@@ -9,7 +9,7 @@
 #### Technical
 - [ ] Draft a high level design doc.
 - [ ] ???
-- [ ] Profit.
+- [ ] Profit
 
 #### Resources
 - Add links here
