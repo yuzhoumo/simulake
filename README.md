@@ -12,4 +12,4 @@
 - [ ] Profit
 
 #### Resources
-- Add links here
+- [Noita: a Game Based on Falling Sand Simulation](https://80.lv/articles/noita-a-game-based-on-falling-sand-simulation/)
