@@ -2,4 +2,4 @@ build/
 .nvimrc.lua
 tags
 .cache
-
+.DS_Store
