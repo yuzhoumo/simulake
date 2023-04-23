@@ -1,6 +1,6 @@
 #include <iostream>
 #include <benchmark/benchmark.h>
-#include <bs_threadpool.hpp>
+#include "bs_threadpool.hpp"
 
 int main() {
   BS::thread_pool tp(10);
