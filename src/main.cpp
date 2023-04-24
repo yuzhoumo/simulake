@@ -1,8 +1,7 @@
-#include <iostream>
-#include <benchmark/benchmark.h>
 #include "bs_threadpool.hpp"
+#include "cell.hpp"
+#include "grid.hpp"
+#include <benchmark/benchmark.h>
+#include <iostream>
 
-int main() {
-  BS::thread_pool tp(10);
-  return 0;
-}
+int main() { return 0; }
