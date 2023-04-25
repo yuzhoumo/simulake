@@ -30,12 +30,15 @@ void AirCell::step(const position_t &pos, Grid &grid) noexcept {
   const auto context = BaseCell::get_cell_context(pos, grid);
 
   // will be flown into if
-  if (FALLS_DOWN(context.top)) {
-    grid.set_at(x, y, context.top);
-  }
+  // if (FALLS_DOWN(context.top)) {
+  //   grid.set_at(x, y, context.top);
+  // } else if (FALLS_DOWN(context.top_left)) {
+  //   grid.set_at(x, y, context.top_left);
+  // } else if (FALLS_DOWN(context.top_right)) {
+  //   grid.set_at(x, y, context.top_right);
+  // }
 }
 
-// TODO(vir): use velocity component for lateral movement
 void SandCell::step(const position_t &pos, Grid &grid) noexcept {
   const auto [x, y] = pos;
   const auto context = BaseCell::get_cell_context(pos, grid);
@@ -43,6 +46,19 @@ void SandCell::step(const position_t &pos, Grid &grid) noexcept {
   // will flow down if possible
   if (VACANT(context.bottom)) {
     grid.set_at(x, y, CellType::AIR);
+    grid.set_at(x + 1, y, CellType::SAND);
+  }
+
+  // else flow left if possible
+  else if (VACANT(context.bottom_left)) {
+    grid.set_at(x, y, CellType::AIR);
+    grid.set_at(x + 1, y - 1, CellType::SAND);
+  }
+
+  // else flow right if possible
+  else if (VACANT(context.bottom_right)) {
+    grid.set_at(x, y, CellType::AIR);
+    grid.set_at(x + 1, y + 1, CellType::SAND);
   }
 }
 

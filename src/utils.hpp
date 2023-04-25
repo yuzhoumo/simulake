@@ -44,3 +44,16 @@ std::ostream &operator<<(std::ostream &, const simulake::CellType);
 
 // pretty print context
 std::ostream &operator<<(std::ostream &, const simulake::BaseCell::context_t);
+
+namespace simulake {
+
+// scope timer
+struct scope_timer_t {
+  const std::chrono::time_point<std::chrono::high_resolution_clock> start;
+  const char* title;
+
+  scope_timer_t(const char*);
+  ~scope_timer_t();
+};
+
+} // namespace simulake

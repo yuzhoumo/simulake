@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 
 #include "utils.hpp"
@@ -8,7 +9,7 @@
 std::ostream &operator<<(std::ostream &stream, const simulake::CellType type) {
   switch (type) {
   case simulake::CellType::AIR:
-    stream << '*';
+    stream << ' ';
     break;
   case simulake::CellType::WATER:
     stream << 'W';
@@ -26,7 +27,7 @@ std::ostream &operator<<(std::ostream &stream, const simulake::CellType type) {
     stream << 'J';
     break;
   case simulake::CellType::SMOKE:
-    stream << '#';
+    stream << '*';
     break;
 
   default:
@@ -56,3 +57,30 @@ std::ostream &operator<<(std::ostream &stream, const simulake::Grid &grid) {
   }
   return stream;
 }
+
+namespace simulake {
+scope_timer_t::scope_timer_t(const char *_title)
+    : start(std::chrono::high_resolution_clock::now()), title(_title) {}
+
+scope_timer_t::~scope_timer_t() {
+  // clang-format off
+  const auto delta = std::chrono::high_resolution_clock::now() - start;
+  const auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(delta);
+  const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(delta);
+  const auto duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(delta);
+  // clang-format on
+
+  // show milliseconds if > 1
+  if (duration_ms.count() > 0)
+    std::cout << title << " took: " << duration_ms.count() << "ms" << std::endl;
+
+  // else show microseconds if > 1
+  else if (duration_us.count() > 0)
+    std::cout << title << " took: " << duration_us.count() << "us" << std::endl;
+
+  // else show nano seconds
+  else
+    std::cout << title << " took: " << duration_ns.count() << "ns" << std::endl;
+}
+
+} // namespace simulake

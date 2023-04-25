@@ -3,9 +3,8 @@
 #include <optional>
 #include <vector>
 
-#include "utils.hpp"
-
 #include "grid.hpp"
+#include "utils.hpp"
 
 namespace simulake {
 
@@ -20,7 +19,7 @@ void Grid::reset() noexcept {
   for (auto &row : _grid)
     row.resize(width, CellType::AIR);
 
-  // copy construct
+  // deep copy construct (same dimensions and contents)
   _next_grid = _grid;
 }
 
@@ -34,10 +33,11 @@ void Grid::simulate() noexcept {
 
   // TODO(vir): parallelize loop
   {
-
+#pragma omp parallel for
 #if 1
     for (int i = height - 1; i >= 0; i -= 1) {
       for (int j = width - 1; j >= 0; j -= 1) {
+
 #else
     for (int i = 0; i < height; i += 1) {
       for (int j = 0; j < width; j += 1) {
@@ -79,6 +79,7 @@ void Grid::simulate() noexcept {
   }
 
   // TODO(vir): add effects (smoke, fillins, etc)
+  // second pass?
 
   // swap around
   std::swap(_grid, _next_grid);
@@ -95,9 +96,9 @@ CellType Grid::type_at(std::uint32_t row, std::uint32_t col) const noexcept {
 // renders next grid
 bool Grid::set_at(std::uint32_t row, std::uint32_t col,
                   const CellType type) noexcept {
-  // NOTE(vir): soft error when out of bounds, no need to handle failure
+  // soft error when out of bounds
   if (row >= height && col >= width) {
-    std::cerr << "out of bounds" << std::endl;
+    std::cerr << "out of bounds: " << row << ' ' << col << std::endl;
     return false;
   }
 
@@ -110,7 +111,7 @@ bool Grid::set_at(std::uint32_t row, std::uint32_t col,
 // set current grid
 bool Grid::set_state(std::uint32_t row, std::uint32_t col,
                      const CellType type) noexcept {
-  // NOTE(vir): soft error when out of bounds, no need to handle failure
+  // soft error when out of bounds
   if (row >= height && col >= width) {
     std::cerr << "out of bounds: " << row << ' ' << col << std::endl;
     return false;

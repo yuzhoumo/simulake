@@ -28,17 +28,18 @@ class BaseCell {
 public:
   typedef std::tuple<std::uint32_t, std::uint32_t> position_t;
 
-  // NOTE(vir): using struct instead of tuple for named access
-  struct context_t {
+  // convenient packed representation of neighbours
+  // TODO(vir): add aligned(16) attr as per opengl requirements?
+  struct __attribute__((packed)) context_t {
     // clang-format off
-    CellType top_left     = CellType::NONE;
-    CellType top          = CellType::NONE;
-    CellType top_right    = CellType::NONE;
-    CellType left         = CellType::NONE;
-    CellType right        = CellType::NONE;
-    CellType bottom_left  = CellType::NONE;
-    CellType bottom       = CellType::NONE;
-    CellType bottom_right = CellType::NONE;
+    CellType top_left     = CellType::NONE,
+             top          = CellType::NONE,
+             top_right    = CellType::NONE,
+             left         = CellType::NONE,
+             right        = CellType::NONE,
+             bottom_left  = CellType::NONE,
+             bottom       = CellType::NONE,
+             bottom_right = CellType::NONE;
     // clang-format on
   };
 
