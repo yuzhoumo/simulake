@@ -15,9 +15,8 @@ Grid::Grid(const std::uint32_t _width, const std::uint32_t _height)
 
 // reset empty grid (full of AIR cells)
 void Grid::reset() noexcept {
-  _grid.resize(height, {});
-  for (auto &row : _grid)
-    row.resize(width, CellType::AIR);
+  // construct in place
+  _grid.resize(height, {width, CellType::AIR});
 
   // deep copy construct (same dimensions and contents)
   _next_grid = _grid;

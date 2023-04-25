@@ -18,7 +18,7 @@ int main() {
   omp_set_num_threads(NUM_THREADS);
 
   // create grid
-  const int width = 1000, height = 1000;
+  const int width = 500, height = 500;
   simulake::Grid grid(width, height);
 
   // example: demo sand simluation

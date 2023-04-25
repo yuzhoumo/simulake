@@ -25,11 +25,7 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 # defines
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG=1)
-else()
-  target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG=0)
-endif()
+target_compile_definitions(${PROJECT_NAME} PRIVATE "DEBUG=$<IF:$<CONFIG:Debug>,1,0>")
 
 # threads, openmp
 find_package(Threads REQUIRED)
