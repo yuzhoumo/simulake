@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <iostream>
 #include <thread>
 
@@ -8,6 +9,9 @@
 
 #include <omp.h>
 
+#include "constants.hpp"
+#include "shader.hpp"
+
 #include "grid.hpp"
 #include "utils.hpp"
 
@@ -15,14 +19,8 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow *window) {
-  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-    glfwSetWindowShouldClose(window, true);
-  }
-}
-
 /* initialize GLAD and GLFW, then create window object and set callbacks */
-void createGLcontexts(GLFWwindow *&window) {
+void create_gl_contexts(GLFWwindow *&window) {
   if (!glfwInit()) {
     std::cerr << "ERROR::GLFW_INITIALIZATION_FAILURE" << std::endl;
     exit(EXIT_FAILURE);
@@ -33,7 +31,8 @@ void createGLcontexts(GLFWwindow *&window) {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  window = glfwCreateWindow(800, 600, "simulake", nullptr, nullptr);
+  window = glfwCreateWindow(WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT,
+                            WINDOW_TITLE, nullptr, nullptr);
   if (nullptr == window) {
     std::cerr << "ERROR::GLFW_WINDOW_CREATION_FAILURE" << std::endl;
     glfwTerminate();
@@ -41,28 +40,72 @@ void createGLcontexts(GLFWwindow *&window) {
   }
 
   glfwMakeContextCurrent(window);
-  glfwSetFramebufferSizeCallback(
-      window, framebuffer_size_callback); // Set a framebuffer size callback
+  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cerr << "ERROR::GLAD_INITIALIZATION_FAILURE" << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  glViewport(0, 0, 800, 600);
+  glViewport(0, 0, WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT);
 }
 
-void test_renderer() {
+/* clean up objects and exit */
+void cleanup(GLFWwindow *&window, int exit_code) {
+  glfwDestroyWindow(window);
+  glfwTerminate();
+  exit(EXIT_SUCCESS);
+}
+
+void test_renderer(int argc, char **argv) {
   GLFWwindow *window;
-  createGLcontexts(window);
+  create_gl_contexts(window);
 
+  assert(argc > 2);
+
+  /* compile shaders */
+  std::filesystem::path vert_shader_path("shaders/vertex.glsl");
+  if (!vert_shader_path.is_absolute())
+    vert_shader_path = std::filesystem::absolute(vert_shader_path);
+
+  std::filesystem::path frag_shader_path("shaders/fragment.glsl");
+  if (!frag_shader_path.is_absolute())
+    frag_shader_path = std::filesystem::absolute(frag_shader_path);
+
+  const Shader shader{
+      vert_shader_path.string(),
+      frag_shader_path.string(),
+  };
+
+  if (0 == shader.get_id()) {
+    std::cerr << "ERROR::SHADER_CREATION_FAILURE" << std::endl;
+    cleanup(window, EXIT_FAILURE);
+  }
+
+  /* load fullscreen quad */
+  GLuint VAO, VBO;
+  glGenVertexArrays(1, &VAO);
+  glGenBuffers(1, &VBO);
+
+  glBindVertexArray(VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(FS_QUAD), FS_QUAD, GL_STATIC_DRAW);
+
+  glVertexAttribPointer(FS_QUAD_VERTEX_ATTRIB_PARAMS);
+  glEnableVertexAttribArray(FS_QUAD_VERTEX_ATTRIB_INDEX);
+
+  // render loop
   while (!glfwWindowShouldClose(window)) {
-    processInput(window);
-
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
 
+    shader.use();
+
+    /* draw frame */
+    glBindVertexArray(VAO);
+    glDrawArrays(FS_QUAD_DRAW_ARRAY_PARAMS);
     glfwSwapBuffers(window);
+
     glfwPollEvents();
   }
 
@@ -113,7 +156,8 @@ void test_simulation() {
     std::cout << grid << std::endl;
 }
 
-int main() {
+int main(int argc, char **argv) {
   test_simulation();
+  // test_renderer(argc, argv);
   return 0;
 }
