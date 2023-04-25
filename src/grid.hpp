@@ -27,19 +27,33 @@ public:
   /* reset to empty grid */
   void reset() noexcept;
 
-  /* simulate the next step */
+  /* simulate the next step, update grid */
   void simulate() noexcept;
 
-  // const access
-  CellType &at(std::uint32_t, std::uint32_t);
+  /* get cell type at given position */
+  CellType type_at(std::uint32_t, std::uint32_t) const noexcept;
+
+  /* set cell type at given position. returns true of successful */
+  bool set_at(std::uint32_t, std::uint32_t, const CellType) noexcept;
+  bool set_state(std::uint32_t, std::uint32_t, const CellType) noexcept;
+
+  /* utils */
+  // void set_random_state(const std::uint32_t) noexcept;
+
+  // getters
+  inline uint32_t get_width() const noexcept { return width; }
+  inline uint32_t get_height() const noexcept { return height; }
 
 private:
+  // grid is represented as a 2D array of CellType (int ids)
+  typedef std::vector<std::vector<CellType>> cell_grid_t;
+
   // all out of bounds cell point to here
   inline static const CellType OUT_OF_BOUNDS = CellType::NONE;
 
-  // grid is represented as a 2D array of CellType (int ids)
-  typedef std::vector<std::vector<CellType>> cell_grid_t;
-  cell_grid_t _grid;
+  // buffers
+  cell_grid_t _grid;      // completed last grid
+  cell_grid_t _next_grid; // next grid being computed, swap at end of simulate
 
   uint32_t width, height;
 };

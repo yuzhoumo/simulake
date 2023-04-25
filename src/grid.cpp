@@ -1,7 +1,10 @@
+#include <cassert>
+#include <iostream>
 #include <optional>
 #include <vector>
 
-#include "cell.hpp"
+#include "utils.hpp"
+
 #include "grid.hpp"
 
 namespace simulake {
@@ -16,6 +19,9 @@ void Grid::reset() noexcept {
   _grid.resize(height, {});
   for (auto &row : _grid)
     row.resize(width, CellType::AIR);
+
+  // copy construct
+  _next_grid = _grid;
 }
 
 Grid::~Grid() {
@@ -23,39 +29,97 @@ Grid::~Grid() {
 }
 
 void Grid::simulate() noexcept {
-  // TODO(vir): parallelize loop
-  for (std::uint32_t i = 0; i < height; i += 1) {
-    for (std::uint32_t j = 0; j < width; j += 1) {
-      switch (_grid[i][j]) {
-      case CellType::AIR:
-        // AirCell::step({i, j}, *this);
-      case CellType::WATER:
-        // WaterCell::step({i, j}, *this);
-      case CellType::OIL:
-        // OilCell::step({i, j}, *this);
-      case CellType::SAND:
-        // SandCell::step({i, j}, *this);
-      case CellType::FIRE:
-        // FireCell::step({i, j}, *this);
-      case CellType::JELLO:
-        // JelloCell::step({i, j}, *this);
-      case CellType::SMOKE:
-        // SmokeCell::step({i, j}, *this);
+  // copy old grid into new
+  _next_grid = _grid;
 
-      default: // CellType::NONE
-        break;
-      };
+  // TODO(vir): parallelize loop
+  {
+
+#if 1
+    for (int i = height - 1; i >= 0; i -= 1) {
+      for (int j = width - 1; j >= 0; j -= 1) {
+#else
+    for (int i = 0; i < height; i += 1) {
+      for (int j = 0; j < width; j += 1) {
+#endif
+        switch (_grid[i][j]) {
+        case CellType::AIR:
+          AirCell::step({i, j}, *this);
+          break;
+
+        case CellType::WATER:
+          // WaterCell::step({i, j}, *this);
+          break;
+
+        case CellType::OIL:
+          // OilCell::step({i, j}, *this);
+          break;
+
+        case CellType::SAND:
+          SandCell::step({i, j}, *this);
+          break;
+
+        case CellType::FIRE:
+          // FireCell::step({i, j}, *this);
+          break;
+
+        case CellType::JELLO:
+          // JelloCell::step({i, j}, *this);
+          break;
+
+        case CellType::SMOKE:
+          // SmokeCell::step({i, j}, *this);
+          break;
+
+        default: // CellType::NONE
+          break;
+        };
+      }
     }
+  }
+
+  // TODO(vir): add effects (smoke, fillins, etc)
+
+  // swap around
+  std::swap(_grid, _next_grid);
+}
+
+// reads current grid
+CellType Grid::type_at(std::uint32_t row, std::uint32_t col) const noexcept {
+  if (row >= height || col >= width)
+    return CellType::NONE;
+
+  return _grid[row][col];
+}
+
+// renders next grid
+bool Grid::set_at(std::uint32_t row, std::uint32_t col,
+                  const CellType type) noexcept {
+  // NOTE(vir): soft error when out of bounds, no need to handle failure
+  if (row >= height && col >= width) {
+    std::cerr << "out of bounds" << std::endl;
+    return false;
+  }
+
+  else {
+    _next_grid[row][col] = type;
+    return true;
   }
 }
 
-CellType &Grid::at(std::uint32_t row, std::uint32_t col) {
-  if (row >= height || col >= width)
-    // return OUT_OF_BOUNDS;
-    // NOTE(vir): figure out something better yet performant
-    return const_cast<CellType &>(OUT_OF_BOUNDS);
+// set current grid
+bool Grid::set_state(std::uint32_t row, std::uint32_t col,
+                     const CellType type) noexcept {
+  // NOTE(vir): soft error when out of bounds, no need to handle failure
+  if (row >= height && col >= width) {
+    std::cerr << "out of bounds: " << row << ' ' << col << std::endl;
+    return false;
+  }
 
-  return _grid[row][col];
+  else {
+    _grid[row][col] = type;
+    return true;
+  }
 }
 
 } // namespace simulake
