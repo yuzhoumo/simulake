@@ -47,6 +47,14 @@ std::ostream &operator<<(std::ostream &, const simulake::BaseCell::context_t);
 
 namespace simulake {
 
+#if DEBUG
+#define PROFILE_SCOPE(name) simulake::scope_timer_t timer##__LINE__(name)
+#define PROFILE_FUNCTION() PROFILE_SCOPE(__FUNCTION__)
+#else
+#define PROFILE_SCOPE(name)
+#define PROFILE_FUNCTION()
+#endif
+
 // scope timer
 struct scope_timer_t {
   const std::chrono::time_point<std::chrono::high_resolution_clock> start;

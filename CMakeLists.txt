@@ -24,12 +24,20 @@ file(GLOB_RECURSE HEADER_FILES
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
+# defines
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG=1)
+else()
+  target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG=0)
+endif()
+
 # threads, openmp
 find_package(Threads REQUIRED)
 target_link_libraries(${PROJECT_NAME} Threads::Threads)
 
 # openmp
-# get homebrew openmp prefix
+# install libomp using brew and set prefix path
+# execute_process(COMMAND brew install libomp)
 execute_process (
   COMMAND brew --prefix libomp
   OUTPUT_VARIABLE HOMEBREW_LIBOMP_PREFIX
@@ -40,8 +48,9 @@ message(STATUS "homebrew OpenMP found: " ${HOMEBREW_LIBOMP_PREFIX})
 # set openmp paths
 set(OpenMP_LIBRARIES ${HOMEBREW_LIBOMP_PREFIX}/lib)
 set(OpenMP_INCLUDES ${HOMEBREW_LIBOMP_PREFIX}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${OpenMP_INCLUDES})
+target_link_directories(${PROJECT_NAME} PRIVATE ${OpenMP_LIBRARIES})
 
-# set compiler flags
 if(APPLE)
   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
     set(OpenMP_C "${CMAKE_C_COMPILER}" CACHE STRING "" FORCE)
@@ -59,8 +68,6 @@ if(APPLE)
 endif()
 
 find_package(OpenMP REQUIRED)
-target_include_directories(${PROJECT_NAME} PRIVATE ${OpenMP_INCLUDES})
-target_link_directories(${PROJECT_NAME} PRIVATE ${OpenMP_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
 
 # benchmark

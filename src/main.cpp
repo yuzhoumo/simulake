@@ -7,6 +7,8 @@
 #include "utils.hpp"
 
 int main() {
+  PROFILE_FUNCTION();
+
   // easy-toggles
   constexpr auto DEBUG_PRINT = false;
   constexpr auto NUM_THREADS = 10;
@@ -21,7 +23,8 @@ int main() {
 
   // example: demo sand simluation
   {
-    simulake::scope_timer_t timer("full sim");
+    // simulake::scope_timer_t timer("full sim");
+    PROFILE_SCOPE("sim");
 
     for (int i = 0; i < SIM_STEPS; i += 1) {
       // spawn new particles in

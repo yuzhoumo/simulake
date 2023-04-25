@@ -43,11 +43,15 @@ public:
     // clang-format on
   };
 
+  // not pure virtual becase we want want to use static functions
   /* step forward simulation by 1 step, return new state of cell */
-  // static CellType step(const Context &context, const Grid &grid) noexcept;
+  // static CellType step(const position_t &pos, Grid &grid) noexcept = 0;
 
   [[nodiscard]] static context_t get_cell_context(const position_t &,
                                                   const Grid &) noexcept;
+
+  // needed for any base class
+  virtual ~BaseCell() = default;
 
 private:
   // make this an abstract class
@@ -56,31 +60,31 @@ private:
 
 /* individual datatypes / behaviors */
 
-struct AirCell : public BaseCell {
+struct AirCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
 
-struct WaterCell : public BaseCell {
+struct WaterCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
 
-struct OilCell : public BaseCell {
+struct OilCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
 
-struct SandCell : public BaseCell {
+struct SandCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
 
-struct FireCell : public BaseCell {
+struct FireCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
 
-struct JelloCell : public BaseCell {
+struct JelloCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
 
-struct SmokeCell : public BaseCell {
+struct SmokeCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
 
