@@ -42,22 +42,20 @@ target_link_libraries(${PROJECT_NAME} Threads::Threads)
 target_include_directories(${PROJECT_NAME} PRIVATE ${VENDOR_DIR}/)
 
 # openmp
-# NOTE(vir): toggle next line to install libomp using brew
-# execute_process(COMMAND brew install libomp)
-execute_process (
-  COMMAND brew --prefix libomp
-  OUTPUT_VARIABLE HOMEBREW_LIBOMP_PREFIX
-)
-string(STRIP ${HOMEBREW_LIBOMP_PREFIX} HOMEBREW_LIBOMP_PREFIX)
-message(STATUS "homebrew OpenMP found: " ${HOMEBREW_LIBOMP_PREFIX})
-
-# set openmp paths
-set(OpenMP_LIBRARIES ${HOMEBREW_LIBOMP_PREFIX}/lib)
-set(OpenMP_INCLUDES ${HOMEBREW_LIBOMP_PREFIX}/include)
-target_include_directories(${PROJECT_NAME} PRIVATE ${OpenMP_INCLUDES})
-target_link_directories(${PROJECT_NAME} PRIVATE ${OpenMP_LIBRARIES})
-
 if(APPLE)
+  # NOTE(vir): toggle next line to install libomp using brew
+  # execute_process(COMMAND brew install libomp)
+  execute_process (
+    COMMAND brew --prefix libomp
+    OUTPUT_VARIABLE HOMEBREW_LIBOMP_PREFIX
+  )
+  string(STRIP ${HOMEBREW_LIBOMP_PREFIX} HOMEBREW_LIBOMP_PREFIX)
+  message(STATUS "homebrew OpenMP found: " ${HOMEBREW_LIBOMP_PREFIX})
+
+  # set openmp paths
+  set(OpenMP_LIBRARIES ${HOMEBREW_LIBOMP_PREFIX}/lib)
+  set(OpenMP_INCLUDES ${HOMEBREW_LIBOMP_PREFIX}/include)
+
   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
     set(OpenMP_C "${CMAKE_C_COMPILER}" CACHE STRING "" FORCE)
     set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp -lomp -Wno-unused-command-line-argument" CACHE STRING "" FORCE)
@@ -74,6 +72,8 @@ if(APPLE)
 endif()
 
 find_package(OpenMP REQUIRED)
+target_include_directories(${PROJECT_NAME} PRIVATE ${OpenMP_INCLUDES})
+target_link_directories(${PROJECT_NAME} PRIVATE ${OpenMP_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
 
 # glm
