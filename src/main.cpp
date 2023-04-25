@@ -1,7 +1,11 @@
-#include "bs_threadpool.hpp"
 #include "cell.hpp"
 #include "grid.hpp"
-#include <benchmark/benchmark.h>
 #include <iostream>
 
-int main() { return 0; }
+int main() {
+  simulake::Grid grid(200, 150);
+  for (int i = 0; i < 10; i += 1)
+    grid.simulate();
+
+  return 0;
+}

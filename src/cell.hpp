@@ -3,20 +3,44 @@
 #include <memory>
 #include <utility>
 
+namespace simulake {
 class Grid;
-enum class CellType { AIR, WATER, OIL, SAND, FIRE, JELLO, SMOKE };
 
-/* represents an individual CA-cell */
+/* types a grid cell can have */
+enum class CellType : std::uint8_t {
+  AIR,
+  WATER,
+  OIL,
+  SAND,
+  FIRE,
+  JELLO,
+  SMOKE,
+  NONE
+};
+
+/* represents an individual grid cell */
 class BaseCell {
 public:
-  typedef std::tuple<int, int, int, int, int, int, int, int> Context;
-  typedef std::tuple<int, int> Position;
+  typedef std::tuple<std::uint32_t, std::uint32_t> position_t;
+  struct context_t {
+    // clang-format off
+    CellType top_left     = CellType::NONE;
+    CellType top          = CellType::NONE;
+    CellType top_right    = CellType::NONE;
+    CellType left         = CellType::NONE;
+    CellType right        = CellType::NONE;
+    CellType bottom_left  = CellType::NONE;
+    CellType bottom       = CellType::NONE;
+    CellType bottom_right = CellType::NONE;
+    // clang-format on
+  };
 
   /* step forward simulation by 1 step, takes */
-  // static void step(const Context &context, const Grid &grid);
+  // static void step(const Context &context, const Grid &grid) noexcept;
 
 private:
-  static Context get_cell_context(const Position &);
+  [[nodiscard]] static context_t get_cell_context(const position_t &,
+                                                  const Grid &) noexcept;
 
   // make this an abstract class
   BaseCell() = delete;
@@ -24,30 +48,31 @@ private:
 
 /* individual datatypes / behaviors */
 
-class AirCell : public BaseCell {
-  static void step(const Position &, const Grid &);
+struct AirCell : public BaseCell {
+  static void step(const position_t &, const Grid &) noexcept;
 };
 
-class WaterCell : public BaseCell {
-  static void step(const Position &, const Grid &);
+struct WaterCell : public BaseCell {
+  static void step(const position_t &, const Grid &) noexcept;
 };
 
-class OilCell : public BaseCell {
-  static void step(const Position &, const Grid &);
+struct OilCell : public BaseCell {
+  static void step(const position_t &, const Grid &) noexcept;
 };
 
-class SandCell : public BaseCell {
-  static void step(const Position &, const Grid &);
+struct SandCell : public BaseCell {
+  static void step(const position_t &, const Grid &) noexcept;
 };
 
-class FireCell : public BaseCell {
-  static void step(const Position &, const Grid &);
+struct FireCell : public BaseCell {
+  static void step(const position_t &, const Grid &) noexcept;
 };
 
-class JelloCell : public BaseCell {
-  static void step(const Position &, const Grid &);
+struct JelloCell : public BaseCell {
+  static void step(const position_t &, const Grid &) noexcept;
 };
 
-class SmokeCell : public BaseCell {
-  static void step(const Position &, const Grid &);
+struct SmokeCell : public BaseCell {
+  static void step(const position_t &, const Grid &) noexcept;
 };
+} // namespace simulake
