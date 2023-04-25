@@ -21,4 +21,8 @@ const float FS_QUAD[] = {
 #define FS_QUAD_VERTEX_ATTRIB_PARAMS FS_QUAD_VERTEX_ATTRIB_INDEX, \
     3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0
 
+/* vertex and fragment shader locations */
+#define VERTEX_SHADER_PATH "./shaders/vertex.glsl"
+#define FRAGMENT_SHADER_PATH "./shaders/fragment.glsl"
+
 #endif /* ifndef CONSTANTS_H */

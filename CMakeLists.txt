@@ -23,6 +23,10 @@ file(GLOB_RECURSE HEADER_FILES
 # submodule dependencies
 set(VENDOR_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 
+# shaders
+set(SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
+file(COPY ${SHADER_DIR} DESTINATION ${CMAKE_BINARY_DIR})
+
 # main executable
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
@@ -102,4 +106,3 @@ target_link_libraries(${PROJECT_NAME} glfw)
 #   GIT_TAG v1.7.0)
 # FetchContent_MakeAvailable(benchmark)
 # target_link_libraries(${PROJECT_NAME} benchmark::benchmark)
-

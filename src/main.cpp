@@ -61,21 +61,16 @@ void test_renderer(int argc, char **argv) {
   GLFWwindow *window;
   create_gl_contexts(window);
 
-  assert(argc > 2);
+  if (3 != argc) {
+    std::cerr << "ERROR::INCORRECT_ARG_COUNT: " << argc << ", expected 3."
+              << std::endl;
+    exit(EXIT_FAILURE);
+  }
 
-  /* compile shaders */
-  std::filesystem::path vert_shader_path("shaders/vertex.glsl");
-  if (!vert_shader_path.is_absolute())
-    vert_shader_path = std::filesystem::absolute(vert_shader_path);
-
-  std::filesystem::path frag_shader_path("shaders/fragment.glsl");
-  if (!frag_shader_path.is_absolute())
-    frag_shader_path = std::filesystem::absolute(frag_shader_path);
-
-  const Shader shader{
-      vert_shader_path.string(),
-      frag_shader_path.string(),
-  };
+  /* load and compile shaders */
+  const auto vert_shader_path = std::filesystem::absolute(VERTEX_SHADER_PATH);
+  const auto frag_shader_path = std::filesystem::absolute(FRAGMENT_SHADER_PATH);
+  const Shader shader{vert_shader_path.string(), frag_shader_path.string()};
 
   if (0 == shader.get_id()) {
     std::cerr << "ERROR::SHADER_CREATION_FAILURE" << std::endl;
