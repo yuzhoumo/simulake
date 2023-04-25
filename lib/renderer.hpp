@@ -36,7 +36,10 @@ public:
   void render(GridData grid_data, GLFWwindow*& window);
 
 private:
-  std::vector<std::vector<float>> _generate_chunks(GridData grid_data);
+  using Chunks = std::vector<std::vector<float>>;
+  using ChunkIndices = std::vector<std::vector<unsigned int>>;
+
+  std::tuple<Chunks, ChunkIndices> _generate_chunks(GridData grid_data);
 
   void _set_cell_size(int cell_size);
   void _set_grid_size(GridData grid_data);
@@ -50,7 +53,7 @@ private:
   int _num_cells;
   int _cell_size;
 
-  GLuint _VAO, _VBO, _IBO;
+  GLuint _VAO, _VBO, _EBO;
 };
 
 #endif /* ifndef RENDERER_HPP */

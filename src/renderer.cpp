@@ -17,16 +17,18 @@ Renderer::Renderer(GridData grid_data) {
 
   /* set state variables */
   _set_cell_size(4);
-  _set_viewport_size(_cell_size * grid_data.width, _cell_size * grid_data.height);
+  _set_viewport_size(
+      _cell_size * grid_data.width, _cell_size * grid_data.height);
 
   /* create gl objects */
   glGenVertexArrays(1, &_VAO);
   glGenBuffers(1, &_VBO);
-  glGenBuffers(1, &_IBO);
+  glGenBuffers(1, &_EBO);
 
   /* bind vertex data and load into buffer */
   glBindVertexArray(_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, _VBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 
   /* configure vertex attribute pointers */
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
@@ -40,39 +42,54 @@ void Renderer::render(GridData grid_data, GLFWwindow*& window) {
   _set_grid_size(grid_data);
   _set_viewport_size(_cell_size * _grid_size);
 
-  std::vector<std::vector<float>> chunks = _generate_chunks(grid_data);
+  const auto& chunk_data = _generate_chunks(grid_data);
+  const auto& chunks = std::get<0>(chunk_data);
+  const auto& chunk_indices = std::get<1>(chunk_data);
 
   glBindVertexArray(_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, _VBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 
-  for (const auto& chunk : chunks) {
+  for (size_t i = 0; i < chunks.size(); ++i) {
+    const auto& chunk = chunks[i];
+    const auto& indices = chunk_indices[i];
+
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * chunk.size(),
                  &(chunk.front()), GL_STREAM_DRAW);
-    glDrawArrays(GL_TRIANGLES, 0, chunk.size());
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(),
+                 &(indices.front()), GL_STREAM_DRAW);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
   }
 
   glfwSwapBuffers(window);
 }
 
-std::vector<std::vector<float>> Renderer::_generate_chunks(GridData grid_data) {
+using Chunks = std::vector<std::vector<float>>;
+using ChunkIndices = std::vector<std::vector<unsigned int>>;
+
+std::tuple<Chunks, ChunkIndices>
+    Renderer::_generate_chunks(GridData grid_data) {
+
   const int chunk_size = 512; // FIXME: Change this value as needed
   std::vector<std::vector<float>> chunks;
+  std::vector<std::vector<unsigned int>> chunk_indices;
 
   for (int chunk_x = 0; chunk_x < _grid_size.x; chunk_x += chunk_size) {
     for (int chunk_y = 0; chunk_y < _grid_size.y; chunk_y += chunk_size) {
       std::vector<float> vertices;
+      std::vector<unsigned int> indices;
 
-      for (int i = chunk_x; i < std::min(chunk_x + chunk_size, _grid_size.x); ++i) {
-        for (int j = chunk_y; j < std::min(chunk_y + chunk_size, _grid_size.y); ++j) {
-          /* draw a quad in following order
-           * [square, not to scale]
+      int x_max = std::min(chunk_x + chunk_size, _grid_size.x);
+      int y_max = std::min(chunk_y + chunk_size, _grid_size.y);
+
+      for (int i = chunk_x; i < x_max; ++i) {
+        for (int j = chunk_y; j < y_max; ++j) {
+          /* draw a quad in following order using triangle strip
            *
-           * 2----3/4
-           * |    / |
-           * |   /  |
-           * |  /   |
-           * | /    |
-           * 1/5----6
+           * 2----3
+           * |    |
+           * |    |
+           * 1----4
            */
 
           glm::vec2 bot_left{
@@ -89,6 +106,9 @@ std::vector<std::vector<float>> Renderer::_generate_chunks(GridData grid_data) {
           int cell_type = static_cast<float>(grid_data.cells[index].type);
           float mass = grid_data.cells[index].mass;
 
+          unsigned int base_index =
+            static_cast<unsigned int>(vertices.size() / 4);
+
           vertices.emplace_back(bot_left.x);
           vertices.emplace_back(bot_left.y);
           vertices.emplace_back(cell_type);
@@ -100,32 +120,30 @@ std::vector<std::vector<float>> Renderer::_generate_chunks(GridData grid_data) {
           vertices.emplace_back(mass);
 
           vertices.emplace_back(top_right.x);
-          vertices.emplace_back(top_right.y);
-          vertices.emplace_back(cell_type);
-          vertices.emplace_back(mass);
-
-          vertices.emplace_back(top_right.x);
-          vertices.emplace_back(top_right.y);
-          vertices.emplace_back(cell_type);
-          vertices.emplace_back(mass);
-
-          vertices.emplace_back(bot_left.x);
           vertices.emplace_back(bot_left.y);
           vertices.emplace_back(cell_type);
           vertices.emplace_back(mass);
 
           vertices.emplace_back(top_right.x);
-          vertices.emplace_back(bot_left.y);
+          vertices.emplace_back(top_right.y);
           vertices.emplace_back(cell_type);
           vertices.emplace_back(mass);
+
+          indices.push_back(base_index + 0);
+          indices.push_back(base_index + 1);
+          indices.push_back(base_index + 2);
+          indices.push_back(base_index + 1);
+          indices.push_back(base_index + 3);
+          indices.push_back(base_index + 2);
         }
       }
 
       chunks.push_back(vertices);
+      chunk_indices.push_back(indices);
     }
   }
 
-  return chunks;
+  return std::make_tuple(chunks, chunk_indices);
 }
 
 void Renderer::_set_cell_size(int cell_size) {
