@@ -8,13 +8,10 @@
 namespace simulake {
 class Grid;
 
-#define FALLS_DOWN(x) (static_cast<std::uint8_t>(x) > 3)
-#define VACANT(x) (static_cast<std::uint8_t>(x) == 1)
-
 /* types a grid cell can have */
-enum class CellType : std::uint8_t {
-  // out of bounds
-  NONE = 0,
+// NOTE(vir): cant make this by std::uint8_t
+enum class CellType {
+  NONE = 0, // out of bounds
   AIR,
   SMOKE,
   FIRE,
@@ -23,6 +20,9 @@ enum class CellType : std::uint8_t {
   SAND,
   JELLO,
 };
+
+#define FALLS_DOWN(x) (x > simulake::CellType::WATER))
+#define VACANT(x) (x == simulake::CellType::AIR)
 
 /* represents an individual grid cell */
 class BaseCell {

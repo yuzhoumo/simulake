@@ -1,59 +1,64 @@
 #ifndef SIMULAKE_RENDERER_HPP
 #define SIMULAKE_RENDERER_HPP
 
-#include "shader.hpp"
-
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 #include <vector>
 
-struct Cell {
-  int type;
-  float mass;
-};
+#include <glm/glm.hpp>
 
-struct GridData {
-  int width;
-  int height;
-  Cell *cells;
-};
+#include "grid.hpp"
+#include "shader.hpp"
+#include "window.hpp"
+
+namespace simulake {
+class Window;
 
 class Renderer {
 public:
-  Renderer(GridData grid_data);
+  typedef std::vector<std::vector<float>> chunks_t;
+  typedef std::vector<std::vector<unsigned int>> chunk_indices_t;
 
-  ~Renderer() {
-    glDeleteVertexArrays(1, &_VAO);
-    glDeleteBuffers(1, &_VBO);
-    glDeleteProgram(_shader.get_id());
-  };
+  /* initialize renderer */
+  explicit Renderer(const std::uint32_t = 800, const std::uint32_t = 600,
+                    const std::uint32_t = 4);
 
-  /* disable copy construction/assignment */
-  Renderer(const Renderer &) = delete;
+  // disable moves
+  explicit Renderer(Renderer &&) = delete;
+  Renderer &operator=(Renderer &&) = delete;
+
+  // disable copies
+  explicit Renderer(const Renderer &) = delete;
   Renderer &operator=(const Renderer &) = delete;
 
-  /* render frame based on current GridData */
-  void render(GridData grid_data, GLFWwindow *&window);
+  /* free up resources on deletion */
+  ~Renderer();
+
+  /* render frame based on dataptr */
+  void render(const Grid &) noexcept;
+
+  /* get a reference to renderer window */
+  const Window &get_window() const noexcept;
 
 private:
-  using Chunks = std::vector<std::vector<float>>;
-  using ChunkIndices = std::vector<std::vector<unsigned int>>;
+  // generate chunks based on simulake::Grid
+  std::tuple<chunks_t, chunk_indices_t> generate_chunks(const Grid &) noexcept;
 
-  std::tuple<Chunks, ChunkIndices> _generate_chunks(GridData grid_data);
+  /* initialize opengl and shaders */
+  void initialize_graphics() noexcept;
 
-  void _set_cell_size(int cell_size);
-  void _set_grid_size(GridData grid_data);
-  void _set_viewport_size(int width, int height);
-  void _set_viewport_size(glm::ivec2 size);
+  /* set state */
+  void set_cell_size(const std::uint32_t) noexcept;
+  void set_viewport_size(const std::uint32_t, const std::uint32_t) noexcept;
 
-  Shader _shader;
+  glm::ivec2 grid_size;     /* grid width, height in cells */
+  glm::ivec2 viewport_size; /* viewport width, height in pixels */
+  std::uint32_t num_cells;  /* number of cells to render */
+  std::uint32_t cell_size;  /* each cell pixels = (cell_size * cell_size) */
 
-  glm::ivec2 _grid_size;     /* grid width, height in cells */
-  glm::ivec2 _viewport_size; /* viewport width, height in pixels */
-  int _num_cells;
-  int _cell_size;
-
+  Window window;
+  Shader shader;
   GLuint _VAO, _VBO, _EBO;
 };
+
+} // namespace simulake
 
 #endif
