@@ -14,12 +14,10 @@ class Window;
 
 class Renderer {
 public:
-  typedef std::vector<std::vector<float>> chunks_t;
-  typedef std::vector<std::vector<unsigned int>> chunk_indices_t;
-
-  /* initialize renderer */
-  explicit Renderer(const std::uint32_t = 800, const std::uint32_t = 600,
-                    const std::uint32_t = 4);
+  // create and initialize renderer
+  explicit Renderer(const std::uint32_t width = 800,
+                    const std::uint32_t height = 600,
+                    const std::uint32_t cell_size = 4);
 
   // disable moves
   explicit Renderer(Renderer &&) = delete;
@@ -32,31 +30,39 @@ public:
   /* free up resources on deletion */
   ~Renderer();
 
+  /* submit new grid data to renderer */
+  void submit_grid(const Grid &) noexcept;
+
   /* render frame based on dataptr */
-  void render(const Grid &) noexcept;
+  void render() noexcept;
 
   /* get a reference to renderer window */
   const Window &get_window() const noexcept;
 
 private:
-  // generate chunks based on simulake::Grid
-  std::tuple<chunks_t, chunk_indices_t> generate_chunks(const Grid &) noexcept;
+  // regenerate triangles set
+  void regenerate_grid() noexcept;
+
+  // update grid texture based on new sim grid
+  void update_grid_data_texture(const Grid &) noexcept;
 
   /* initialize opengl and shaders */
   void initialize_graphics() noexcept;
 
   /* set state */
   void set_cell_size(const std::uint32_t) noexcept;
-  void set_viewport_size(const std::uint32_t, const std::uint32_t) noexcept;
 
   glm::ivec2 grid_size;     /* grid width, height in cells */
   glm::ivec2 viewport_size; /* viewport width, height in pixels */
   std::uint32_t num_cells;  /* number of cells to render */
   std::uint32_t cell_size;  /* each cell pixels = (cell_size * cell_size) */
 
+  std::vector<float> vertices;
+  std::vector<unsigned int> ebo_indices;
+
   Window window;
   Shader shader;
-  GLuint _VAO, _VBO, _EBO;
+  GLuint _VAO, _VBO, _EBO, _GRID_DATA_TEXTURE;
 };
 
 } // namespace simulake

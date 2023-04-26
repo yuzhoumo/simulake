@@ -19,7 +19,7 @@ void test_renderer(int argc, char **argv) {
   PROFILE_FUNCTION();
   constexpr auto WIDTH = 800;
   constexpr auto HEIGHT = 600;
-  constexpr auto CELL_SIZE = 2;
+  constexpr auto CELL_SIZE = 4;
 
   // TODO(vir): find a better place for this initialization
   { assert(glfwInit()); }
@@ -37,11 +37,13 @@ void test_renderer(int argc, char **argv) {
     }
   }
 
-  // render loop
+  // application loop
   while (!glfwWindowShouldClose(renderer.get_window().get_window_ptr())) {
-    // PROFILE_SCOPE("render loop");
+    // render step
+    renderer.submit_grid(test_grid);
+    renderer.render();
 
-    renderer.render(test_grid);
+    // sim step
     test_grid.simulate();
 
     glfwPollEvents();

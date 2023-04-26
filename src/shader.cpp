@@ -36,7 +36,7 @@ Shader::build_program(const std::string_view vertex_shader_path,
   glAttachShader(shader_program, vertex_shader);
   glAttachShader(shader_program, fragment_shader);
   glLinkProgram(shader_program);
-  if (-1 == check_compile_errors(shader_program, ShaderType::SHADER_PROGRAM))
+  if (check_compile_errors(shader_program, ShaderType::SHADER_PROGRAM) == -1)
     return 0;
 
   /* clean up shader objects */
@@ -118,7 +118,7 @@ void Shader::set_bool(const std::string_view name,
 }
 
 void Shader::set_int(const std::string_view name,
-  const int value) const noexcept {
+                     const int value) const noexcept {
   glUniform1i(glGetUniformLocation(_id, name.data()), value);
 }
 

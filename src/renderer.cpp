@@ -9,14 +9,14 @@
 
 namespace simulake {
 
-Renderer::Renderer(const std::uint32_t _width, const std::uint32_t _height,
+Renderer::Renderer(const std::uint32_t width, const std::uint32_t height,
                    const std::uint32_t cell_size)
-    : window(_width, _height, "simulake") {
+    : window(width, height, "simulake") {
   // set state variables
+  num_cells = (width / cell_size) * (height / cell_size);
   set_cell_size(cell_size);
-  set_viewport_size(_width, _height);
 
-  // opengl and shaders initailize
+  // initialize opengl and shaders
   initialize_graphics();
 }
 
@@ -24,6 +24,7 @@ Renderer::~Renderer() {
   glDeleteVertexArrays(1, &_VAO);
   glDeleteBuffers(1, &_VBO);
   glDeleteProgram(shader.get_id());
+  // TODO(vir): check if grid_data_texture is deleted
 }
 
 void Renderer::initialize_graphics() noexcept {
@@ -39,6 +40,7 @@ void Renderer::initialize_graphics() noexcept {
   glGenVertexArrays(1, &_VAO);
   glGenBuffers(1, &_VBO);
   glGenBuffers(1, &_EBO);
+  glGenTextures(1, &_GRID_DATA_TEXTURE);
 
   // bind vertex data and load into buffer
   glBindVertexArray(_VAO);
@@ -46,162 +48,165 @@ void Renderer::initialize_graphics() noexcept {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 
   // configure vertex attributes
-  glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
+
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                        (void *)(2 * sizeof(float)));
+  glEnableVertexAttribArray(1);
 }
 
-void Renderer::render(const Grid &grid) noexcept {
+void Renderer::submit_grid(const Grid &grid) noexcept {
+  const auto grid_width = grid.get_width();
+  const auto grid_height = grid.get_width();
+
+  const auto curr_num_cells = grid_width * grid_height;
+
+  // update dimensions and regenerate grid
+  if (curr_num_cells != num_cells) {
+    num_cells = curr_num_cells;
+    grid_size[0] = grid_width;
+    grid_size[1] = grid_height;
+    viewport_size[0] = cell_size * grid_width;
+    viewport_size[1] = cell_size * grid_height;
+    glViewport(0, 0, viewport_size[0], viewport_size[1]);
+
+    regenerate_grid();
+  }
+
+  update_grid_data_texture(grid);
+}
+
+void Renderer::render() noexcept {
   glClear(GL_COLOR_BUFFER_BIT);
 
   // activate shader
   shader.use();
 
-  // generate chunks
-  const auto [chunks, chunk_indices] = generate_chunks(grid);
+  // activate cells texture
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, _GRID_DATA_TEXTURE);
+  shader.set_int("u_grid_data_texture", 0);
 
-  // bind pipeline
+  // bind vertex buffer and draw triangles
   glBindVertexArray(_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, _VBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 
-  for (int i = 0; i < chunks.size(); ++i) {
-    const auto &chunk = chunks[i];
-    const auto &indices = chunk_indices[i];
+  // bind vertices
+  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(),
+               &(vertices.front()), GL_STREAM_DRAW);
 
-    // set vertices
-    glBufferData(GL_ARRAY_BUFFER, chunk.size() * sizeof(float), &chunk.front(),
-                 GL_STREAM_DRAW);
+  // bind indices
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+               sizeof(unsigned int) * ebo_indices.size(),
+               &(ebo_indices.front()), GL_STREAM_DRAW);
 
-    // set indices
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 indices.size() * sizeof(std::uint32_t), &indices.front(),
-                 GL_STREAM_DRAW);
+  // draw triangles
+  glDrawElements(GL_TRIANGLES, ebo_indices.size(), GL_UNSIGNED_INT, 0);
 
-    // draw triangles
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-  }
-
+  // refresh window
   window.swap_buffers();
 }
 
-std::tuple<Renderer::chunks_t, Renderer::chunk_indices_t>
-Renderer::generate_chunks(const Grid &grid) noexcept {
-  // PROFILE_FUNCTION();
+void Renderer::regenerate_grid() noexcept {
+  vertices.clear();
+  ebo_indices.clear();
 
-  // make sure right size grid is passed for this renderer
-  assert(grid.get_width() == viewport_size.x / cell_size);
-  assert(grid.get_height() == viewport_size.y / cell_size);
+  vertices.reserve(16 * grid_size.x * grid_size.y);
+  ebo_indices.reserve(6 * grid_size.x * grid_size.y);
 
-  // TODO(joe): Change this value as needed
-  const int chunk_size = 100;
+  for (int i = 0; i < grid_size.x; ++i) {
+    for (int j = 0; j < grid_size.y; ++j) {
+      // push vertices
+      {
+        const glm::vec2 bot_left{
+            2.0f * (i * cell_size) / viewport_size.x - 1.0f,
+            2.0f * (j * cell_size) / viewport_size.y - 1.0f,
+        };
 
-  std::vector<std::vector<float>> chunks;
-  std::vector<std::vector<unsigned int>> chunk_indices;
+        const glm::vec2 top_right{
+            2.0f * (i + 1) * cell_size / viewport_size.x - 1.0f,
+            2.0f * (j + 1) * cell_size / viewport_size.y - 1.0f,
+        };
 
-  const std::uint32_t n_chunks_x = viewport_size.x / chunk_size;
-  const std::uint32_t n_chunks_y = viewport_size.y / chunk_size;
-  chunks.reserve(n_chunks_x * n_chunks_y);
+        const glm::vec2 tex_bot_left{
+            static_cast<float>(i) / grid_size.x,
+            static_cast<float>(j) / grid_size.y,
+        };
 
-  // TODO(vir): parallelize loop, by changing push_back to indexed write
-  for (int chunk_x = 0; chunk_x < viewport_size.x; chunk_x += chunk_size) {
-    for (int chunk_y = 0; chunk_y < viewport_size.y; chunk_y += chunk_size) {
-      const auto x_max = std::min(chunk_x + chunk_size, viewport_size.x);
-      const auto y_max = std::min(chunk_y + chunk_size, viewport_size.y);
+        const glm::vec2 tex_top_right{
+            static_cast<float>(i + 1) / grid_size.x,
+            static_cast<float>(j + 1) / grid_size.y,
+        };
 
-      std::vector<float> vertices;
-      std::vector<std::uint32_t> indices;
+        vertices.push_back(bot_left.x);
+        vertices.push_back(bot_left.y);
+        vertices.push_back(tex_bot_left.x);
+        vertices.push_back(tex_bot_left.y);
 
-      // reserve space to avoid resizing in loop
-      vertices.reserve(16 * (x_max - chunk_x) * (y_max - chunk_y));
-      indices.reserve(6 * (x_max - chunk_x) * (y_max - chunk_y));
+        vertices.push_back(bot_left.x);
+        vertices.push_back(top_right.y);
+        vertices.push_back(tex_bot_left.x);
+        vertices.push_back(tex_top_right.y);
 
-      for (int i = chunk_x; i < x_max; ++i) {
-        for (int j = chunk_y; j < y_max; ++j) {
-          // TODO(joe): get mass from grid
-          /* draw a quad in following order using triangle strip
-           *
-           * 2----3
-           * |    |
-           * |    |
-           * 1----4
-           */
+        vertices.push_back(top_right.x);
+        vertices.push_back(bot_left.y);
+        vertices.push_back(tex_top_right.x);
+        vertices.push_back(tex_bot_left.y);
 
-          glm::vec2 bot_left{
-              2.0f * (i * cell_size) / viewport_size.x - 1.0f,
-              2.0f * (j * cell_size) / viewport_size.y - 1.0f,
-          };
-
-          glm::vec2 top_right{
-              2.0f * (i + 1) * cell_size / viewport_size.x - 1.0f,
-              2.0f * (j + 1) * cell_size / viewport_size.y - 1.0f,
-          };
-
-          // push vertices
-          {
-            const float cell_type = static_cast<float>(
-                grid.type_at(static_cast<std::uint32_t>(i / cell_size),
-                             static_cast<std::uint32_t>(j / cell_size)));
-
-            // TODO(vir): get mass from grid
-            const auto mass = 1.f;
-
-            vertices.push_back(bot_left.x);
-            vertices.push_back(bot_left.y);
-            vertices.push_back(cell_type);
-            vertices.push_back(mass);
-
-            vertices.push_back(bot_left.x);
-            vertices.push_back(top_right.y);
-            vertices.push_back(cell_type);
-            vertices.push_back(mass);
-
-            vertices.push_back(top_right.x);
-            vertices.push_back(bot_left.y);
-            vertices.push_back(cell_type);
-            vertices.push_back(mass);
-
-            vertices.push_back(top_right.x);
-            vertices.push_back(top_right.y);
-            vertices.push_back(cell_type);
-            vertices.push_back(mass);
-          }
-
-          // push indices
-          {
-            const std::uint32_t base_index = vertices.size() / 4;
-            indices.push_back(base_index + 0);
-            indices.push_back(base_index + 1);
-            indices.push_back(base_index + 2);
-            indices.push_back(base_index + 1);
-            indices.push_back(base_index + 3);
-            indices.push_back(base_index + 2);
-          }
-        }
+        vertices.push_back(top_right.x);
+        vertices.push_back(top_right.y);
+        vertices.push_back(tex_top_right.x);
+        vertices.push_back(tex_top_right.y);
       }
 
-      // move into table
-      chunks.emplace_back(std::move(vertices));
-      chunk_indices.emplace_back(std::move(indices));
+      // push indices
+      {
+        const std::uint32_t base_index = vertices.size() / 4;
+
+        ebo_indices.push_back(base_index + 0);
+        ebo_indices.push_back(base_index + 1);
+        ebo_indices.push_back(base_index + 2);
+
+        ebo_indices.push_back(base_index + 1);
+        ebo_indices.push_back(base_index + 3);
+        ebo_indices.push_back(base_index + 2);
+      }
     }
   }
+}
 
-  return std::make_tuple(std::move(chunks), std::move(chunk_indices));
+void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
+  glBindTexture(GL_TEXTURE_2D, _GRID_DATA_TEXTURE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  const auto grid_width = grid.get_width();
+  const auto grid_height = grid.get_height();
+
+  std::vector<float> texture_data(num_cells * 2);
+  for (size_t i = 0; i < num_cells; ++i) {
+    const auto row = grid_height - i / grid_width;
+    const auto col = i % grid_width;
+
+    // texture_data[i * 2] = static_cast<float>(grid_data.cells[i].type);
+    // texture_data[i * 2 + 1] = grid_data.cells[i].mass;
+
+    // TODO(vir): add support for mass and other properties
+    texture_data[i * 2] = static_cast<float>(grid.type_at(row, col));
+    texture_data[i * 2 + 1] = 1.f;
+  }
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,
+               GL_FLOAT, texture_data.data());
 }
 
 void Renderer::set_cell_size(const std::uint32_t new_size) noexcept {
   cell_size = new_size;
   shader.set_int("u_cell_size", cell_size);
-}
-
-void Renderer::set_viewport_size(const std::uint32_t width,
-                                 const std::uint32_t height) noexcept {
-  grid_size[0] = width / cell_size;
-  grid_size[1] = height / cell_size;
-  viewport_size[0] = width;
-  viewport_size[1] = height;
-
-  shader.set_float2("u_resolution", viewport_size);
-  glViewport(0, 0, viewport_size[0], viewport_size[1]);
 }
 
 const Window &Renderer::get_window() const noexcept { return window; }
