@@ -64,7 +64,7 @@ void Renderer::submit_grid(const Grid &grid) noexcept {
   const auto curr_num_cells = grid_width * grid_height;
 
   // update dimensions and regenerate grid
-  if (curr_num_cells != num_cells) {
+  if (curr_num_cells != num_cells) [[unlikely]] {
     num_cells = curr_num_cells;
     grid_size[0] = grid_width;
     grid_size[1] = grid_height;
