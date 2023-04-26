@@ -26,7 +26,6 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
   glfwSetFramebufferSizeCallback(_window.get(),
                                  Window::framebuffer_size_callback);
 
-  // initialize opengl
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     failure_exit();
   }
@@ -43,4 +42,4 @@ void Window::swap_buffers() const noexcept { glfwSwapBuffers(_window.get()); }
 
 GLFWwindow *Window::get_window_ptr() const noexcept { return _window.get(); }
 
-} // namespace simulake
+} /* namespace simulake */

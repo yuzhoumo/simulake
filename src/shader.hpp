@@ -20,11 +20,11 @@ public:
   explicit Shader() = default;
   explicit Shader(const std::string_view, const std::string_view);
 
-  // enable moves
+  /* enable moves */
   explicit Shader(Shader &&) = default;
   Shader &operator=(Shader &&) = default;
 
-  // disable copies
+  /* disable copies */
   explicit Shader(const Shader &) = delete;
   Shader &operator=(const Shader &) = delete;
 
@@ -45,7 +45,7 @@ public:
 
 private:
   /* opengl shader identifier */
-  std::uint32_t _id;
+  GLuint _id;
 
   /* create shader program from paths of the fragment shader and vertex
    * shader source GLSL files */
@@ -60,5 +60,5 @@ private:
   static int check_compile_errors(const GLuint, const ShaderType) noexcept;
 };
 
-} // namespace simulake
+} /* namespace simulake */
 #endif

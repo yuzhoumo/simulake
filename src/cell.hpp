@@ -28,7 +28,7 @@ class BaseCell {
 public:
   typedef std::tuple<std::uint32_t, std::uint32_t> position_t;
 
-  // convenient packed representation of neighbours
+  /* convenient packed representation of neighbors */
   struct __attribute__((packed)) context_t {
     // clang-format off
     CellType top_left     = CellType::NONE,
@@ -87,6 +87,6 @@ struct SmokeCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
 
-} // namespace simulake
+} /* namespace simulake */
 
 #endif

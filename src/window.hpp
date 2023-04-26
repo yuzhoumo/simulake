@@ -5,26 +5,23 @@
 #include <string_view>
 
 #include <glad/glad.h>
-
 #include <GLFW/glfw3.h>
 
 namespace simulake {
 
-// void framebuffer_size_callback(GLFWwindow *, int, int);
-
 class Window {
 public:
-  /* initialize window */
+  /* initialize glfw window */
   explicit Window(const std::uint32_t, const std::uint32_t,
                   const std::string_view);
 
-  // enable moves
-  explicit Window(Window &&);   // move constructor
-  Window &operator=(Window &&); // move assignment
+  /* enable moves */
+  explicit Window(Window &&);
+  Window &operator=(Window &&);
 
-  // disable copies
-  Window(const Window &) = delete;            // copy constructor
-  Window &operator=(const Window &) = delete; // copy assignment
+  /* disable copies */
+  Window(const Window &) = delete;
+  Window &operator=(const Window &) = delete;
 
   void swap_buffers() const noexcept;
   GLFWwindow *get_window_ptr() const noexcept;
@@ -47,6 +44,6 @@ private:
   const std::string_view title;
 };
 
-} // namespace simulake
+} /* namespace simulake */
 
 #endif

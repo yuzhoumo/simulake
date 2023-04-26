@@ -8,7 +8,7 @@
 
 namespace simulake {
 
-// calculate neighbour types and return them as tuple of 8 elements
+/* compute neighbor types and return as 8 element tuple */
 [[nodiscard]] BaseCell::context_t
 BaseCell::get_cell_context(const BaseCell::position_t &pos,
                            const Grid &grid) noexcept {
@@ -43,23 +43,23 @@ void SandCell::step(const position_t &pos, Grid &grid) noexcept {
   const auto [x, y] = pos;
   const auto context = BaseCell::get_cell_context(pos, grid);
 
-  // will flow down if possible
+  /* will flow down if possible */
   if (VACANT(context.bottom)) {
     grid.set_at(x, y, CellType::AIR);
     grid.set_at(x + 1, y, CellType::SAND);
   }
 
-  // else flow left if possible
+  /* else flow left if possible */
   else if (VACANT(context.bottom_left)) {
     grid.set_at(x, y, CellType::AIR);
     grid.set_at(x + 1, y - 1, CellType::SAND);
   }
 
-  // else flow right if possible
+  /* else flow right if possible */
   else if (VACANT(context.bottom_right)) {
     grid.set_at(x, y, CellType::AIR);
     grid.set_at(x + 1, y + 1, CellType::SAND);
   }
 }
 
-} // namespace simulake
+} /* namespace simulake */

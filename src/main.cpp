@@ -18,10 +18,10 @@
 void test_renderer(int argc, char **argv) {
   PROFILE_FUNCTION();
 
-  constexpr auto WIDTH = 1920;
-  constexpr auto HEIGHT = 1080;
-  constexpr auto CELL_SIZE = 1;
-  constexpr auto NUM_THREADS = 10;
+  constexpr auto WIDTH = 1280;
+  constexpr auto HEIGHT = 720;
+  constexpr auto CELL_SIZE = 4;
+  constexpr auto NUM_THREADS = 2;
 
   {
     int rc = glfwInit();

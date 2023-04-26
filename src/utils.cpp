@@ -70,17 +70,17 @@ scope_timer_t::~scope_timer_t() {
   const auto duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(delta);
   // clang-format on
 
-  // show milliseconds if > 0
+  /* show milliseconds if > 0 */
   if (duration_ms.count() > 0)
     std::cout << title << " took: " << duration_ms.count() << "ms" << std::endl;
 
-  // else show microseconds if > 0
+  /* else show microseconds if > 0 */
   else if (duration_us.count() > 0)
     std::cout << title << " took: " << duration_us.count() << "us" << std::endl;
 
-  // else show nano seconds
+  /* else show nano seconds */
   else
     std::cout << title << " took: " << duration_ns.count() << "ns" << std::endl;
 }
 
-} // namespace simulake
+} /* namespace simulake */

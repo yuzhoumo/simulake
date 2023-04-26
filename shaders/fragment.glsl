@@ -6,19 +6,19 @@
 
 uniform sampler2D u_grid_data_texture;
 
-in vec2 TexCoord;
+in vec2 tex_coord;
 out vec4 frag_color;
 
 void main() {
-  vec4 grid_data = texture(u_grid_data_texture, TexCoord);
+  vec4 grid_data = texture(u_grid_data_texture, tex_coord);
 
   int type = int(grid_data.r);
   float mass = grid_data.g;
 
   if (type == AIR_TYPE) {
-    frag_color = vec4(0.5, 0.5, 0.5, 1.0); // off white
+    frag_color = vec4(0.5, 0.5, 0.5, 1.0); // gray
   } else if (type == SAND_TYPE) {
-    frag_color = vec4(1.0, 1.0, 0.0, 1.0); // yello
+    frag_color = vec4(1.0, 1.0, 0.0, 1.0); // yellow
   } else if (type == WATER_TYPE) {
     frag_color = vec4(0.0, 0.0, 1.0, 1.0); // blue
   } else {

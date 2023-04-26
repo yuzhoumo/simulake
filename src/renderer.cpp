@@ -11,20 +11,28 @@ namespace simulake {
 
 Renderer::Renderer(const std::uint32_t width, const std::uint32_t height,
                    const std::uint32_t cell_size)
-    : window(width, height, "simulake") {
-  // set state variables
+                          : window(width, height, "simulake") {
+
+  /* set state variables */
   num_cells = 0;
   set_cell_size(cell_size);
 
-  // initialize opengl and shaders
+  /* initialize opengl and shaders */
   initialize_graphics();
 }
 
 Renderer::~Renderer() {
+  /* delete gl objects */
+  glDeleteProgram(shader.get_id());
   glDeleteVertexArrays(1, &_VAO);
   glDeleteBuffers(1, &_VBO);
-  glDeleteProgram(shader.get_id());
   glDeleteTextures(1, &_GRID_DATA_TEXTURE);
+
+  /* unbind gl objects */
+  glBindVertexArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Renderer::initialize_graphics() noexcept {
@@ -32,34 +40,35 @@ void Renderer::initialize_graphics() noexcept {
   constexpr auto VERTEX_SHADER_PATH = "./shaders/vertex.glsl";
   constexpr auto FRAGMENT_SHADER_PATH = "./shaders/fragment.glsl";
 
-  // compile and bind shaders: fixed
+  /* compile and bind shaders */
   shader = Shader(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
   assert(shader.get_id() != 0);
   shader.use();
 
-  // create VAO, VBO, EBO
+  /* create VAO, VBO, EBO, and texture */
   glGenVertexArrays(1, &_VAO);
   glGenBuffers(1, &_VBO);
   glGenBuffers(1, &_EBO);
   glGenTextures(1, &_GRID_DATA_TEXTURE);
 
-  // bind buffers: fixed
+  /* bind buffers */
   glBindVertexArray(_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, _VBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 
-  // bind texture: fixed
+  /* bind texture and set params */
   glBindTexture(GL_TEXTURE_2D, _GRID_DATA_TEXTURE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  // bind vertex attributes: fixed
+  /* location 0: vertex positions */
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
                         static_cast<void *>(0));
 
+  /* location 1: texture coordinates */
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
                         (void *)(2 * sizeof(float)));
@@ -70,7 +79,7 @@ void Renderer::submit_grid(const Grid &grid) noexcept {
   const auto grid_height = grid.get_height();
   const auto new_num_cells = grid_width * grid_height;
 
-  // update dimensions and regenerate grid
+  /* update dimensions and regenerate grid */
   if (new_num_cells != num_cells) [[unlikely]] {
     num_cells = new_num_cells;
     grid_size[0] = grid_width;
@@ -87,13 +96,13 @@ void Renderer::submit_grid(const Grid &grid) noexcept {
 }
 
 void Renderer::render() noexcept {
-  // clear previous colors
+  /* clear framebuffer colors */
   glClear(GL_COLOR_BUFFER_BIT);
 
-  // draw triangles
+  /* draw triangles */
   glDrawElements(GL_TRIANGLES, ebo_indices.size(), GL_UNSIGNED_INT, 0);
 
-  // refresh window
+  /* flush framebuffer to window */
   window.swap_buffers();
 }
 
@@ -106,8 +115,14 @@ void Renderer::regenerate_grid() noexcept {
 
   for (int i = 0; i < grid_size.x; ++i) {
     for (int j = 0; j < grid_size.y; ++j) {
-      // push vertices
-      {
+      /*
+       * 1----3  generate a quad in screen-space
+       * |    |  vertices 1, 2 are shared using EBO:
+       * |    |    triangle1: (0, 1, 2)
+       * 0----2    triangle2: (1, 3, 2)
+       */
+
+      { /* push vertices and texture coordinates */
         const glm::vec2 bot_left{
             2.0f * (i * cell_size) / viewport_size.x - 1.0f,
             2.0f * (j * cell_size) / viewport_size.y - 1.0f,
@@ -149,8 +164,7 @@ void Renderer::regenerate_grid() noexcept {
         vertices.push_back(tex_top_right.y);
       }
 
-      // push indices
-      {
+      { /* push EBO indices */
         const std::uint32_t base_index = vertices.size() / 4;
 
         ebo_indices.push_back(base_index + 0);
@@ -166,36 +180,39 @@ void Renderer::regenerate_grid() noexcept {
 }
 
 void Renderer::regenerate_pipeline() noexcept {
-  // NOTE(vir): dont need to bind resources (see initialize_graphics)
-  // only need to update data on device
+  /* NOTE(vir): dont need to bind resources (see initialize_graphics)
+   * only need to update data on device */
 
-  // push vertex data
+  /* push vertex data */
   glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(),
                &(vertices.front()), GL_STREAM_DRAW);
 
-  // push index data
+  /* push index data */
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                sizeof(std::uint32_t) * ebo_indices.size(),
                &(ebo_indices.front()), GL_STREAM_DRAW);
 }
 
 void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
-  // make sure we are already resized to this grid size
-  assert(grid_size[0] == grid.get_width());
-  assert(grid_size[1] == grid.get_height());
+  /* make sure we are already resized to this grid size */
+  assert(grid_size.x == grid.get_width());
+  assert(grid_size.y == grid.get_height());
 
-  const auto grid_width = grid_size[0];
-  const auto grid_height = grid_size[1];
+  const auto grid_width = grid_size.x;
+  const auto grid_height = grid_size.y;
 
-  std::vector<float> texture_data(num_cells * 2);
+  /* number of cell attributes */
+  const uint32_t stride = 2;
+
+  std::vector<float> texture_data(num_cells * stride);
   for (std::uint32_t row = 0; row < grid_height; row += 1) {
     for (std::uint32_t col = 0; col < grid_width; col += 1) {
-      const std::uint64_t index = row * grid_width + col;
+      const std::uint64_t base_index = (row * grid_width + col) * stride;
 
       // clang-format off
       // TODO(vir): add support for mass / other properties
-      texture_data[index * 2] = static_cast<float>(grid.type_at(grid_height - row - 1, col));
-      texture_data[index * 2 + 1] = 1.f;
+      texture_data[base_index] = static_cast<float>(grid.type_at(grid_height - row - 1, col));
+      texture_data[base_index + 1] = 1.f;
       // clang-format on
     }
   }
@@ -211,4 +228,4 @@ void Renderer::set_cell_size(const std::uint32_t new_size) noexcept {
 
 const Window &Renderer::get_window() const noexcept { return window; }
 
-} // namespace simulake
+} /* namespace simulake */

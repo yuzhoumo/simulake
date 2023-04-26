@@ -14,16 +14,16 @@ class Window;
 
 class Renderer {
 public:
-  // create and initialize renderer
+  /* create and initialize renderer */
   explicit Renderer(const std::uint32_t width = 800,
                     const std::uint32_t height = 600,
                     const std::uint32_t cell_size = 4);
 
-  // disable moves
+  /* disable moves */
   explicit Renderer(Renderer &&) = delete;
   Renderer &operator=(Renderer &&) = delete;
 
-  // disable copies
+  /* disable copies */
   explicit Renderer(const Renderer &) = delete;
   Renderer &operator=(const Renderer &) = delete;
 
@@ -40,13 +40,13 @@ public:
   const Window &get_window() const noexcept;
 
 private:
-  // regenerate triangles set
+  /* regenerate grid vertices and texture coordinates */
   void regenerate_grid() noexcept;
 
-  // regenerate opengl structures
+  /* regenerate opengl structures */
   void regenerate_pipeline() noexcept;
 
-  // update grid texture based on new sim grid
+  /* update grid texture based on new simulation state */
   void update_grid_data_texture(const Grid &) noexcept;
 
   /* initialize opengl and shaders */

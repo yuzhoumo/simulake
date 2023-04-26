@@ -13,7 +13,7 @@
 #define BREAKPOINT
 #endif
 
-// pretty print vectors
+/* pretty print vectors */
 template <typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &vec) {
   stream << "[ ";
@@ -23,7 +23,7 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &vec) {
   return stream;
 }
 
-// pretty print tuples
+/* pretty print tuples */
 template <typename... Ts, std::uint32_t... Is>
 std::ostream &operator<<(std::ostream &stream, const std::tuple<Ts...> &tuple) {
   static_assert(sizeof...(Is) == sizeof...(Ts), "invalid tuple");
@@ -37,19 +37,19 @@ std::ostream &operator<<(std::ostream &stream, const std::tuple<Ts...> &tuple) {
   return stream;
 }
 
-// pretty print context
+/* pretty print context */
 std::ostream &operator<<(std::ostream &, const simulake::CellType);
 
-// pretty print cell context
+/* pretty print cell context */
 std::ostream &operator<<(std::ostream &, const simulake::BaseCell::context_t);
 
-// pretty print grid
+/* pretty print grid */
 std::ostream &operator<<(std::ostream &, const simulake::Grid &);
 
-// pretty print cell type
+/* pretty print cell type */
 std::ostream &operator<<(std::ostream &, const simulake::CellType);
 
-// pretty print context
+/* pretty print context */
 std::ostream &operator<<(std::ostream &, const simulake::BaseCell::context_t&);
 
 namespace simulake {
@@ -62,7 +62,7 @@ namespace simulake {
 #define PROFILE_FUNCTION() PROFILE_SCOPE(__PRETTY_FUNCTION__)
 #endif
 
-// scope timer
+/* scope timer */
 struct scope_timer_t {
   const std::chrono::time_point<std::chrono::high_resolution_clock> start;
   const std::string_view title;
@@ -71,6 +71,6 @@ struct scope_timer_t {
   ~scope_timer_t();
 };
 
-} // namespace simulake
+} /* namespace simulake */
 
 #endif
