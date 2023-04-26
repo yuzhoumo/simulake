@@ -166,20 +166,14 @@ void Renderer::regenerate_grid() noexcept {
 }
 
 void Renderer::regenerate_pipeline() noexcept {
-  // activate cells texture
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, _GRID_DATA_TEXTURE);
+  // NOTE(vir): dont need to bind resources (see initialize_graphics)
+  // only need to update data on device
 
-  // bind buffers
-  glBindVertexArray(_VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, _VBO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
-
-  // bind vertex data
+  // push vertex data
   glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(),
                &(vertices.front()), GL_STREAM_DRAW);
 
-  // bind index data
+  // push index data
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                sizeof(std::uint32_t) * ebo_indices.size(),
                &(ebo_indices.front()), GL_STREAM_DRAW);
