@@ -13,7 +13,6 @@
 #define BREAKPOINT
 #endif
 
-
 // pretty print vectors
 template <typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &vec) {
@@ -60,8 +59,8 @@ namespace simulake {
 #define PROFILE_SCOPE(name) ::simulake::scope_timer_t timer##__LINE__(name)
 #define PROFILE_FUNCTION() PROFILE_SCOPE(__PRETTY_FUNCTION__)
 #else
-#define PROFILE_SCOPE(name)
-#define PROFILE_FUNCTION()
+#define PROFILE_SCOPE(name) ::simulake::scope_timer_t timer##__LINE__(name)
+#define PROFILE_FUNCTION() PROFILE_SCOPE(__PRETTY_FUNCTION__)
 #endif
 
 // scope timer
@@ -69,7 +68,7 @@ struct scope_timer_t {
   const std::chrono::time_point<std::chrono::high_resolution_clock> start;
   const std::string_view title;
 
-  scope_timer_t(const char*);
+  scope_timer_t(const char *);
   ~scope_timer_t();
 };
 

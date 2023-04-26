@@ -30,8 +30,7 @@ public:
   GLFWwindow *get_window_ptr() const noexcept;
 
 private:
-  /* setup window */
-  void setup() noexcept;
+  /* print error and terminate */
   [[noreturn]] void failure_exit() noexcept;
 
   static void framebuffer_size_callback(GLFWwindow *, int, int);

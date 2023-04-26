@@ -22,7 +22,10 @@ void test_renderer(int argc, char **argv) {
   constexpr auto CELL_SIZE = 4;
 
   // TODO(vir): find a better place for this initialization
-  { assert(glfwInit()); }
+  {
+    int rc = glfwInit();
+    assert(rc != 0);
+  }
 
   simulake::Renderer renderer(WIDTH, HEIGHT, CELL_SIZE);
   simulake::Grid test_grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE);

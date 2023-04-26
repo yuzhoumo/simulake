@@ -11,10 +11,6 @@ void Window::framebuffer_size_callback(GLFWwindow *, int, int) {
 Window::Window(const std::uint32_t _width, const std::uint32_t _height,
                const std::string_view _title)
     : width(_width), height(_height), title(_title) {
-  setup();
-}
-
-void Window::setup() noexcept {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
