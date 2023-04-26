@@ -1,4 +1,5 @@
 build/
+build_xcode/
 .nvimrc.lua
 tags
 .cache

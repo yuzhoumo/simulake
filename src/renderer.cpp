@@ -95,6 +95,8 @@ void Renderer::render() noexcept {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 
   if (buffer_resized) [[unlikely]] {
+    buffer_resized = false;
+
     // bind vertices
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(),
                  &(vertices.front()), GL_STREAM_DRAW);
@@ -104,8 +106,6 @@ void Renderer::render() noexcept {
                  sizeof(std::uint32_t) * ebo_indices.size(),
                  &(ebo_indices.front()), GL_STREAM_DRAW);
   } else {
-    buffer_resized = false;
-
     // bind vertices
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * vertices.size(),
                     vertices.data());

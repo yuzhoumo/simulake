@@ -10,7 +10,7 @@ class Grid;
 
 /* types a grid cell can have */
 // NOTE(vir): cant make this by std::uint8_t
-enum class CellType {
+enum class CellType : std::uint8_t {
   NONE = 0, // out of bounds
   AIR,
   SMOKE,
@@ -30,7 +30,6 @@ public:
   typedef std::tuple<std::uint32_t, std::uint32_t> position_t;
 
   // convenient packed representation of neighbours
-  // TODO(vir): add aligned(16) attr as per opengl requirements?
   struct __attribute__((packed)) context_t {
     // clang-format off
     CellType top_left     = CellType::NONE,
