@@ -88,7 +88,6 @@ void Renderer::render() noexcept {
   // activate cells texture
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, _GRID_DATA_TEXTURE);
-  shader.set_int("u_grid_data_texture", 0);
 
   // bind vertex buffer and draw triangles
   glBindVertexArray(_VAO);
