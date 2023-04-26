@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SIMULAKE_UTILS_HPP
+#define SIMULAKE_UTILS_HPP
 
 #include <iostream>
 #include <vector>
@@ -73,3 +74,5 @@ struct scope_timer_t {
 };
 
 } // namespace simulake
+
+#endif

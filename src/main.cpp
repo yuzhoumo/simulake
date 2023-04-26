@@ -86,7 +86,7 @@ void test_simulation() {
   omp_set_num_threads(NUM_THREADS);
 
   // create grid
-  const int width = 500, height = 500;
+  const int width = 50, height = 100;
   simulake::Grid grid(width, height);
 
   // example: demo sand simluation
@@ -96,12 +96,8 @@ void test_simulation() {
 
     for (int i = 0; i < SIM_STEPS; i += 1) {
       // spawn new particles in
-      if (i % (height / 2) == 0) {
-        if (i % height == 0)
-          grid.set_state(0, (width * 2 / 3) + 1, simulake::CellType::SAND);
-        else
-          grid.set_state(0, (width * 1 / 3) - 1, simulake::CellType::SAND);
-      }
+      grid.set_state(0, (width * 2 / 3) + 1, simulake::CellType::SAND);
+      grid.set_state(0, (width * 1 / 3) - 1, simulake::CellType::SAND);
 
       if constexpr (DEBUG_PRINT) {
         std::cout << grid << std::endl;

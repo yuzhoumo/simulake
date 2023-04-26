@@ -1,17 +1,17 @@
-#ifndef SHADER_H
-#define SHADER_H
+#ifndef SIMULAKE_SHADER_HPP
+#define SIMULAKE_SHADER_HPP
 
-#include <string>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <string>
 
 /* enum for denoting types during shader compilation and error checking */
 enum ShaderType { VERTEX_SHADER, FRAGMENT_SHADER, SHADER_PROGRAM };
 
 class Shader {
 public:
-  Shader(const std::string& vertex_shader_path,
-         const std::string& fragment_shader_path) {
+  Shader(const std::string &vertex_shader_path,
+         const std::string &fragment_shader_path) {
     _id = _build_program(vertex_shader_path, fragment_shader_path);
   }
 
@@ -38,15 +38,15 @@ private:
 
   /* create shader program from paths of the fragment shader and vertex
    * shader source GLSL files */
-  static GLuint _build_program(const std::string& vertex_shader_path,
-                               const std::string& fragment_shader_path);
+  static GLuint _build_program(const std::string &vertex_shader_path,
+                               const std::string &fragment_shader_path);
 
   /* compile shader of type LOADER_TYPE_VERT_SHADER or LOADER_TYPE_FRAG_SHADER
    * given the path to the shader source GLSL file */
-  static GLuint _compile(const std::string& shader_path, const ShaderType type);
+  static GLuint _compile(const std::string &shader_path, const ShaderType type);
 
   /* private method for checking shader compilation errors */
   static int _check_compile_errors(const GLuint shader, const ShaderType type);
 };
 
-#endif /* ifndef SHADER_H */
+#endif

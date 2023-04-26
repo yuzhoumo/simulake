@@ -1,5 +1,5 @@
-#ifndef RENDERER_HPP
-#define RENDERER_HPP
+#ifndef SIMULAKE_RENDERER_HPP
+#define SIMULAKE_RENDERER_HPP
 
 #include "shader.hpp"
 
@@ -15,7 +15,7 @@ struct Cell {
 struct GridData {
   int width;
   int height;
-  Cell* cells;
+  Cell *cells;
 };
 
 class Renderer {
@@ -29,11 +29,11 @@ public:
   };
 
   /* disable copy construction/assignment */
-  Renderer(const Renderer&) = delete;
-  Renderer& operator=(const Renderer&) = delete;
+  Renderer(const Renderer &) = delete;
+  Renderer &operator=(const Renderer &) = delete;
 
   /* render frame based on current GridData */
-  void render(GridData grid_data, GLFWwindow*& window);
+  void render(GridData grid_data, GLFWwindow *&window);
 
 private:
   using Chunks = std::vector<std::vector<float>>;
@@ -56,4 +56,4 @@ private:
   GLuint _VAO, _VBO, _EBO;
 };
 
-#endif /* ifndef RENDERER_HPP */
+#endif

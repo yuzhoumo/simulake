@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SIMULAKE_CELL_HPP
+#define SIMULAKE_CELL_HPP
 
 #include <algorithm>
 #include <memory>
@@ -89,3 +90,5 @@ struct SmokeCell final : public BaseCell {
 };
 
 } // namespace simulake
+
+#endif

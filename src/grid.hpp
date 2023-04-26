@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SIMULAKE_GRID_HPP
+#define SIMULAKE_GRID_HPP
 
 #include <optional>
 #include <vector>
@@ -56,3 +57,5 @@ private:
 };
 
 } // namespace simulake
+
+#endif
