@@ -10,9 +10,12 @@ enum ShaderType { VERTEX_SHADER, FRAGMENT_SHADER, SHADER_PROGRAM };
 
 class Shader {
 public:
-  /* constructor: reads shader sources and builds */
   Shader(const std::string& vertex_shader_path,
-         const std::string& fragment_shader_path);
+         const std::string& fragment_shader_path) {
+    _id = _build_program(vertex_shader_path, fragment_shader_path);
+  }
+
+  Shader() {}
 
   /* activate shader */
   void use() const;

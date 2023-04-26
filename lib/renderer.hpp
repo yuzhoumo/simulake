@@ -25,6 +25,7 @@ public:
   ~Renderer() {
     glDeleteVertexArrays(1, &_VAO);
     glDeleteBuffers(1, &_VBO);
+    glDeleteProgram(_shader.get_id());
   };
 
   /* disable copy construction/assignment */

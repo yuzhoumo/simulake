@@ -5,10 +5,13 @@
 #include "include/renderer.hpp"
 #include "include/constants.hpp"
 
-Renderer::Renderer(GridData grid_data) :
-                   _shader(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH) {
+Renderer::Renderer(GridData grid_data) {
+  /* initialize opengl loader */
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    std::cerr << "ERROR::GLAD_INITIALIZATION_FAILURE" << std::endl;
 
-  /* check if shaders compiled */
+  /* compile shaders */
+  _shader = Shader(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
   if (0 == _shader.get_id())
     std::cerr << "ERROR::SHADER_CREATION_FAILURE" << std::endl;
 

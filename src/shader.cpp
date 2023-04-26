@@ -6,11 +6,6 @@
 
 #include "shader.hpp"
 
-Shader::Shader(const std::string &vertex_shader_path,
-               const std::string &fragment_shader_path) {
-  _id = _build_program(vertex_shader_path, fragment_shader_path);
-}
-
 void Shader::use() const { glUseProgram(_id); }
 
 unsigned int Shader::get_id() const { return _id; }

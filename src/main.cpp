@@ -21,7 +21,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 /* initialize GLAD and GLFW, then create window object and set callbacks */
-void create_glfw_contexts(GLFWwindow*& window) {
+void create_glfw_contexts(GLFWwindow *&window) {
   if (!glfwInit()) {
     std::cerr << "ERROR::GLFW_INITIALIZATION_FAILURE" << std::endl;
     exit(EXIT_FAILURE);
@@ -42,21 +42,6 @@ void create_glfw_contexts(GLFWwindow*& window) {
 
   glfwMakeContextCurrent(window);
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-  /* initialize opengl loader */
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    std::cerr << "ERROR::GLAD_INITIALIZATION_FAILURE" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  glViewport(0, 0, WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT);
-}
-
-/* clean up objects and exit */
-void cleanup(GLFWwindow *&window, int exit_code) {
-  glfwDestroyWindow(window);
-  glfwTerminate();
-  exit(EXIT_SUCCESS);
 }
 
 void test_renderer(int argc, char **argv) {
@@ -65,7 +50,7 @@ void test_renderer(int argc, char **argv) {
 
   if (3 != argc) {
     std::cerr << "ERROR::INCORRECT_ARG_COUNT: " << argc << ", expected 3."
-      << std::endl;
+              << std::endl;
     exit(EXIT_FAILURE);
   }
 
@@ -79,14 +64,14 @@ void test_renderer(int argc, char **argv) {
   std::srand(static_cast<unsigned>(std::time(nullptr)));
   for (int i = 0; i < 200 * 150; ++i) {
     test_grid_data.cells[i].type = std::rand() % 3;
-    test_grid_data.cells[i].mass = static_cast<float>(std::rand()) /
-      (static_cast<float>(RAND_MAX / 10.0));
+    test_grid_data.cells[i].mass =
+        static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / 10.0));
   }
   // <<<<< test code
 
   // render loop
   while (!glfwWindowShouldClose(window)) {
-  renderer.render(test_grid_data, window);
+    renderer.render(test_grid_data, window);
     glfwPollEvents();
   }
 
