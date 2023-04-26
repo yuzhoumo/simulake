@@ -17,14 +17,18 @@
 
 void test_renderer(int argc, char **argv) {
   PROFILE_FUNCTION();
-  constexpr auto WIDTH = 800;
-  constexpr auto HEIGHT = 600;
+
+  constexpr auto WIDTH = 1920;
+  constexpr auto HEIGHT = 1080;
   constexpr auto CELL_SIZE = 4;
+  constexpr auto NUM_THREADS = 2;
 
   // TODO(vir): find a better place for this initialization
   {
     int rc = glfwInit();
     assert(rc != 0);
+
+    omp_set_num_threads(NUM_THREADS);
   }
 
   simulake::Renderer renderer(WIDTH, HEIGHT, CELL_SIZE);
@@ -40,17 +44,41 @@ void test_renderer(int argc, char **argv) {
     }
   }
 
+  // stats
+  std::uint64_t frame_count = 0;
+  std::chrono::time_point start = std::chrono::high_resolution_clock::now();
+
   // application loop
   while (!glfwWindowShouldClose(renderer.get_window().get_window_ptr())) {
+    frame_count += 1;
+
     // render step
-    renderer.submit_grid(test_grid);
-    renderer.render();
+    {
+      PROFILE_SCOPE("render_pass");
+      renderer.render();
+    }
 
     // sim step
-    test_grid.simulate();
+    {
+      // PROFILE_SCOPE("sim_pass");
+      test_grid.simulate();
+      renderer.submit_grid(test_grid);
+    }
 
     glfwPollEvents();
+
+    // escape key
+    if (glfwGetKey(renderer.get_window().get_window_ptr(), GLFW_KEY_ESCAPE) ==
+        GLFW_PRESS)
+      glfwSetWindowShouldClose(renderer.get_window().get_window_ptr(),
+                               GLFW_TRUE);
   }
+
+  // clang-format off
+  const auto delta = (std::chrono::high_resolution_clock::now() - start);
+  const auto duration_s = std::chrono::duration_cast<std::chrono::seconds>(delta);
+  std::cout << "average fps: " << frame_count / duration_s.count() << std::endl;
+  // clang-format on
 
   glfwTerminate();
 }

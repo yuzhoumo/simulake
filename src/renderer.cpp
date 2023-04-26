@@ -13,6 +13,7 @@ Renderer::Renderer(const std::uint32_t width, const std::uint32_t height,
                    const std::uint32_t cell_size)
     : window(width, height, "simulake") {
   // set state variables
+  buffer_resized = true;
   num_cells = (width / cell_size) * (height / cell_size);
   set_cell_size(cell_size);
 
@@ -72,6 +73,7 @@ void Renderer::submit_grid(const Grid &grid) noexcept {
     glViewport(0, 0, viewport_size[0], viewport_size[1]);
 
     regenerate_grid();
+    buffer_resized = true;
   }
 
   update_grid_data_texture(grid);
@@ -93,14 +95,27 @@ void Renderer::render() noexcept {
   glBindBuffer(GL_ARRAY_BUFFER, _VBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 
-  // bind vertices
-  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(),
-               &(vertices.front()), GL_STREAM_DRAW);
+  if (buffer_resized) [[unlikely]] {
+    // bind vertices
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(),
+                 &(vertices.front()), GL_STREAM_DRAW);
 
-  // bind indices
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               sizeof(unsigned int) * ebo_indices.size(),
-               &(ebo_indices.front()), GL_STREAM_DRAW);
+    // bind indices
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 sizeof(std::uint32_t) * ebo_indices.size(),
+                 &(ebo_indices.front()), GL_STREAM_DRAW);
+  } else {
+    buffer_resized = false;
+
+    // bind vertices
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * vertices.size(),
+                    vertices.data());
+
+    // bind indices
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0,
+                    sizeof(std::uint32_t) * ebo_indices.size(),
+                    ebo_indices.data());
+  }
 
   // draw triangles
   glDrawElements(GL_TRIANGLES, ebo_indices.size(), GL_UNSIGNED_INT, 0);

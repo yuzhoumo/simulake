@@ -59,6 +59,7 @@ private:
 
   std::vector<float> vertices;
   std::vector<unsigned int> ebo_indices;
+  bool buffer_resized;
 
   Window window;
   Shader shader;
