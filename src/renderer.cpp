@@ -1,9 +1,10 @@
 #include <iostream>
+
 #include <glad/glad.h>
 
-#include "include/shader.hpp"
-#include "include/renderer.hpp"
-#include "include/constants.hpp"
+#include "constants.hpp"
+#include "renderer.hpp"
+#include "shader.hpp"
 
 Renderer::Renderer(GridData grid_data) {
   /* initialize opengl loader */
@@ -17,8 +18,8 @@ Renderer::Renderer(GridData grid_data) {
 
   /* set state variables */
   _set_cell_size(4);
-  _set_viewport_size(
-      _cell_size * grid_data.width, _cell_size * grid_data.height);
+  _set_viewport_size(_cell_size * grid_data.width,
+                     _cell_size * grid_data.height);
 
   /* create gl objects */
   glGenVertexArrays(1, &_VAO);
@@ -31,28 +32,28 @@ Renderer::Renderer(GridData grid_data) {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 
   /* configure vertex attribute pointers */
-  glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+  glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
 }
 
-void Renderer::render(GridData grid_data, GLFWwindow*& window) {
+void Renderer::render(GridData grid_data, GLFWwindow *&window) {
   glClear(GL_COLOR_BUFFER_BIT);
 
   _shader.use();
   _set_grid_size(grid_data);
   _set_viewport_size(_cell_size * _grid_size);
 
-  const auto& chunk_data = _generate_chunks(grid_data);
-  const auto& chunks = std::get<0>(chunk_data);
-  const auto& chunk_indices = std::get<1>(chunk_data);
+  const auto &chunk_data = _generate_chunks(grid_data);
+  const auto &chunks = std::get<0>(chunk_data);
+  const auto &chunk_indices = std::get<1>(chunk_data);
 
   glBindVertexArray(_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, _VBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 
   for (size_t i = 0; i < chunks.size(); ++i) {
-    const auto& chunk = chunks[i];
-    const auto& indices = chunk_indices[i];
+    const auto &chunk = chunks[i];
+    const auto &indices = chunk_indices[i];
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * chunk.size(),
                  &(chunk.front()), GL_STREAM_DRAW);
@@ -68,7 +69,7 @@ using Chunks = std::vector<std::vector<float>>;
 using ChunkIndices = std::vector<std::vector<unsigned int>>;
 
 std::tuple<Chunks, ChunkIndices>
-    Renderer::_generate_chunks(GridData grid_data) {
+Renderer::_generate_chunks(GridData grid_data) {
 
   const int chunk_size = 512; // FIXME: Change this value as needed
   std::vector<std::vector<float>> chunks;
@@ -92,22 +93,19 @@ std::tuple<Chunks, ChunkIndices>
            * 1----4
            */
 
-          glm::vec2 bot_left{
-            2.0f * (i * _cell_size) / _viewport_size.x - 1.0f,
-            2.0f * (j * _cell_size) / _viewport_size.y - 1.0f
-          };
+          glm::vec2 bot_left{2.0f * (i * _cell_size) / _viewport_size.x - 1.0f,
+                             2.0f * (j * _cell_size) / _viewport_size.y - 1.0f};
 
           glm::vec2 top_right{
-            2.0f * (i + 1) * _cell_size / _viewport_size.x - 1.0f,
-            2.0f * (j + 1) * _cell_size / _viewport_size.y - 1.0f
-          };
+              2.0f * (i + 1) * _cell_size / _viewport_size.x - 1.0f,
+              2.0f * (j + 1) * _cell_size / _viewport_size.y - 1.0f};
 
           int index = j * grid_data.width + i;
           int cell_type = static_cast<float>(grid_data.cells[index].type);
           float mass = grid_data.cells[index].mass;
 
           unsigned int base_index =
-            static_cast<unsigned int>(vertices.size() / 4);
+              static_cast<unsigned int>(vertices.size() / 4);
 
           vertices.emplace_back(bot_left.x);
           vertices.emplace_back(bot_left.y);

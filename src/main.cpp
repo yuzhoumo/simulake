@@ -10,6 +10,7 @@
 #include <omp.h>
 
 #include "constants.hpp"
+#include "renderer.hpp"
 #include "shader.hpp"
 
 #include "grid.hpp"
@@ -46,15 +47,9 @@ void create_glfw_contexts(GLFWwindow *&window) {
 
 void test_renderer(int argc, char **argv) {
   GLFWwindow *window;
-  create_gl_contexts(window);
+  create_glfw_contexts(window);
 
-  if (3 != argc) {
-    std::cerr << "ERROR::INCORRECT_ARG_COUNT: " << argc << ", expected 3."
-              << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  // >>>>>> test code
+  // <<<<< test code
   GridData test_grid_data;
   test_grid_data.width = 200;
   test_grid_data.height = 150;
@@ -67,7 +62,7 @@ void test_renderer(int argc, char **argv) {
     test_grid_data.cells[i].mass =
         static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / 10.0));
   }
-  // <<<<< test code
+  // test code >>>>>
 
   // render loop
   while (!glfwWindowShouldClose(window)) {
@@ -123,7 +118,7 @@ void test_simulation() {
 }
 
 int main(int argc, char **argv) {
-  test_simulation();
-  // test_renderer(argc, argv);
+  // test_simulation();
+  test_renderer(argc, argv);
   return 0;
 }
