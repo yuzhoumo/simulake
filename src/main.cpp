@@ -16,11 +16,12 @@
 #include "utils.hpp"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-  glViewport(0, 0, width, height);
+  // TODO: resize grid and push to renderer
+  // glViewport(0, 0, width, height);
 }
 
 /* initialize GLAD and GLFW, then create window object and set callbacks */
-void create_gl_contexts(GLFWwindow *&window) {
+void create_glfw_contexts(GLFWwindow*& window) {
   if (!glfwInit()) {
     std::cerr << "ERROR::GLFW_INITIALIZATION_FAILURE" << std::endl;
     exit(EXIT_FAILURE);
@@ -42,7 +43,8 @@ void create_gl_contexts(GLFWwindow *&window) {
   glfwMakeContextCurrent(window);
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+  /* initialize opengl loader */
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     std::cerr << "ERROR::GLAD_INITIALIZATION_FAILURE" << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -63,44 +65,28 @@ void test_renderer(int argc, char **argv) {
 
   if (3 != argc) {
     std::cerr << "ERROR::INCORRECT_ARG_COUNT: " << argc << ", expected 3."
-              << std::endl;
+      << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  /* load and compile shaders */
-  const auto vert_shader_path = std::filesystem::absolute(VERTEX_SHADER_PATH);
-  const auto frag_shader_path = std::filesystem::absolute(FRAGMENT_SHADER_PATH);
-  const Shader shader{vert_shader_path.string(), frag_shader_path.string()};
+  // >>>>>> test code
+  GridData test_grid_data;
+  test_grid_data.width = 200;
+  test_grid_data.height = 150;
+  test_grid_data.cells = new Cell[200 * 150];
 
-  if (0 == shader.get_id()) {
-    std::cerr << "ERROR::SHADER_CREATION_FAILURE" << std::endl;
-    cleanup(window, EXIT_FAILURE);
+  Renderer renderer{test_grid_data};
+  std::srand(static_cast<unsigned>(std::time(nullptr)));
+  for (int i = 0; i < 200 * 150; ++i) {
+    test_grid_data.cells[i].type = std::rand() % 3;
+    test_grid_data.cells[i].mass = static_cast<float>(std::rand()) /
+      (static_cast<float>(RAND_MAX / 10.0));
   }
-
-  /* load fullscreen quad */
-  GLuint VAO, VBO;
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
-
-  glBindVertexArray(VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(FS_QUAD), FS_QUAD, GL_STATIC_DRAW);
-
-  glVertexAttribPointer(FS_QUAD_VERTEX_ATTRIB_PARAMS);
-  glEnableVertexAttribArray(FS_QUAD_VERTEX_ATTRIB_INDEX);
+  // <<<<< test code
 
   // render loop
   while (!glfwWindowShouldClose(window)) {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    shader.use();
-
-    /* draw frame */
-    glBindVertexArray(VAO);
-    glDrawArrays(FS_QUAD_DRAW_ARRAY_PARAMS);
-    glfwSwapBuffers(window);
-
+  renderer.render(test_grid_data, window);
     glfwPollEvents();
   }
 

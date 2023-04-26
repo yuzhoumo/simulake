@@ -1,7 +1,11 @@
 #version 330 core
 
-out vec4 o_frag_color;
+uniform vec2 u_resolution;
+uniform int u_cell_size;
+
+in vec4 color;
+out vec4 frag_color;
 
 void main() {
-  o_frag_color = vec4(0.0, 0.0, 0.0, 1.0);
+  frag_color = color;
 }

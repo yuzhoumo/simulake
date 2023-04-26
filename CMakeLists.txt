@@ -25,7 +25,18 @@ set(VENDOR_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 
 # shaders
 set(SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
+set(SHADER_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 file(COPY ${SHADER_DIR} DESTINATION ${CMAKE_BINARY_DIR})
+
+file(MAKE_DIRECTORY "${SHADER_BUILD_DIR}")
+add_custom_target(copy_shaders ALL)
+
+# add a custom command to copy assets when they change
+add_custom_command(
+    TARGET copy_shaders
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${SHADER_DIR}" "${SHADER_BUILD_DIR}"
+    DEPENDS "${SHADER_DIR}"
+    COMMENT "Copying shaders to build directory")
 
 # main executable
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
