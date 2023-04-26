@@ -13,8 +13,7 @@ Renderer::Renderer(const std::uint32_t width, const std::uint32_t height,
                    const std::uint32_t cell_size)
     : window(width, height, "simulake") {
   // set state variables
-  buffer_resized = true;
-  num_cells = (width / cell_size) * (height / cell_size);
+  num_cells = 0;
   set_cell_size(cell_size);
 
   // initialize opengl and shaders
@@ -25,7 +24,7 @@ Renderer::~Renderer() {
   glDeleteVertexArrays(1, &_VAO);
   glDeleteBuffers(1, &_VBO);
   glDeleteProgram(shader.get_id());
-  // TODO(vir): check if grid_data_texture is deleted
+  glDeleteTextures(1, &_GRID_DATA_TEXTURE);
 }
 
 void Renderer::initialize_graphics() noexcept {
@@ -33,9 +32,10 @@ void Renderer::initialize_graphics() noexcept {
   constexpr auto VERTEX_SHADER_PATH = "./shaders/vertex.glsl";
   constexpr auto FRAGMENT_SHADER_PATH = "./shaders/fragment.glsl";
 
-  // compile shaders
+  // compile and bind shaders: fixed
   shader = Shader(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
   assert(shader.get_id() != 0);
+  shader.use();
 
   // create VAO, VBO, EBO
   glGenVertexArrays(1, &_VAO);
@@ -43,29 +43,36 @@ void Renderer::initialize_graphics() noexcept {
   glGenBuffers(1, &_EBO);
   glGenTextures(1, &_GRID_DATA_TEXTURE);
 
-  // bind vertex data and load into buffer
+  // bind buffers: fixed
   glBindVertexArray(_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, _VBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 
-  // configure vertex attributes
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
+  // bind texture: fixed
+  glBindTexture(GL_TEXTURE_2D, _GRID_DATA_TEXTURE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+  // bind vertex attributes: fixed
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                        static_cast<void *>(0));
+
+  glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
                         (void *)(2 * sizeof(float)));
-  glEnableVertexAttribArray(1);
 }
 
 void Renderer::submit_grid(const Grid &grid) noexcept {
   const auto grid_width = grid.get_width();
-  const auto grid_height = grid.get_width();
-
-  const auto curr_num_cells = grid_width * grid_height;
+  const auto grid_height = grid.get_height();
+  const auto new_num_cells = grid_width * grid_height;
 
   // update dimensions and regenerate grid
-  if (curr_num_cells != num_cells) [[unlikely]] {
-    num_cells = curr_num_cells;
+  if (new_num_cells != num_cells) [[unlikely]] {
+    num_cells = new_num_cells;
     grid_size[0] = grid_width;
     grid_size[1] = grid_height;
     viewport_size[0] = cell_size * grid_width;
@@ -73,48 +80,15 @@ void Renderer::submit_grid(const Grid &grid) noexcept {
     glViewport(0, 0, viewport_size[0], viewport_size[1]);
 
     regenerate_grid();
-    buffer_resized = true;
+    regenerate_pipeline();
   }
 
   update_grid_data_texture(grid);
 }
 
 void Renderer::render() noexcept {
+  // clear previous colors
   glClear(GL_COLOR_BUFFER_BIT);
-
-  // activate shader
-  shader.use();
-
-  // activate cells texture
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, _GRID_DATA_TEXTURE);
-
-  // bind vertex buffer and draw triangles
-  glBindVertexArray(_VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, _VBO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
-
-  if (buffer_resized) [[unlikely]] {
-    buffer_resized = false;
-
-    // bind vertices
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(),
-                 &(vertices.front()), GL_STREAM_DRAW);
-
-    // bind indices
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 sizeof(std::uint32_t) * ebo_indices.size(),
-                 &(ebo_indices.front()), GL_STREAM_DRAW);
-  } else {
-    // bind vertices
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * vertices.size(),
-                    vertices.data());
-
-    // bind indices
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0,
-                    sizeof(std::uint32_t) * ebo_indices.size(),
-                    ebo_indices.data());
-  }
 
   // draw triangles
   glDrawElements(GL_TRIANGLES, ebo_indices.size(), GL_UNSIGNED_INT, 0);
@@ -191,27 +165,45 @@ void Renderer::regenerate_grid() noexcept {
   }
 }
 
-void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
+void Renderer::regenerate_pipeline() noexcept {
+  // activate cells texture
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, _GRID_DATA_TEXTURE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  const auto grid_width = grid.get_width();
-  const auto grid_height = grid.get_height();
+  // bind buffers
+  glBindVertexArray(_VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, _VBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
+
+  // bind vertex data
+  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(),
+               &(vertices.front()), GL_STREAM_DRAW);
+
+  // bind index data
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+               sizeof(std::uint32_t) * ebo_indices.size(),
+               &(ebo_indices.front()), GL_STREAM_DRAW);
+}
+
+void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
+  // make sure we are already resized to this grid size
+  assert(grid_size[0] == grid.get_width());
+  assert(grid_size[1] == grid.get_height());
+
+  const auto grid_width = grid_size[0];
+  const auto grid_height = grid_size[1];
 
   std::vector<float> texture_data(num_cells * 2);
-  for (size_t i = 0; i < num_cells; ++i) {
-    const auto row = grid_height - (i / grid_width) - 1;
-    const auto col = i % grid_width;
+  for (std::uint32_t row = 0; row < grid_height; row += 1) {
+    for (std::uint32_t col = 0; col < grid_width; col += 1) {
+      const std::uint64_t index = row * grid_width + col;
 
-    // texture_data[i * 2] = static_cast<float>(grid_data.cells[i].type);
-    // texture_data[i * 2 + 1] = grid_data.cells[i].mass;
-
-    // TODO(vir): add support for mass and other properties
-    texture_data[i * 2] = static_cast<float>(grid.type_at(row, col));
-    texture_data[i * 2 + 1] = 1.f;
+      // clang-format off
+      // TODO(vir): add support for mass / other properties
+      texture_data[index * 2] = static_cast<float>(grid.type_at(grid_height - row - 1, col));
+      texture_data[index * 2 + 1] = 1.f;
+      // clang-format on
+    }
   }
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,

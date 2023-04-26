@@ -30,7 +30,6 @@ void Grid::simulate() noexcept {
   // copy old grid into new
   _next_grid = _grid;
 
-  // TODO(vir): parallelize loop
   {
 #pragma omp parallel for
 #if 1
@@ -87,7 +86,7 @@ void Grid::simulate() noexcept {
 // reads current grid
 [[nodiscard]] CellType Grid::type_at(std::uint32_t row,
                                      std::uint32_t col) const noexcept {
-  if (row >= height || col >= width)
+  if (row >= height || col >= width) [[unlikely]]
     return CellType::NONE;
 
   return _grid[row][col];

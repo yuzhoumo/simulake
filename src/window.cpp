@@ -5,7 +5,7 @@
 namespace simulake {
 
 void Window::framebuffer_size_callback(GLFWwindow *, int, int) {
-  // TODO(vir): handle resize events
+  // TODO(vir): handle resize events?
 }
 
 Window::Window(const std::uint32_t _width, const std::uint32_t _height,

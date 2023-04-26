@@ -9,7 +9,6 @@ namespace simulake {
 class Grid;
 
 /* types a grid cell can have */
-// NOTE(vir): cant make this by std::uint8_t
 enum class CellType : std::uint8_t {
   NONE = 0, // out of bounds
   AIR,

@@ -43,6 +43,9 @@ private:
   // regenerate triangles set
   void regenerate_grid() noexcept;
 
+  // regenerate opengl structures
+  void regenerate_pipeline() noexcept;
+
   // update grid texture based on new sim grid
   void update_grid_data_texture(const Grid &) noexcept;
 
@@ -59,7 +62,6 @@ private:
 
   std::vector<float> vertices;
   std::vector<unsigned int> ebo_indices;
-  bool buffer_resized;
 
   Window window;
   Shader shader;

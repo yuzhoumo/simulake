@@ -20,10 +20,9 @@ void test_renderer(int argc, char **argv) {
 
   constexpr auto WIDTH = 1920;
   constexpr auto HEIGHT = 1080;
-  constexpr auto CELL_SIZE = 4;
-  constexpr auto NUM_THREADS = 2;
+  constexpr auto CELL_SIZE = 1;
+  constexpr auto NUM_THREADS = 10;
 
-  // TODO(vir): find a better place for this initialization
   {
     int rc = glfwInit();
     assert(rc != 0);
@@ -48,13 +47,16 @@ void test_renderer(int argc, char **argv) {
   std::uint64_t frame_count = 0;
   std::chrono::time_point start = std::chrono::high_resolution_clock::now();
 
+  // initial load
+  renderer.submit_grid(test_grid);
+
   // application loop
   while (!glfwWindowShouldClose(renderer.get_window().get_window_ptr())) {
     frame_count += 1;
 
     // render step
     {
-      PROFILE_SCOPE("render_pass");
+      // PROFILE_SCOPE("render_pass");
       renderer.render();
     }
 
@@ -89,7 +91,6 @@ void test_simulation() {
   constexpr auto SIM_STEPS = 1000;
   constexpr auto NUM_THREADS = 10;
 
-  // TODO(vir): find a better place for this initialization
   { omp_set_num_threads(NUM_THREADS); }
 
   // create grid

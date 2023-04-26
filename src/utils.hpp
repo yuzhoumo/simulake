@@ -50,8 +50,7 @@ std::ostream &operator<<(std::ostream &, const simulake::Grid &);
 std::ostream &operator<<(std::ostream &, const simulake::CellType);
 
 // pretty print context
-// TODO(vir): 8 bytes for now, might change later so update this accordingly
-std::ostream &operator<<(std::ostream &, const simulake::BaseCell::context_t);
+std::ostream &operator<<(std::ostream &, const simulake::BaseCell::context_t&);
 
 namespace simulake {
 
