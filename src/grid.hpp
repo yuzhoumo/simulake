@@ -16,11 +16,11 @@ public:
 
   // enable moves
   explicit Grid(Grid &&) = default;   // move constructor
-  Grid &operator=(Grid &&) = default; // move assignment operator
+  Grid &operator=(Grid &&) = default; // move assignment
 
   // disable copies
   explicit Grid(const Grid &) = delete;   // copy constructor
-  Grid &operator=(const Grid &) = delete; // copy assignment operator
+  Grid &operator=(const Grid &) = delete; // copy assignment
 
   /* dealloc memory on destruction */
   ~Grid();
@@ -32,7 +32,7 @@ public:
   void simulate() noexcept;
 
   /* get cell type at given position */
-  CellType type_at(std::uint32_t, std::uint32_t) const noexcept;
+  [[nodiscard]] CellType type_at(std::uint32_t, std::uint32_t) const noexcept;
 
   /* set cell type at given position. returns true of successful */
   bool set_at(std::uint32_t, std::uint32_t, const CellType) noexcept;

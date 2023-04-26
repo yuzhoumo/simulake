@@ -25,7 +25,7 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &vec) {
 }
 
 // pretty print tuples
-template <typename... Ts, uint32_t... Is>
+template <typename... Ts, std::uint32_t... Is>
 std::ostream &operator<<(std::ostream &stream, const std::tuple<Ts...> &tuple) {
   static_assert(sizeof...(Is) == sizeof...(Ts), "invalid tuple");
   static_assert(sizeof...(Ts) > 0, "empty tuple");
