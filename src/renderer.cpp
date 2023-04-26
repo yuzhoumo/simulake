@@ -189,7 +189,7 @@ void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
 
   std::vector<float> texture_data(num_cells * 2);
   for (size_t i = 0; i < num_cells; ++i) {
-    const auto row = grid_height - i / grid_width;
+    const auto row = grid_height - (i / grid_width) - 1;
     const auto col = i % grid_width;
 
     // texture_data[i * 2] = static_cast<float>(grid_data.cells[i].type);
