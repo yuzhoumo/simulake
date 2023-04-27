@@ -10,8 +10,16 @@
 
 namespace simulake {
 
-// #define CL_CALL(x) assert(x == CL_SUCCESS)
-#define CL_CALL(x) if (x != CL_SUCCESS) std::exit(x);
+#if DEBUG
+#define CL_CALL(x) assert(x == CL_SUCCESS)
+#else
+#define CL_CALL(x)                                                             \
+  if (x != CL_SUCCESS) {                                                       \
+    ::std::cout << "CL_FAILURE: " << __FILE__ << ':' << __LINE__               \
+                << ::std::endl;                                                \
+    ::std::abort();                                                            \
+  }
+#endif
 
 class DeviceGrid {
 public:
@@ -72,7 +80,7 @@ private:
   void initialize_kernels() noexcept;
 
   static std::string read_program_source(const std::string_view) noexcept;
-  void print_cl_extensions() const noexcept;
+  void print_cl_debug_info() const noexcept;
 
   std::uint32_t stride;
   std::uint32_t num_cells;

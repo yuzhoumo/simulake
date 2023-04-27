@@ -22,7 +22,6 @@ DeviceGrid::DeviceGrid(const std::uint32_t _width, const std::uint32_t _height,
 }
 
 DeviceGrid::~DeviceGrid() {
-  cl_int error = CL_SUCCESS;
   CL_CALL(clReleaseMemObject(sim_context.grid));
   CL_CALL(clReleaseMemObject(sim_context.next_grid));
   CL_CALL(clReleaseKernel(sim_context.init_kernel));
@@ -43,42 +42,10 @@ void DeviceGrid::initialize_device() noexcept {
                          &sim_context.device, nullptr));
 
 #if DEBUG
-  cl_uint max_compute_units;
-  CL_CALL(clGetDeviceInfo(sim_context.device, CL_DEVICE_MAX_COMPUTE_UNITS,
-                          sizeof(max_compute_units), &max_compute_units,
-                          nullptr));
-
-  cl_ulong max_mem_alloc_size;
-  CL_CALL(clGetDeviceInfo(sim_context.device, CL_DEVICE_MAX_MEM_ALLOC_SIZE,
-                          sizeof(max_mem_alloc_size), &max_mem_alloc_size,
-                          nullptr));
-
-  size_t max_work_group_size;
-  CL_CALL(clGetDeviceInfo(sim_context.device, CL_DEVICE_MAX_WORK_GROUP_SIZE,
-                          sizeof(max_work_group_size), &max_work_group_size,
-                          nullptr));
-
-  cl_uint max_work_item_dims;
-  CL_CALL(
-      clGetDeviceInfo(sim_context.device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
-                      sizeof(max_work_item_dims), &max_work_item_dims, NULL));
-
-  size_t work_item_sizes[max_work_item_dims];
-  CL_CALL(clGetDeviceInfo(sim_context.device, CL_DEVICE_MAX_WORK_ITEM_SIZES,
-                          sizeof(work_item_sizes), &work_item_sizes, NULL));
-
-  std::cout << "---OPENCL DEVICE INFO---" << std::endl;
-  std::cout << "max_mem_alloc_size(mb): " << max_mem_alloc_size / 1024 / 1022
-            << std::endl;
-  std::cout << "max_compute_units:      " << max_compute_units << std::endl;
-  std::cout << "max_work_group_size:    " << max_work_group_size << std::endl;
-  std::cout << "max_work_item_dims:     " << max_work_item_dims << std::endl;
-  std::cout << "max_work_item_sizes:    " << work_item_sizes[0] << std::endl;
-  std::cout << "------------------------" << std::endl;
-  print_cl_extensions();
+  print_cl_debug_info();
 #endif
 
-  // create context
+#ifdef __APPLE__
   // NOTE(vir): opengl opencl interop
   CGLContextObj cgl_context = CGLGetCurrentContext();
   if (cgl_context != nullptr) {
@@ -97,6 +64,10 @@ void DeviceGrid::initialize_device() noexcept {
     std::cout << "OPENGL-OPENCL sharegroup SUCCESSFULLY created" << std::endl;
     std::cout << "---------------------------------------------" << std::endl;
   } else {
+
+#endif
+
+    // create context
     sim_context.context =
         clCreateContext(0, 1, &sim_context.device, nullptr, nullptr, &error);
     CL_CALL(error);
@@ -104,7 +75,10 @@ void DeviceGrid::initialize_device() noexcept {
     std::cout << "------------------------------------" << std::endl;
     std::cout << "OPENGL-OPENCL sharegroup NOT created" << std::endl;
     std::cout << "------------------------------------" << std::endl;
+
+#ifdef __APPLE__
   }
+#endif
 
   // create command queue
   sim_context.queue =
@@ -194,25 +168,6 @@ void DeviceGrid::reset() const noexcept {
 
   // wait for kernel to finish
   CL_CALL(clFinish(sim_context.queue));
-
-  // test
-  std::vector<CellType> grid(num_cells, CellType::NONE);
-  std::vector<CellType> next_grid(num_cells, CellType::NONE);
-  CL_CALL(clEnqueueReadBuffer(sim_context.queue, sim_context.grid, CL_TRUE, 0,
-                              memory_size, grid.data(), 0, nullptr, nullptr));
-  CL_CALL(clEnqueueReadBuffer(sim_context.queue, sim_context.next_grid, CL_TRUE,
-                              0, memory_size, next_grid.data(), 0, nullptr,
-                              nullptr));
-  CL_CALL(clFinish(sim_context.queue));
-
-  // make sure init kernel worked kernel
-  for (int row = 0; row < height; row += 1) {
-    for (int col = 0; col < width; col += 1) {
-      const auto index = row * width + col;
-      assert(grid[index] == CellType::AIR);
-      assert(next_grid[index] == CellType::AIR);
-    }
-  }
 }
 
 void DeviceGrid::initialize_random() const noexcept {
@@ -280,7 +235,6 @@ void DeviceGrid::print_current() const noexcept {
       CL_TRUE, 0, memory_size, grid.data(), 0, nullptr, nullptr));
   CL_CALL(clFinish(sim_context.queue));
 
-  // make sure init kernel worked kernel
   for (int row = 0; row < height; row += 1) {
     for (int col = 0; col < width; col += 1) {
       const auto index = row * width + col;
@@ -322,7 +276,6 @@ void DeviceGrid::print_both() const noexcept {
                               nullptr));
   CL_CALL(clFinish(sim_context.queue));
 
-  // make sure init kernel worked kernel
   for (int row = 0; row < height; row += 1) {
     for (int col = 0; col < width; col += 1) {
       const auto index = row * width + col;
@@ -342,7 +295,31 @@ void DeviceGrid::print_both() const noexcept {
   std::cout << "---\n";
 }
 
-void DeviceGrid::print_cl_extensions() const noexcept {
+void DeviceGrid::print_cl_debug_info() const noexcept {
+  cl_uint max_compute_units;
+  CL_CALL(clGetDeviceInfo(sim_context.device, CL_DEVICE_MAX_COMPUTE_UNITS,
+                          sizeof(max_compute_units), &max_compute_units,
+                          nullptr));
+
+  cl_ulong max_mem_alloc_size;
+  CL_CALL(clGetDeviceInfo(sim_context.device, CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+                          sizeof(max_mem_alloc_size), &max_mem_alloc_size,
+                          nullptr));
+
+  size_t max_work_group_size;
+  CL_CALL(clGetDeviceInfo(sim_context.device, CL_DEVICE_MAX_WORK_GROUP_SIZE,
+                          sizeof(max_work_group_size), &max_work_group_size,
+                          nullptr));
+
+  cl_uint max_work_item_dims;
+  CL_CALL(
+      clGetDeviceInfo(sim_context.device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
+                      sizeof(max_work_item_dims), &max_work_item_dims, NULL));
+
+  size_t work_item_sizes[max_work_item_dims];
+  CL_CALL(clGetDeviceInfo(sim_context.device, CL_DEVICE_MAX_WORK_ITEM_SIZES,
+                          sizeof(work_item_sizes), &work_item_sizes, NULL));
+
   size_t extension_size = 0;
   CL_CALL(clGetDeviceInfo(sim_context.device, CL_DEVICE_EXTENSIONS, 0, NULL,
                           &extension_size));
@@ -350,6 +327,13 @@ void DeviceGrid::print_cl_extensions() const noexcept {
   char *extensions = new char[extension_size];
   CL_CALL(clGetDeviceInfo(sim_context.device, CL_DEVICE_EXTENSIONS,
                           extension_size, extensions, NULL));
+
+  std::cout << "---OPENCL DEVICE INFO---";
+  std::cout << "\nmax_mem_alloc_size(mb): " << max_mem_alloc_size / 1024 / 1024;
+  std::cout << "\nmax_compute_units:      " << max_compute_units;
+  std::cout << "\nmax_work_group_size:    " << max_work_group_size;
+  std::cout << "\nmax_work_item_dims:     " << max_work_item_dims;
+  std::cout << "\nmax_work_item_sizes:    " << work_item_sizes[0];
 
   std::cout << "---OPENCL EXTENSIONS---" << std::endl;
   std::cout << extensions << std::endl;

@@ -11,14 +11,19 @@
 
 #include <GLFW/glfw3.h>
 
+#ifdef __APPLE__
+
+#include <OpenCL/opencl.h>
 #include <OpenGL/OpenGL.h>
 
-#ifdef __APPLE__
-#include <OpenCL/opencl.h>
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
 #else
-#error "ONLY MACOS SUPPORTED"
+
+#include <CL/cl.hpp>
+// #error "ONLY MACOS SUPPORTED"
+
 #endif
 
 #endif

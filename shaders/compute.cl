@@ -27,6 +27,7 @@ __kernel void random_init(__global char *grid, __global char *next_grid,
   const unsigned int col = get_global_id(0);
   const unsigned int row = get_global_id(1);
 
+  // get a random number using xorshift
   const uint seed = 1337 + row;
   const uint t = seed ^ (seed << 11);
   const uint rand = (7331 + col) ^ ((7331 + col) >> 19) ^ (t ^ (t >> 8));

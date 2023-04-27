@@ -42,8 +42,8 @@ add_custom_command(
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
-target_compile_definitions(${PROJECT_NAME} PRIVATE "DEBUG=$<IF:$<CONFIG:Debug>,1,0>")
 target_precompile_headers(${PROJECT_NAME} PRIVATE ${HEADER_FILES})
+target_compile_definitions(${PROJECT_NAME} PRIVATE "DEBUG=$<IF:$<CONFIG:Debug>,1,0>")
 
 # opengl
 find_package(OpenGL REQUIRED)
