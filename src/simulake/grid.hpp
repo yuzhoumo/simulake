@@ -47,6 +47,14 @@ public:
   inline std::uint32_t get_height() const noexcept { return height; }
   inline std::uint32_t get_stride() const noexcept { return stride; }
 
+  /* Temp support for mass. */
+  float mass_at(std::uint32_t, std::uint32_t) const noexcept;
+
+  // Mass is represented as a 2D array of floats.
+  typedef std::vector<std::vector<float>> mass_grid_t;
+  mass_grid_t _mass;
+  mass_grid_t _next_mass;
+
 private:
   /* grid is represented as a 2D array of CellType (int ids) */
   typedef std::vector<std::vector<CellType>> cell_grid_t;

@@ -21,6 +21,13 @@ void Grid::reset() noexcept {
 
   // deep copy construct (same dimensions and contents)
   _next_grid = _grid;
+
+  // Temp support for mass.
+  _mass.resize(height, {});
+  for (auto &row : _mass)
+      row.resize(width, .0f);
+
+  _next_mass = _mass;
 }
 
 Grid::~Grid() {
@@ -54,6 +61,7 @@ void Grid::spawn_cells(const uint32_t x_center, const uint32_t y_center,
 void Grid::simulate() noexcept {
   // copy old grid into new
   _next_grid = _grid;
+  _next_mass = _mass;
 
   {
 #pragma omp parallel for
@@ -71,7 +79,7 @@ void Grid::simulate() noexcept {
           break;
 
         case CellType::WATER:
-          // WaterCell::step({i, j}, *this);
+          WaterCell::step({i, j}, *this);
           break;
 
         case CellType::OIL:
@@ -94,6 +102,9 @@ void Grid::simulate() noexcept {
           // SmokeCell::step({i, j}, *this);
           break;
 
+        case CellType::STONE:
+          break;
+
         default: // CellType::NONE
           break;
         };
@@ -106,6 +117,7 @@ void Grid::simulate() noexcept {
 
   // swap around
   std::swap(_grid, _next_grid);
+  std::swap(_mass, _next_mass);
 }
 
 // reads current grid
@@ -147,6 +159,14 @@ bool Grid::set_state(std::uint32_t row, std::uint32_t col,
     _grid[row][col] = type;
     return true;
   }
+}
+
+// reads current mass grid
+float Grid::mass_at(std::uint32_t row, std::uint32_t col) const noexcept {
+    if (row >= height || col >= width)
+        return 0;
+
+    return _mass[row][col];
 }
 
 } // namespace simulake

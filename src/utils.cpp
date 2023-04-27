@@ -76,6 +76,12 @@ std::ostream &operator<<(std::ostream &stream, const simulake::Grid &grid) {
   return stream;
 }
 
+float constrain(float val, float low, float high) {
+    if (val > high) return high;
+    if (val < low) return low;
+    return val;
+}
+
 namespace simulake {
 scope_timer_t::scope_timer_t(const char *_title)
     : start(std::chrono::high_resolution_clock::now()), title(_title) {}

@@ -55,6 +55,9 @@ std::ostream &operator<<(std::ostream &, const simulake::BaseCell::context_t &);
 /* pretty print app state */
 std::ostream& operator<<(std::ostream& stream, const simulake::AppState& state);
 
+// Helper for modeling water flow.
+float constrain(float, float, float);
+
 namespace simulake {
 
 // TODO(vir): only Release mode should have disabled perf counters

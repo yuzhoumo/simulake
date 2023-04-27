@@ -3,6 +3,7 @@
 #define AIR_TYPE 1
 #define WATER_TYPE 4
 #define SAND_TYPE 6
+#define STONE_TYPE 8
 
 uniform sampler2D u_grid_data_texture;
 
@@ -21,6 +22,8 @@ void main() {
     frag_color = vec4(1.0, 1.0, 0.0, 1.0); // yellow
   } else if (type == WATER_TYPE) {
     frag_color = vec4(0.0, 0.0, 1.0, 1.0); // blue
+  } else if (type == STONE_TYPE) {
+    frag_color = vec4(0.0, 0.0, 0.0, 1.0); // black
   } else {
     frag_color = vec4(0.0, 0.0, 0.0, 1.0); // black
   }

@@ -37,8 +37,23 @@ void test_renderer() {
     for (int y = 0; y < WIDTH / CELL_SIZE; y += 1) {
       test_grid.set_state(x, y, simulake::CellType::AIR);
 
-      if (std::rand() % 2 == 0)
-        test_grid.set_state(x, y, simulake::CellType::SAND);
+      // Stone.
+      int first_col = (int) HEIGHT / CELL_SIZE / 3;
+      int second_col = (int) HEIGHT / CELL_SIZE / 3 * 2;
+      int first_row = (int) WIDTH / CELL_SIZE / 3;
+      int second_row = (int) WIDTH / CELL_SIZE / 3 * 2;
+
+      if ((x == first_col && first_row < y && y < second_row)
+          || (x == second_col && first_row < y && y < second_row) 
+          || (y == first_row && first_col < x && x < second_col)
+          || (y == second_row && first_col < x && x < second_col)) {
+        test_grid.set_state(x, y, simulake::CellType::STONE);
+
+      // Water.
+      } else if (std::rand() % 2 == 0) {
+        test_grid.set_state(x, y, simulake::CellType::WATER);
+        test_grid._mass[x][y] = simulake::WaterCell::max_mass;
+      }
     }
   }
 
