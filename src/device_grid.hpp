@@ -7,6 +7,9 @@
 #include <CL/cl.h>
 #endif
 
+#pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
 #include <string>
 #include <string_view>
 
@@ -38,6 +41,11 @@ public:
   /* reset grid to empty (AIR) cells */
   void reset() noexcept;
 
+  /* useful for testing */
+  void initialize_random() const noexcept;
+  void print_current() const noexcept;
+  void print_both() const noexcept;
+
 private:
   /* opencl structures */
   struct sim_context_t {
@@ -50,6 +58,7 @@ private:
     /* kernels */
     cl_kernel sim_kernel = nullptr;
     cl_kernel init_kernel = nullptr;
+    cl_kernel rand_kernel = nullptr;
 
     /* buffers */
     cl_mem grid = nullptr;
@@ -62,6 +71,10 @@ private:
 
   static std::string read_program_source(const std::string_view) noexcept;
 
+  std::uint32_t num_cells;
+  std::uint32_t memory_size;
+
+  bool flip_flag;
   sim_context_t sim_context;
   std::uint32_t width, height;
 };

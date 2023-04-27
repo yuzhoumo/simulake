@@ -121,18 +121,27 @@ void test_simulation() {
 
 void test_device_grid() {
   PROFILE_FUNCTION();
+  constexpr auto DEBUG_PRINT = false;
   constexpr auto WIDTH = 1920;
   constexpr auto HEIGHT = 1080;
   constexpr auto CELL_SIZE = 1;
-  constexpr auto SIM_STEPS = 1;
-
-  simulake::DeviceGrid grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE);
+  constexpr auto SIM_STEPS = 10;
 
   // example: demo sand simluation on gpu
-  {
-    for (int i = 0; i < SIM_STEPS; i += 1) {
-      PROFILE_SCOPE("sim");
-      grid.simulate();
+  simulake::DeviceGrid grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE);
+
+  grid.initialize_random();
+
+  if constexpr (DEBUG_PRINT)
+    grid.print_both();
+
+  for (int i = 0; i < SIM_STEPS; i += 1) {
+    PROFILE_SCOPE("sim");
+    grid.simulate();
+
+    if constexpr (DEBUG_PRINT) {
+      grid.print_current();
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
   }
 }

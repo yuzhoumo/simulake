@@ -10,70 +10,64 @@
 
 __kernel void initialize(__global char *grid, __global char *next_grid,
                          const unsigned int width, const unsigned int height) {
-  const unsigned int id = get_global_id(0);
-  const unsigned int num_cells = width * height;
-  if (id >= num_cells)
-    return;
-
   const unsigned int size = get_global_size(0); // chunk size
-  const unsigned int base_row = get_global_id(0);
-  const unsigned int base_col = get_global_id(1);
+  const unsigned int col = get_global_id(0);
+  const unsigned int row = get_global_id(1);
 
-  for (unsigned int row = base_row; row < min(base_row + size, height);
-       row += 1) {
-    for (unsigned int col = base_col; col < min(base_col + size, width);
-         col += 1) {
+  const unsigned int idx = row * width + col;
+  // printf("%d-%d-%d\n", row, col, idx);
+  grid[idx] = AIR_TYPE;
+  next_grid[idx] = AIR_TYPE;
+}
 
-      const unsigned int idx = row * width + col;
-      grid[idx] = AIR_TYPE;
-      next_grid[idx] = AIR_TYPE;
-    }
+__kernel void random_init(__global char *grid, __global char *next_grid,
+                          const unsigned int width, const unsigned int height) {
+  const unsigned int size = get_global_size(0); // chunk size
+  const unsigned int col = get_global_id(0);
+  const unsigned int row = get_global_id(1);
+
+  if (row == 0 && col % 5 == 1) {
+    const unsigned int idx = row * width + col;
+    grid[idx] = SAND_TYPE;
   }
 }
 
 __kernel void simulate(__global char *grid, __global char *next_grid,
                        const unsigned int width, const unsigned int height) {
-  const unsigned int id = get_global_id(0);
   const unsigned int num_cells = width * height;
-  if (id >= num_cells)
-    return;
+  const unsigned int size = get_global_size(0); // == full grid size
+  const unsigned int col = get_global_id(0);    // <= local grid size (cols)
+  const unsigned int row = get_global_id(1);    // <= local grid size (rows)
 
-  const unsigned int type = (int)grid[0];       // scale up from std::uint8_t
-  const unsigned int size = get_global_size(0); // chunk size
-  const unsigned int base_row = get_global_id(0);
-  const unsigned int base_col = get_global_id(1);
+  // clang-format off
+  const unsigned int idx_top_left  = (row - 1) * width + (col - 1);
+  const unsigned int idx_top       = (row - 1) * width + (col + 0);
+  const unsigned int idx_top_right = (row - 1) * width + (col + 1);
+  const unsigned int idx_left      = (row + 0) * width + (col - 1);
+  const unsigned int idx           = (row + 0) * width + (col + 0);
+  const unsigned int idx_right     = (row + 0) * width + (col + 1);
+  const unsigned int idx_bot_left  = (row + 1) * width + (col - 1);
+  const unsigned int idx_bot       = (row + 1) * width + (col + 0);
+  const unsigned int idx_bot_right = (row + 1) * width + (col + 1);
+  // clang-format on
 
-  for (unsigned int row = base_row; row < min(base_row + size, height);
-       row += 1) {
-    for (unsigned int col = base_col; col < min(base_col + size, width);
-         col += 1) {
+  const unsigned int type = (int)grid[idx];       // scale up from std::uint8_t
+  if (type == SAND_TYPE && idx_bot < num_cells) { // cant fall below ground
+    // printf("%d-%d-%d\n", grid > next_grid ? 0 : 1, idx, idx_bot);
 
-      const unsigned int idx = row * width + col;
-      const unsigned int idx_bot_left = (row + 1) * width + (col - 1);
-      const unsigned int idx_bot = (row + 1) * width + (col);
-      const unsigned int idx_bot_right = (row + 1) * width + (col + 1);
-      const unsigned int idx_left = (row)*width + (col - 1);
-      const unsigned int idx_right = (row)*width + (col + 1);
-      const unsigned int idx_top_left = (row - 1) * width + (col - 1);
-      const unsigned int idx_top = (row - 1) * width + (col);
-      const unsigned int idx_top_right = (row - 1) * width + (col + 1);
+    if (VACANT(grid[idx_bot])) {
+      next_grid[idx_bot] = SAND_TYPE;
+      next_grid[idx] = AIR_TYPE;
+    }
 
-      if (type == SAND_TYPE) {
-        if (VACANT(grid[idx_bot])) {
-          next_grid[idx_bot] = SAND_TYPE;
-          next_grid[idx] = AIR_TYPE;
-        }
+    else if (VACANT(grid[idx_bot_left])) {
+      next_grid[idx_bot_left] = SAND_TYPE;
+      next_grid[idx] = AIR_TYPE;
+    }
 
-        else if (VACANT(grid[idx_bot_left])) {
-          next_grid[idx_bot_left] = SAND_TYPE;
-          next_grid[idx] = AIR_TYPE;
-        }
-
-        else if (VACANT(grid[idx_bot_right])) {
-          next_grid[idx_bot_right] = SAND_TYPE;
-          next_grid[idx] = AIR_TYPE;
-        }
-      }
+    else if (VACANT(grid[idx_bot_right])) {
+      next_grid[idx_bot_right] = SAND_TYPE;
+      next_grid[idx] = AIR_TYPE;
     }
   }
 }
