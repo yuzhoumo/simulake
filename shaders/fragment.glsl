@@ -21,7 +21,9 @@ void main() {
   } else if (type == SAND_TYPE) {
     frag_color = vec4(1.0, 1.0, 0.0, 1.0); // yellow
   } else if (type == WATER_TYPE) {
-    frag_color = vec4(0.0, 0.0, 1.0, 1.0); // blue
+    vec3 light_blue = vec3(0.0, 0.5, 1.0); // light blue
+    vec3 dark_blue = vec3(0.0, 0.0, 0.5);  // dark blue
+    frag_color = vec4(mix(light_blue, dark_blue, mass), 1.0); // interpolated
   } else if (type == STONE_TYPE) {
     frag_color = vec4(0.0, 0.0, 0.0, 1.0); // black
   } else {
