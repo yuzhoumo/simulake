@@ -10,23 +10,28 @@
 
 __kernel void initialize(__global char *grid, __global char *next_grid,
                          const unsigned int width, const unsigned int height) {
-  const unsigned int size = get_global_size(0); // chunk size
+  const unsigned int size = get_global_size(0); // full grid size (rows)
   const unsigned int col = get_global_id(0);
   const unsigned int row = get_global_id(1);
 
   const unsigned int idx = row * width + col;
+
   // printf("%d-%d-%d\n", row, col, idx);
+
   grid[idx] = AIR_TYPE;
   next_grid[idx] = AIR_TYPE;
 }
 
 __kernel void random_init(__global char *grid, __global char *next_grid,
                           const unsigned int width, const unsigned int height) {
-  const unsigned int size = get_global_size(0); // chunk size
   const unsigned int col = get_global_id(0);
   const unsigned int row = get_global_id(1);
 
-  if (row == 0 && col % 5 == 1) {
+  const uint seed = 1337 + row;
+  const uint t = seed ^ (seed << 11);
+  const uint rand = (7331 + col) ^ ((7331 + col) >> 19) ^ (t ^ (t >> 8));
+
+  if (rand % 5 == 0) {
     const unsigned int idx = row * width + col;
     grid[idx] = SAND_TYPE;
   }
@@ -35,9 +40,8 @@ __kernel void random_init(__global char *grid, __global char *next_grid,
 __kernel void simulate(__global char *grid, __global char *next_grid,
                        const unsigned int width, const unsigned int height) {
   const unsigned int num_cells = width * height;
-  const unsigned int size = get_global_size(0); // == full grid size
-  const unsigned int col = get_global_id(0);    // <= local grid size (cols)
-  const unsigned int row = get_global_id(1);    // <= local grid size (rows)
+  const unsigned int col = get_global_id(0); // <= local grid size (cols)
+  const unsigned int row = get_global_id(1); // <= local grid size (rows)
 
   // clang-format off
   const unsigned int idx_top_left  = (row - 1) * width + (col - 1);
@@ -70,4 +74,24 @@ __kernel void simulate(__global char *grid, __global char *next_grid,
       next_grid[idx] = AIR_TYPE;
     }
   }
+}
+
+// TODO(vir): this doesnt work
+__kernel void render_texture(__write_only image2d_t texture,
+                             __global char *grid, __global char *next_grid,
+                             const unsigned int width,
+                             const unsigned int height,
+                             const unsigned int cell_size) {
+  const unsigned int num_cells = width * height;
+  const unsigned int size = get_global_size(0); // == full grid size
+  const unsigned int col = get_global_id(0);    // <= local grid size (cols)
+  const unsigned int row = get_global_id(1);    // <= local grid size (rows)
+
+  const unsigned int idx = (row + 0) * width + (col + 0);
+  const unsigned int type = (int)grid[idx]; // scale up from
+  const int2 out_coord = {row, col};
+
+  // texture[idx] = type;
+  float4 out_color = (float4)(0.0f, 0.0f, 0.0f, (float)type);
+  write_imagef(texture, out_coord, (float)type);
 }

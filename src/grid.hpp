@@ -37,9 +37,6 @@ public:
   bool set_at(std::uint32_t, std::uint32_t, const CellType) noexcept;
   bool set_state(std::uint32_t, std::uint32_t, const CellType) noexcept;
 
-  /* utils */
-  // void set_random_state(const std::uint32_t) noexcept;
-
   inline std::uint32_t get_width() const noexcept { return width; }
   inline std::uint32_t get_height() const noexcept { return height; }
 
