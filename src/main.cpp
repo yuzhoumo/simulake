@@ -4,24 +4,23 @@
 
 #include <omp.h>
 
-#include <glad/glad.h>
-
-#include <GLFW/glfw3.h>
+#include "simulake.hpp"
 
 #include "constants.hpp"
 #include "renderer.hpp"
 #include "shader.hpp"
 
+#include "device_grid.hpp"
 #include "grid.hpp"
 #include "utils.hpp"
 
 void test_renderer(int argc, char **argv) {
   PROFILE_FUNCTION();
 
-  constexpr auto WIDTH = 1280;
-  constexpr auto HEIGHT = 720;
-  constexpr auto CELL_SIZE = 4;
-  constexpr auto NUM_THREADS = 2;
+  constexpr auto WIDTH = 1920;
+  constexpr auto HEIGHT = 1080;
+  constexpr auto CELL_SIZE = 1;
+  constexpr auto NUM_THREADS = 10;
 
   {
     int rc = glfwInit();
@@ -99,7 +98,6 @@ void test_simulation() {
 
   // example: demo sand simluation
   {
-    // simulake::scope_timer_t timer("full sim");
     PROFILE_SCOPE("sim");
 
     for (int i = 0; i < SIM_STEPS; i += 1) {
@@ -121,8 +119,29 @@ void test_simulation() {
     std::cout << grid << std::endl;
 }
 
+void test_device_grid() {
+  PROFILE_FUNCTION();
+  constexpr auto WIDTH = 1920;
+  constexpr auto HEIGHT = 1080;
+  constexpr auto CELL_SIZE = 1;
+  constexpr auto SIM_STEPS = 1;
+
+  simulake::DeviceGrid grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE);
+
+  // example: demo sand simluation on gpu
+  {
+    for (int i = 0; i < SIM_STEPS; i += 1) {
+      PROFILE_SCOPE("sim");
+      grid.simulate();
+    }
+  }
+}
+
 int main(int argc, char **argv) {
   // test_simulation();
-  test_renderer(argc, argv);
+  // test_renderer(argc, argv);
+
+  test_device_grid();
+
   return 0;
 }

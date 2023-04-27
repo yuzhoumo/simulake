@@ -1,6 +1,8 @@
 #include <iostream>
 
-#include <glad/glad.h>
+#include <glm/glm.hpp>
+
+#include "simulake.hpp"
 
 #include "constants.hpp"
 #include "renderer.hpp"
@@ -11,7 +13,7 @@ namespace simulake {
 
 Renderer::Renderer(const std::uint32_t width, const std::uint32_t height,
                    const std::uint32_t cell_size)
-                          : window(width, height, "simulake") {
+    : window(width, height, "simulake") {
 
   /* set state variables */
   num_cells = 0;

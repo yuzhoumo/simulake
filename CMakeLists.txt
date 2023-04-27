@@ -43,6 +43,8 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 
+target_precompile_headers(${PROJECT_NAME} PRIVATE ${HEADER_FILES})
+
 # defines
 target_compile_definitions(${PROJECT_NAME} PRIVATE "DEBUG=$<IF:$<CONFIG:Debug>,1,0>")
 
@@ -117,3 +119,8 @@ target_link_libraries(${PROJECT_NAME} glfw)
 #   GIT_TAG v1.7.0)
 # FetchContent_MakeAvailable(benchmark)
 # target_link_libraries(${PROJECT_NAME} benchmark::benchmark)
+
+find_package(OpenCL REQUIRED)
+target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCL_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} ${OpenCL_LIBRARY})
+

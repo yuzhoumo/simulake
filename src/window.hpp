@@ -4,8 +4,7 @@
 #include <memory>
 #include <string_view>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "simulake.hpp"
 
 namespace simulake {
 

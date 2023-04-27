@@ -11,8 +11,7 @@ namespace simulake {
 class Grid {
 public:
   /* default: initialize empty grid */
-  explicit Grid(const std::uint32_t,
-                const std::uint32_t);
+  explicit Grid(const std::uint32_t, const std::uint32_t);
 
   /* enable moves */
   explicit Grid(Grid &&) = default;
