@@ -12,9 +12,7 @@
 namespace simulake {
 
 Renderer::Renderer(const std::uint32_t width, const std::uint32_t height,
-                   const std::uint32_t cell_size)
-    : window(width, height, "simulake") {
-
+                   const std::uint32_t cell_size) {
   /* set state variables */
   num_cells = 0;
   set_cell_size(cell_size);
@@ -131,9 +129,6 @@ void Renderer::render() noexcept {
 
   /* draw triangles */
   glDrawElements(GL_TRIANGLES, ebo_indices.size(), GL_UNSIGNED_INT, 0);
-
-  /* flush framebuffer to window */
-  window.swap_buffers();
 }
 
 void Renderer::regenerate_grid() noexcept {
@@ -257,7 +252,5 @@ void Renderer::set_cell_size(const std::uint32_t new_size) noexcept {
   cell_size = new_size;
   shader.set_int("u_cell_size", cell_size);
 }
-
-const Window &Renderer::get_window() const noexcept { return window; }
 
 } /* namespace simulake */

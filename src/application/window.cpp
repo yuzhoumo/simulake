@@ -2,7 +2,7 @@
 
 #include "window.hpp"
 
-namespace simulake {
+namespace app {
 
 void Window::framebuffer_size_callback(GLFWwindow *, int, int) {
   // TODO(vir): handle resize events?

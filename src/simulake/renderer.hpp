@@ -7,10 +7,8 @@
 
 #include "grid.hpp"
 #include "shader.hpp"
-#include "window.hpp"
 
 namespace simulake {
-class Window;
 
 class Renderer {
 public:
@@ -37,9 +35,6 @@ public:
   /* render frame based on dataptr */
   void render() noexcept;
 
-  /* get a reference to renderer window */
-  const Window &get_window() const noexcept;
-
 private:
   /* regenerate grid vertices and texture coordinates */
   void regenerate_grid() noexcept;
@@ -64,7 +59,6 @@ private:
   std::vector<float> vertices;
   std::vector<unsigned int> ebo_indices;
 
-  Window window;
   Shader shader;
   GLuint _VAO, _VBO, _EBO, _GRID_DATA_TEXTURE;
 };

@@ -3,8 +3,8 @@
 
 #include "utils.hpp"
 
-#include "cell.hpp"
-#include "grid.hpp"
+#include "simulake/cell.hpp"
+#include "simulake/grid.hpp"
 
 std::ostream &operator<<(std::ostream &stream, const simulake::CellType type) {
   switch (type) {

@@ -4,8 +4,8 @@
 #include <iostream>
 #include <vector>
 
-#include "cell.hpp"
-#include "grid.hpp"
+#include "simulake/cell.hpp"
+#include "simulake/grid.hpp"
 
 #if DEBUG
 #define BREAKPOINT __builtin_trap()

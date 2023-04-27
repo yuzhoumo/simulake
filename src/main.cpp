@@ -4,14 +4,13 @@
 
 #include <omp.h>
 
-#include "simulake.hpp"
+#include "simulake/simulake.hpp"
 
-#include "constants.hpp"
-#include "renderer.hpp"
-#include "shader.hpp"
+#include "simulake/renderer.hpp"
+#include "simulake/shader.hpp"
 
-#include "device_grid.hpp"
-#include "grid.hpp"
+#include "simulake/device_grid.hpp"
+#include "simulake/grid.hpp"
 #include "utils.hpp"
 
 void test_renderer(int argc, char **argv) {
@@ -28,6 +27,7 @@ void test_renderer(int argc, char **argv) {
     omp_set_num_threads(NUM_THREADS);
   }
 
+  app::Window window = app::Window{WIDTH, HEIGHT, "simulake"};
   simulake::Renderer renderer(WIDTH, HEIGHT, CELL_SIZE);
   simulake::Grid test_grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE);
 
@@ -49,7 +49,7 @@ void test_renderer(int argc, char **argv) {
   renderer.submit_grid(test_grid);
 
   // application loop
-  while (!glfwWindowShouldClose(renderer.get_window().get_window_ptr())) {
+  while (!glfwWindowShouldClose(window.get_window_ptr())) {
     PROFILE_SCOPE("main_loop");
     frame_count += 1;
 
@@ -57,6 +57,7 @@ void test_renderer(int argc, char **argv) {
     {
       // PROFILE_SCOPE("render_pass");
       renderer.render();
+      window.swap_buffers();
     }
 
     // sim step
@@ -69,10 +70,8 @@ void test_renderer(int argc, char **argv) {
     glfwPollEvents();
 
     // escape key
-    if (glfwGetKey(renderer.get_window().get_window_ptr(), GLFW_KEY_ESCAPE) ==
-        GLFW_PRESS)
-      glfwSetWindowShouldClose(renderer.get_window().get_window_ptr(),
-                               GLFW_TRUE);
+    if (glfwGetKey(window.get_window_ptr(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+      glfwSetWindowShouldClose(window.get_window_ptr(), GLFW_TRUE);
   }
 
   // clang-format off
@@ -131,6 +130,7 @@ void test_device_grid() {
   }
 
   // example: demo sand simluation on gpu
+  app::Window window = app::Window{WIDTH, HEIGHT, "simulake"};
   simulake::Renderer renderer{WIDTH, HEIGHT, CELL_SIZE};
   simulake::DeviceGrid grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE, CELL_SIZE);
 
@@ -143,7 +143,7 @@ void test_device_grid() {
   std::chrono::time_point start = std::chrono::high_resolution_clock::now();
 
   // application loop
-  while (!glfwWindowShouldClose(renderer.get_window().get_window_ptr())) {
+  while (!glfwWindowShouldClose(window.get_window_ptr())) {
     PROFILE_SCOPE("main_loop");
 
     frame_count += 1;
@@ -152,6 +152,7 @@ void test_device_grid() {
     {
       // PROFILE_SCOPE("render_pass");
       renderer.render();
+      window.swap_buffers();
     }
 
     // sim step
@@ -164,10 +165,8 @@ void test_device_grid() {
     glfwPollEvents();
 
     // escape key
-    if (glfwGetKey(renderer.get_window().get_window_ptr(), GLFW_KEY_ESCAPE) ==
-        GLFW_PRESS)
-      glfwSetWindowShouldClose(renderer.get_window().get_window_ptr(),
-                               GLFW_TRUE);
+    if (glfwGetKey(window.get_window_ptr(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+      glfwSetWindowShouldClose(window.get_window_ptr(), GLFW_TRUE);
   }
 
   // clang-format off

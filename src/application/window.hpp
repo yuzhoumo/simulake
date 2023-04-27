@@ -1,12 +1,12 @@
 #ifndef SIMULAKE_WINDOW_HPP
 #define SIMULAKE_WINDOW_HPP
 
+#include "../simulake/simulake.hpp"
+
 #include <memory>
 #include <string_view>
 
-#include "simulake.hpp"
-
-namespace simulake {
+namespace app {
 
 class Window {
 public:
@@ -43,6 +43,6 @@ private:
   const std::string_view title;
 };
 
-} /* namespace simulake */
+} /* namespace app */
 
 #endif
