@@ -89,10 +89,11 @@ __kernel void render_texture(__write_only image2d_t texture,
   const unsigned int row = get_global_id(1);    // <= local grid size (rows)
 
   const unsigned int idx = (row + 0) * width + (col + 0);
-  const unsigned int type = (int)grid[idx]; // scale up from
-  const int2 out_coord = {row, col};
+  const unsigned int type = (int)grid[idx]; // scale up from std::uint8_t
 
-  // texture[idx] = type;
-  float4 out_color = (float4)(0.0f, 0.0f, 0.0f, (float)type);
-  write_imagef(texture, out_coord, (float)type);
+  // write texture
+  // attributes go here
+  const float4 out_color = {type, 1.f, 0.f, 1.f};
+  const int2 out_coord = {width - col, height - row};
+  write_imagef(texture, out_coord, out_color);
 }

@@ -44,7 +44,8 @@ public:
   /* reset grid to empty (AIR) cells */
   void reset() const noexcept;
 
-  std::vector<CellType> compute_texture() const noexcept;
+  /* set gl texture target */
+  void set_texture_target(const GLuint) noexcept;
 
   /* useful for testing */
   void initialize_random() const noexcept;
@@ -79,9 +80,15 @@ private:
   void initialize_device() noexcept;
   void initialize_kernels() noexcept;
 
+  /* render into gl texture */
+  void render_texture() const noexcept;
+
+  /* helpers */
   static std::string read_program_source(const std::string_view) noexcept;
   void print_cl_debug_info() const noexcept;
+  void print_cl_image_debug_info(const cl_image) const noexcept;
 
+  GLuint texture_target;
   std::uint32_t stride;
   std::uint32_t num_cells;
   std::uint32_t memory_size;

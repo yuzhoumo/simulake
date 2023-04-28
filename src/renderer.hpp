@@ -32,7 +32,7 @@ public:
 
   /* submit new grid data to renderer */
   void submit_grid(const Grid &) noexcept;
-  void submit_grid(const DeviceGrid &) noexcept;
+  void submit_grid(DeviceGrid &) noexcept;
 
   /* render frame based on dataptr */
   void render() noexcept;
@@ -49,7 +49,6 @@ private:
 
   /* update grid texture based on new simulation state */
   void update_grid_data_texture(const Grid &) noexcept;
-  void update_grid_data_texture(const DeviceGrid &) noexcept;
 
   /* initialize opengl and shaders */
   void initialize_graphics() noexcept;

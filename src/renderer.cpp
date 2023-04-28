@@ -97,7 +97,7 @@ void Renderer::submit_grid(const Grid &grid) noexcept {
   update_grid_data_texture(grid);
 }
 
-void Renderer::submit_grid(const DeviceGrid &grid) noexcept {
+void Renderer::submit_grid(DeviceGrid &grid) noexcept {
   const auto grid_width = grid.get_width();
   const auto grid_height = grid.get_height();
   const auto new_num_cells = grid_width * grid_height;
@@ -111,11 +111,18 @@ void Renderer::submit_grid(const DeviceGrid &grid) noexcept {
     viewport_size[1] = cell_size * grid_height;
     glViewport(0, 0, viewport_size[0], viewport_size[1]);
 
+    // resize texture, fill with 0.f
+    std::vector<float> texture_data(num_cells * grid.get_stride(), 0.f);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,
+                 GL_FLOAT, texture_data.data());
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, grid_size.x, grid_size.y, 0,
+    //              GL_RGBA, GL_FLOAT, texture_data.data());
+
+    grid.set_texture_target(_GRID_DATA_TEXTURE);
+
     regenerate_grid();
     regenerate_pipeline();
   }
-
-  update_grid_data_texture(grid);
 }
 
 void Renderer::render() noexcept {
@@ -237,37 +244,6 @@ void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
       // TODO(vir): add support for mass / other properties
       // clang-format off
       texture_data[base_index] = static_cast<float>(grid.type_at(grid_height - row - 1, col));
-      texture_data[base_index + 1] = 1.f;
-      // clang-format on
-    }
-  }
-
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,
-               GL_FLOAT, texture_data.data());
-}
-
-void Renderer::update_grid_data_texture(const DeviceGrid &grid) noexcept {
-  /* make sure we are already resized to this grid size */
-  assert(grid_size.x == grid.get_width());
-  assert(grid_size.y == grid.get_height());
-
-  const auto grid_width = grid_size.x;
-  const auto grid_height = grid_size.y;
-  const auto flat_texture = grid.compute_texture();
-
-  /* number of cell attributes */
-  const uint32_t stride = grid.get_stride();
-  std::vector<float> texture_data(num_cells * stride, 1.f);
-
-  // TODO(vir): use opencl-opengl interop to remove this memory copy
-  for (std::uint32_t row = 0; row < grid_height; row += 1) {
-    for (std::uint32_t col = 0; col < grid_width; col += 1) {
-      const auto base_index = (row * grid_width + col) * stride;
-      const auto flat_index = (grid_height - row - 1) * grid_width + col;
-
-      // TODO(vir): add support for mass / other properties
-      // clang-format off
-      texture_data[base_index] = static_cast<float>(flat_texture[flat_index]);
       texture_data[base_index + 1] = 1.f;
       // clang-format on
     }

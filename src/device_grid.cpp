@@ -145,10 +145,9 @@ void DeviceGrid::initialize_kernels() noexcept {
 
   // NOTE(vir): we set render kernel data args in Device::render_texture()
   // these are the fixed ones
-  // CL_CALL(clSetKernelArg(sim_context.render_kernel, 0, sizeof(cl_mem), &sim_context.texture));
-  // CL_CALL(clSetKernelArg(sim_context.render_kernel, 3, sizeof(unsigned int), &width));
-  // CL_CALL(clSetKernelArg(sim_context.render_kernel, 4, sizeof(unsigned int), &height));
-  // CL_CALL(clSetKernelArg(sim_context.render_kernel, 5, sizeof(unsigned int), &cell_size));
+  CL_CALL(clSetKernelArg(sim_context.render_kernel, 3, sizeof(unsigned int), &width));
+  CL_CALL(clSetKernelArg(sim_context.render_kernel, 4, sizeof(unsigned int), &height));
+  CL_CALL(clSetKernelArg(sim_context.render_kernel, 5, sizeof(unsigned int), &cell_size));
 
   // NOTE(vir): we set sim kernel data args in DeviceGrid::simulate()
   // these are the fixed ones
@@ -203,25 +202,10 @@ void DeviceGrid::simulate() noexcept {
         flip_flag ? sim_context.grid : sim_context.next_grid, 0, 0, memory_size,
         0, nullptr, nullptr));
 
+    render_texture();
+
     // wait for kernel to finish
     CL_CALL(clFinish(sim_context.queue));
-  }
-
-  // render step
-  {
-    // TODO(vir): do we need both current and previous frame? might be useful
-    // for effects
-
-    // clang-format off
-    // CL_CALL(clSetKernelArg(sim_context.render_kernel, flip_flag ? 2 : 1, sizeof(cl_mem), &sim_context.grid));
-    // CL_CALL(clSetKernelArg(sim_context.render_kernel, flip_flag ? 1 : 2, sizeof(cl_mem), &sim_context.next_grid));
-    // clang-format on
-
-    // CL_CALL(clEnqueueNDRangeKernel(sim_context.queue,
-    // sim_context.render_kernel,
-    //                                2, nullptr, global_item_size,
-    //                                local_item_size, 0, nullptr, nullptr));
-    // CL_CALL(clFinish(sim_context.queue));
   }
 
   flip_flag = !flip_flag;
@@ -335,32 +319,84 @@ void DeviceGrid::print_cl_debug_info() const noexcept {
   std::cout << "\nmax_work_item_dims:     " << max_work_item_dims;
   std::cout << "\nmax_work_item_sizes:    " << work_item_sizes[0];
 
-  std::cout << "---OPENCL EXTENSIONS---" << std::endl;
-  std::cout << extensions << std::endl;
-  std::cout << "-----------------------" << std::endl;
+  std::cout << "\n---OPENCL EXTENSIONS---\n";
+  std::cout << extensions;
+  std::cout << "\n-----------------------" << std::endl;
 
   delete[] extensions;
 }
 
-std::vector<CellType> DeviceGrid::compute_texture() const noexcept {
+void DeviceGrid::print_cl_image_debug_info(
+    const cl_image image) const noexcept {
+  cl_int error = CL_SUCCESS;
+
+  cl_image_format format{};
+  size_t image_width = 0;
+  size_t image_height = 0;
+  size_t image_depth = 0;
+  size_t elem_size = 0;
+
+  // clang-format off
+  CL_CALL(clGetImageInfo(image, CL_IMAGE_FORMAT, sizeof(cl_image_format), &format, nullptr));
+  CL_CALL(clGetImageInfo(image, CL_IMAGE_ELEMENT_SIZE, sizeof(size_t), &elem_size, nullptr));
+  CL_CALL(clGetImageInfo(image, CL_IMAGE_WIDTH, sizeof(size_t), &image_width, nullptr));
+  CL_CALL(clGetImageInfo(image, CL_IMAGE_HEIGHT, sizeof(size_t), &image_height, nullptr));
+  CL_CALL(clGetImageInfo(image, CL_IMAGE_DEPTH, sizeof(size_t), &image_depth, nullptr));
+  // clang-format on
+
+  std::cout << "---OPENCL-OPENGL texture-cl_iamge---\n";
+  std::cout << "image_channel_order: " << format.image_channel_order;
+  std::cout << "\nimage_channel_data_type: " << format.image_channel_data_type;
+  std::cout << "\nelem_size (bytes): " << elem_size;
+  std::cout << "\nimage_width: " << image_width;
+  std::cout << "\nimage_height: " << image_height;
+  std::cout << "\nimage_depth: " << image_depth;
+  std::cout << "\n------------------------------------" << std::endl;
+}
+
+void DeviceGrid::render_texture() const noexcept {
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {10, 10};
 
-  // NOTE(vir): image is CL_MEM_OBJECT_IMAGE2D;
-  // cl_int error = CL_SUCCESS;
-  // cl_mem image = clCreateFromGLTexture(sim_context.context,
-  // CL_MEM_READ_WRITE,
-  //                                      GL_TEXTURE_2D, 0, texture, &error);
-  // CL_CALL(error);
+  // NOTE(vir):
+  // - image is CL_MEM_OBJECT_IMAGE2D;
+  // - image format and datatype what texture was initialized to
+  // - eg: with stride = 2, format = CL_RG (2 channels), type = CL_FLOAT
+  cl_int error = CL_SUCCESS;
+  cl_image image =
+      clCreateFromGLTexture(sim_context.context, CL_MEM_READ_WRITE,
+                            GL_TEXTURE_2D, 0, texture_target, &error);
+  CL_CALL(error);
 
-  // TODO(vir): passing data through CPU
-  std::vector<CellType> grid(num_cells, CellType::NONE);
-  CL_CALL(clEnqueueReadBuffer(
-      sim_context.queue, flip_flag ? sim_context.grid : sim_context.next_grid,
-      CL_TRUE, 0, memory_size, grid.data(), 0, nullptr, nullptr));
-  CL_CALL(clFinish(sim_context.queue));
+#if DEBUG
+  print_cl_image_debug_info(image);
+#endif
 
-  return grid;
+  CL_CALL(clEnqueueAcquireGLObjects(sim_context.queue, 1, &image, 0, nullptr,
+                                    nullptr));
+
+  // render into texture
+  {
+    // TODO(vir): do we need both current and previous frame? might be useful
+    // for effects
+
+    // clang-format off
+    CL_CALL(clSetKernelArg(sim_context.render_kernel, 0, sizeof(cl_image), &image));
+    CL_CALL(clSetKernelArg(sim_context.render_kernel, flip_flag ? 2 : 1, sizeof(cl_mem), &sim_context.grid));
+    CL_CALL(clSetKernelArg(sim_context.render_kernel, flip_flag ? 1 : 2, sizeof(cl_mem), &sim_context.next_grid));
+    // clang-format on
+
+    CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.render_kernel,
+                                   2, nullptr, global_item_size,
+                                   local_item_size, 0, nullptr, nullptr));
+  }
+
+  CL_CALL(clEnqueueReleaseGLObjects(sim_context.queue, 1, &image, 0, nullptr,
+                                    nullptr));
+}
+
+void DeviceGrid::set_texture_target(const GLuint target) noexcept {
+  texture_target = target;
 }
 
 } // namespace simulake
