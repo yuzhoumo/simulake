@@ -77,7 +77,6 @@ __kernel void simulate(__global char *grid, __global char *next_grid,
   }
 }
 
-// TODO(vir): this doesnt work
 __kernel void render_texture(__write_only image2d_t texture,
                              __global char *grid, __global char *next_grid,
                              const unsigned int width,

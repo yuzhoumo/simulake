@@ -6,6 +6,7 @@
 #include <memory>
 #include <string_view>
 
+namespace simulake {
 namespace app {
 
 class Window {
@@ -15,8 +16,8 @@ public:
                   const std::string_view);
 
   /* enable moves */
-  explicit Window(Window &&);
-  Window &operator=(Window &&);
+  explicit Window(Window &&) = default;
+  Window &operator=(Window &&) = delete;
 
   /* disable copies */
   Window(const Window &) = delete;
@@ -27,7 +28,7 @@ public:
 
 private:
   /* print error and terminate */
-  [[noreturn]] void failure_exit() noexcept;
+  [[noreturn]] void failure_exit() const noexcept;
 
   static void framebuffer_size_callback(GLFWwindow *, int, int);
 
@@ -44,5 +45,6 @@ private:
 };
 
 } /* namespace app */
+} // namespace simulake
 
 #endif

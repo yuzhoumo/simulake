@@ -119,6 +119,7 @@ target_link_libraries(${PROJECT_NAME} glfw)
 # FetchContent_MakeAvailable(benchmark)
 # target_link_libraries(${PROJECT_NAME} benchmark::benchmark)
 
+# opencl
 find_package(OpenCL REQUIRED)
 target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCL_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${OpenCL_LIBRARY})

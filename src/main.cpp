@@ -27,7 +27,7 @@ void test_renderer(int argc, char **argv) {
     omp_set_num_threads(NUM_THREADS);
   }
 
-  app::Window window = app::Window{WIDTH, HEIGHT, "simulake"};
+  simulake::app::Window window{WIDTH, HEIGHT, "simulake"};
   simulake::Renderer renderer(WIDTH, HEIGHT, CELL_SIZE);
   simulake::Grid test_grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE);
 
@@ -130,7 +130,8 @@ void test_device_grid() {
   }
 
   // example: demo sand simluation on gpu
-  app::Window window = app::Window{WIDTH, HEIGHT, "simulake"};
+  simulake::app::Window window =
+      simulake::app::Window{WIDTH, HEIGHT, "simulake"};
   simulake::Renderer renderer{WIDTH, HEIGHT, CELL_SIZE};
   simulake::DeviceGrid grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE, CELL_SIZE);
 

@@ -2,6 +2,7 @@
 
 #include "window.hpp"
 
+namespace simulake {
 namespace app {
 
 void Window::framebuffer_size_callback(GLFWwindow *, int, int) {
@@ -33,13 +34,13 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
 
 void Window::swap_buffers() const noexcept { glfwSwapBuffers(_window.get()); }
 
-[[noreturn]] void Window::failure_exit() noexcept {
+[[noreturn]] void Window::failure_exit() const noexcept {
   std::cerr << "ERROR::WINDOW_FAILURE_EXIT" << std::endl;
-
   glfwTerminate();
   std::exit(-1);
 }
 
 GLFWwindow *Window::get_window_ptr() const noexcept { return _window.get(); }
 
+} // namespace app
 } /* namespace simulake */

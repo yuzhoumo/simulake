@@ -10,6 +10,7 @@
 
 namespace simulake {
 
+// TODO(vir): only Release mode should have disabled asserts
 #if DEBUG
 #define CL_CALL(x) assert(x == CL_SUCCESS)
 #else
