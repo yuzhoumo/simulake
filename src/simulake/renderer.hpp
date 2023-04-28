@@ -36,12 +36,6 @@ public:
   void render() noexcept;
 
 private:
-  /* regenerate grid vertices and texture coordinates */
-  void regenerate_grid() noexcept;
-
-  /* regenerate opengl structures */
-  void regenerate_pipeline() noexcept;
-
   /* update grid texture based on new simulation state */
   void update_grid_data_texture(const Grid &) noexcept;
 

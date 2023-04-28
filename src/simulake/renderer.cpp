@@ -22,23 +22,31 @@ Renderer::Renderer(const std::uint32_t width, const std::uint32_t height,
 }
 
 Renderer::~Renderer() {
-  /* unbind gl objects */
-  glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-  glBindTexture(GL_TEXTURE_2D, 0);
-
-  /* delete gl objects */
   glDeleteProgram(shader.get_id());
+  glUseProgram(0);
+
   glDeleteVertexArrays(1, &_VAO);
+  glBindVertexArray(0);
+
   glDeleteBuffers(1, &_VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
   glDeleteTextures(1, &_GRID_DATA_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Renderer::initialize_graphics() noexcept {
   /* vertex and fragment shader locations */
   constexpr auto VERTEX_SHADER_PATH = "./shaders/vertex.glsl";
   constexpr auto FRAGMENT_SHADER_PATH = "./shaders/fragment.glsl";
+
+  /* fullscreen quad vertices and tex coords */
+  constexpr float FS_QUAD[] = {
+    -1.0f,  1.0f, 0.0f, 1.0f,  // top-left corner
+     1.0f,  1.0f, 1.0f, 1.0f,  // top-right corner
+    -1.0f, -1.0f, 0.0f, 0.0f,  // lower-left corner
+     1.0f, -1.0f, 1.0f, 0.0f,  // lower-right corner
+  };
 
   /* compile and bind shaders */
   shader = Shader(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
@@ -54,7 +62,6 @@ void Renderer::initialize_graphics() noexcept {
   /* bind buffers */
   glBindVertexArray(_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, _VBO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 
   /* bind texture and set params */
   glBindTexture(GL_TEXTURE_2D, _GRID_DATA_TEXTURE);
@@ -66,12 +73,15 @@ void Renderer::initialize_graphics() noexcept {
   /* location 0: vertex positions */
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
-                        static_cast<void *>(0));
+                        (void*)(0));
 
   /* location 1: texture coordinates */
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
-                        (void *)(2 * sizeof(float)));
+                        (void*)(2 * sizeof(float)));
+
+  /* load vertices and tex coords into buffer */
+  glBufferData(GL_ARRAY_BUFFER, sizeof(FS_QUAD), FS_QUAD, GL_STATIC_DRAW);
 }
 
 void Renderer::submit_grid(const Grid &grid) noexcept {
@@ -87,9 +97,6 @@ void Renderer::submit_grid(const Grid &grid) noexcept {
     viewport_size[0] = cell_size * grid_width;
     viewport_size[1] = cell_size * grid_height;
     glViewport(0, 0, viewport_size[0], viewport_size[1]);
-
-    regenerate_grid();
-    regenerate_pipeline();
   }
 
   update_grid_data_texture(grid);
@@ -109,115 +116,19 @@ void Renderer::submit_grid(DeviceGrid &grid) noexcept {
     viewport_size[1] = cell_size * grid_height;
     glViewport(0, 0, viewport_size[0], viewport_size[1]);
 
-    // resize texture, fill with 0.f
+    /* resize texture, fill with 0.f */
     std::vector<float> texture_data(num_cells * grid.get_stride(), 0.f);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,
                  GL_FLOAT, texture_data.data());
-    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, grid_size.x, grid_size.y, 0,
-    //              GL_RGBA, GL_FLOAT, texture_data.data());
 
     grid.set_texture_target(_GRID_DATA_TEXTURE);
-
-    regenerate_grid();
-    regenerate_pipeline();
   }
 }
 
 void Renderer::render() noexcept {
-  /* clear framebuffer colors */
+  /* clear framebuffer and draw */
   glClear(GL_COLOR_BUFFER_BIT);
-
-  /* draw triangles */
-  glDrawElements(GL_TRIANGLES, ebo_indices.size(), GL_UNSIGNED_INT, 0);
-}
-
-void Renderer::regenerate_grid() noexcept {
-  vertices.clear();
-  ebo_indices.clear();
-
-  vertices.reserve(16 * grid_size.x * grid_size.y);
-  ebo_indices.reserve(6 * grid_size.x * grid_size.y);
-
-  // TODO(vir): is this a bug? using width instead of height
-  for (int i = 0; i < grid_size.x; ++i) {
-    for (int j = 0; j < grid_size.y; ++j) {
-      /*
-       * 1----3  generate a quad in screen-space
-       * |    |  vertices 1, 2 are shared using EBO:
-       * |    |    triangle1: (0, 1, 2)
-       * 0----2    triangle2: (1, 3, 2)
-       */
-
-      {
-        /* push vertices and texture coordinates */
-        const glm::vec2 bot_left{
-            2.0f * (i * cell_size) / viewport_size.x - 1.0f,
-            2.0f * (j * cell_size) / viewport_size.y - 1.0f,
-        };
-
-        const glm::vec2 top_right{
-            2.0f * (i + 1) * cell_size / viewport_size.x - 1.0f,
-            2.0f * (j + 1) * cell_size / viewport_size.y - 1.0f,
-        };
-
-        const glm::vec2 tex_bot_left{
-            static_cast<float>(i) / grid_size.x,
-            static_cast<float>(j) / grid_size.y,
-        };
-
-        const glm::vec2 tex_top_right{
-            static_cast<float>(i + 1) / grid_size.x,
-            static_cast<float>(j + 1) / grid_size.y,
-        };
-
-        vertices.push_back(bot_left.x);
-        vertices.push_back(bot_left.y);
-        vertices.push_back(tex_bot_left.x);
-        vertices.push_back(tex_bot_left.y);
-
-        vertices.push_back(bot_left.x);
-        vertices.push_back(top_right.y);
-        vertices.push_back(tex_bot_left.x);
-        vertices.push_back(tex_top_right.y);
-
-        vertices.push_back(top_right.x);
-        vertices.push_back(bot_left.y);
-        vertices.push_back(tex_top_right.x);
-        vertices.push_back(tex_bot_left.y);
-
-        vertices.push_back(top_right.x);
-        vertices.push_back(top_right.y);
-        vertices.push_back(tex_top_right.x);
-        vertices.push_back(tex_top_right.y);
-      }
-
-      { /* push EBO indices */
-        const std::uint32_t base_index = vertices.size() / 4;
-
-        ebo_indices.push_back(base_index + 0);
-        ebo_indices.push_back(base_index + 1);
-        ebo_indices.push_back(base_index + 2);
-
-        ebo_indices.push_back(base_index + 1);
-        ebo_indices.push_back(base_index + 3);
-        ebo_indices.push_back(base_index + 2);
-      }
-    }
-  }
-}
-
-void Renderer::regenerate_pipeline() noexcept {
-  /* NOTE(vir): dont need to bind resources (see initialize_graphics)
-   * only need to update data on device */
-
-  /* push vertex data */
-  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(),
-               &(vertices.front()), GL_STREAM_DRAW);
-
-  /* push index data */
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               sizeof(std::uint32_t) * ebo_indices.size(),
-               &(ebo_indices.front()), GL_STREAM_DRAW);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
