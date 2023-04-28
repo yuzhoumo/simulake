@@ -364,7 +364,7 @@ void DeviceGrid::render_texture() const noexcept {
   // - eg: with stride = 2, format = CL_RG (2 channels), type = CL_FLOAT
   cl_int error = CL_SUCCESS;
   cl_image image =
-      clCreateFromGLTexture(sim_context.context, CL_MEM_READ_WRITE,
+      clCreateFromGLTexture(sim_context.context, CL_MEM_WRITE_ONLY,
                             GL_TEXTURE_2D, 0, texture_target, &error);
   CL_CALL(error);
 
