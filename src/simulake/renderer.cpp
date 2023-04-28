@@ -4,7 +4,6 @@
 
 #include "simulake.hpp"
 
-#include "constants.hpp"
 #include "renderer.hpp"
 #include "shader.hpp"
 #include "utils.hpp"

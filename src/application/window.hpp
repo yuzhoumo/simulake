@@ -1,7 +1,7 @@
 #ifndef SIMULAKE_WINDOW_HPP
 #define SIMULAKE_WINDOW_HPP
 
-#include "../simulake/simulake.hpp"
+#include "graphics.hpp"
 
 #include <memory>
 #include <string_view>
