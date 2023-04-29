@@ -5,11 +5,20 @@
 
 #include <glm/glm.hpp>
 
-#include "grid.hpp"
 #include "device_grid.hpp"
+#include "grid.hpp"
 #include "shader.hpp"
 
 namespace simulake {
+
+// template <typename G>
+// concept grid_t = requires(G grid) {
+//                    { grid.reset() };
+//                    { grid.simulate() };
+//                    { grid.get_width() } -> std::integral;
+//                    { grid.get_height() } -> std::integral;
+//                    { grid.get_height() } -> std::integral;
+//                  };
 
 class Renderer {
 public:

@@ -39,6 +39,7 @@ public:
 
   inline std::uint32_t get_width() const noexcept { return width; }
   inline std::uint32_t get_height() const noexcept { return height; }
+  inline std::uint32_t get_stride() const noexcept { return stride; }
 
 private:
   /* grid is represented as a 2D array of CellType (int ids) */
@@ -48,7 +49,9 @@ private:
   cell_grid_t _grid;      // completed last grid
   cell_grid_t _next_grid; // next grid being computed, swap at end of simulate
 
-  std::uint32_t width, height;
+  std::uint32_t width;
+  std::uint32_t height;
+  std::uint32_t stride;
 };
 
 } /* namespace simulake */

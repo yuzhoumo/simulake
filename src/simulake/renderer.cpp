@@ -138,7 +138,7 @@ void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
   const auto grid_height = grid_size.y;
 
   /* number of cell attributes */
-  const std::uint32_t stride = 2;
+  const auto stride = grid.get_stride();
 
   std::vector<float> texture_data(num_cells * stride);
   for (std::uint32_t row = 0; row < grid_height; row += 1) {

@@ -42,12 +42,12 @@ public:
     // clang-format on
   };
 
-  // not pure virtual becase we want want to use static functions
   /* step forward simulation by 1 step, return new state of cell */
   // static CellType step(const position_t &pos, Grid &grid) noexcept = 0;
+  // not pure virtual becase we want want to use static functions
 
-  [[nodiscard]] static context_t get_cell_context(const position_t &,
-                                                  const Grid &) noexcept;
+  [[nodiscard]] static inline context_t get_cell_context(const position_t &,
+                                                         const Grid &) noexcept;
 
   // needed for any base class
   virtual ~BaseCell() = default;

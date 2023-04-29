@@ -6,6 +6,8 @@
 
 #include "simulake.hpp"
 
+#include "cell.hpp"
+
 namespace simulake {
 
 // TODO(vir): only Release mode should have disabled asserts

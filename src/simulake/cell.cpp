@@ -9,7 +9,7 @@
 namespace simulake {
 
 /* compute neighbor types and return as 8 element tuple */
-[[nodiscard]] BaseCell::context_t
+[[nodiscard]] inline BaseCell::context_t
 BaseCell::get_cell_context(const BaseCell::position_t &pos,
                            const Grid &grid) noexcept {
   const auto [x, y] = pos;

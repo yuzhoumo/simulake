@@ -10,6 +10,7 @@ namespace simulake {
 
 Grid::Grid(const std::uint32_t _width, const std::uint32_t _height)
     : width(_width), height(_height) {
+  stride = 2; // (type, mass)
   reset();
 }
 
