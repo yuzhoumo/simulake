@@ -4,6 +4,7 @@
 
 #include <omp.h>
 
+#include "application/app.hpp"
 #include "simulake/simulake.hpp"
 
 #include "simulake/renderer.hpp"
@@ -13,7 +14,7 @@
 #include "simulake/grid.hpp"
 #include "utils.hpp"
 
-void test_renderer(int argc, char **argv) {
+void test_renderer() {
   PROFILE_FUNCTION();
   constexpr auto WIDTH = 1920;
   constexpr auto HEIGHT = 1080;
@@ -27,7 +28,7 @@ void test_renderer(int argc, char **argv) {
     omp_set_num_threads(NUM_THREADS);
   }
 
-  simulake::app::Window window{WIDTH, HEIGHT, "simulake"};
+  simulake::Window window{WIDTH, HEIGHT, "simulake"};
   simulake::Renderer renderer(WIDTH, HEIGHT, CELL_SIZE);
   simulake::Grid test_grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE);
 
@@ -120,8 +121,8 @@ void test_simulation() {
 
 void test_device_grid() {
   PROFILE_FUNCTION();
-  constexpr auto WIDTH = 1920;
-  constexpr auto HEIGHT = 1080;
+  constexpr auto WIDTH = 1280;
+  constexpr auto HEIGHT = 720;
   constexpr auto CELL_SIZE = 1;
 
   {
@@ -130,8 +131,7 @@ void test_device_grid() {
   }
 
   // example: demo sand simluation on gpu
-  simulake::app::Window window =
-      simulake::app::Window{WIDTH, HEIGHT, "simulake"};
+  simulake::Window window = simulake::Window{WIDTH, HEIGHT, "simulake"};
   simulake::Renderer renderer{WIDTH, HEIGHT, CELL_SIZE};
   simulake::DeviceGrid grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE, CELL_SIZE);
 
@@ -180,8 +180,17 @@ void test_device_grid() {
 }
 
 int main(int argc, char **argv) {
+  constexpr auto WIDTH = 1280;
+  constexpr auto HEIGHT = 720;
+  constexpr auto CELL_SIZE = 1;
+  int rc = glfwInit(); assert(rc != 0);
+
+  simulake::App app = simulake::App{WIDTH, HEIGHT, CELL_SIZE, "simulake"};
+  app.run();
+
   // test_simulation();
-  // test_renderer(argc, argv);
-  test_device_grid();
+  // test_renderer();
+  // test_device_grid();
+
   return 0;
 }

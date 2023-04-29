@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include "grid.hpp"
+#include "device_grid.hpp"
 #include "shader.hpp"
 
 namespace simulake {

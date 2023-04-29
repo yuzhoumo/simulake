@@ -52,6 +52,9 @@ std::ostream &operator<<(std::ostream &, const simulake::CellType);
 /* pretty print context */
 std::ostream &operator<<(std::ostream &, const simulake::BaseCell::context_t &);
 
+/* pretty print app state */
+std::ostream& operator<<(std::ostream& stream, const simulake::AppState& state);
+
 namespace simulake {
 
 // TODO(vir): only Release mode should have disabled perf counters

@@ -7,7 +7,6 @@
 #include <string_view>
 
 namespace simulake {
-namespace app {
 
 class Window {
 public:
@@ -23,14 +22,13 @@ public:
   Window(const Window &) = delete;
   Window &operator=(const Window &) = delete;
 
+  bool should_close() const noexcept;
   void swap_buffers() const noexcept;
   GLFWwindow *get_window_ptr() const noexcept;
 
 private:
   /* print error and terminate */
   [[noreturn]] void failure_exit() const noexcept;
-
-  static void framebuffer_size_callback(GLFWwindow *, int, int);
 
   // clang-format off
   typedef decltype([](GLFWwindow *ptr) { glfwDestroyWindow(ptr); }) glfw_window_deleter_t;
@@ -44,7 +42,6 @@ private:
   const std::string_view title;
 };
 
-} /* namespace app */
-} // namespace simulake
+} /* namespace simulake */
 
 #endif
