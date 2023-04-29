@@ -29,6 +29,7 @@ void App::update_grid() noexcept {
       grid.get_width() * (state->prev_mouse_x / state->window_width));
     std::uint32_t y = static_cast<std::uint32_t>(
       grid.get_height() * (state->prev_mouse_y / state->window_height));
+
     grid.spawn_cells(x, y, state->spawn_radius, state->selected_cell_type);
   }
 }
@@ -111,6 +112,9 @@ void App::run_cpu_sim() noexcept {
 }
 
 void App::run(const bool gpu_mode) noexcept {
+  int rc = glfwInit();
+  assert(rc != 0);
+
   if (gpu_mode)
     run_gpu_sim();
   else

@@ -9,147 +9,147 @@
 namespace simulake {
 
 /* compute neighbor types and return as 8 element tuple */
-[[nodiscard]] inline BaseCell::context_t
+[[nodiscard]] BaseCell::context_t
     BaseCell::get_cell_context(const BaseCell::position_t &pos,
                                const Grid &grid) noexcept {
   const auto [x, y] = pos;
   return {
-      grid.type_at(x - 1, y - 1), // top left
-      grid.type_at(x - 1, y),     // top
-      grid.type_at(x - 1, y + 1), // top right
-      grid.type_at(x, y - 1),     // left
-      grid.type_at(x, y + 1),     // right
-      grid.type_at(x + 1, y - 1), // bottom left
-      grid.type_at(x + 1, y),     // bottom
-      grid.type_at(x + 1, y + 1)  // bottom right
+    grid.type_at(x - 1, y - 1), // top left
+    grid.type_at(x - 1, y),     // top
+    grid.type_at(x - 1, y + 1), // top right
+    grid.type_at(x, y - 1),     // left
+    grid.type_at(x, y + 1),     // right
+    grid.type_at(x + 1, y - 1), // bottom left
+    grid.type_at(x + 1, y),     // bottom
+    grid.type_at(x + 1, y + 1)  // bottom right
   };
-};
+}
 
 void AirCell::step(const position_t &pos, Grid &grid) noexcept {
-    const auto [x, y] = pos;
-    const auto context = BaseCell::get_cell_context(pos, grid);
+  const auto [x, y] = pos;
+  const auto context = BaseCell::get_cell_context(pos, grid);
 }
 
 void StoneCell::step(const position_t &pos, Grid &grid) noexcept {
-    const auto [x, y] = pos;
-    const auto context = BaseCell::get_cell_context(pos, grid);
+  const auto [x, y] = pos;
+  const auto context = BaseCell::get_cell_context(pos, grid);
 }
 
 void SandCell::step(const position_t &pos, Grid &grid) noexcept {
-    const auto [x, y] = pos;
-    const auto context = BaseCell::get_cell_context(pos, grid);
+  const auto [x, y] = pos;
+  const auto context = BaseCell::get_cell_context(pos, grid);
 
-    /* will flow down if possible */
-    if (IS_FLUID(context.bottom)) {
-        grid.set_at(x, y, CellType::AIR);
-        grid.set_at(x + 1, y, CellType::SAND);
-    }
+  /* will flow down if possible */
+  if (IS_FLUID(context.bottom)) {
+    grid.set_at(x, y, CellType::AIR);
+    grid.set_at(x + 1, y, CellType::SAND);
+  }
 
-    /* else flow left if possible */
-    else if (IS_FLUID(context.bottom_left)) {
-        grid.set_at(x, y, CellType::AIR);
-        grid.set_at(x + 1, y - 1, CellType::SAND);
-    }
+  /* else flow left if possible */
+  else if (IS_FLUID(context.bottom_left)) {
+    grid.set_at(x, y, CellType::AIR);
+    grid.set_at(x + 1, y - 1, CellType::SAND);
+  }
 
-    /* else flow right if possible */
-    else if (IS_FLUID(context.bottom_right)) {
-        grid.set_at(x, y, CellType::AIR);
-        grid.set_at(x + 1, y + 1, CellType::SAND);
-    }
+  /* else flow right if possible */
+  else if (IS_FLUID(context.bottom_right)) {
+    grid.set_at(x, y, CellType::AIR);
+    grid.set_at(x + 1, y + 1, CellType::SAND);
+  }
 }
 
 void WaterCell::step(const position_t &pos, Grid &grid) noexcept {
-    const auto [x, y] = pos;
-    const auto context = BaseCell::get_cell_context(pos, grid);
+  const auto [x, y] = pos;
+  const auto context = BaseCell::get_cell_context(pos, grid);
 
-    float flow;
-    float remaining_mass = grid.mass_at(x, y);
-    if (remaining_mass <= 0) {
-        grid.set_at(x, y, CellType::AIR);
-        return;
-    } 
+  float flow;
+  float remaining_mass = grid.mass_at(x, y);
+  if (remaining_mass <= 0) {
+    grid.set_at(x, y, CellType::AIR);
+    return;
+  }
 
-    // Flow to block below.
-    if (IS_FLUID(context.bottom)) {
-        // Convert to water.
-        grid.set_at(x + 1, y, CellType::WATER);
+  // Flow to block below.
+  if (IS_FLUID(context.bottom)) {
+    // Convert to water.
+    grid.set_at(x + 1, y, CellType::WATER);
 
-        flow = get_stable_state_b(remaining_mass + grid.mass_at(x + 1, y))
-            - grid.mass_at(x + 1, y);
+    flow = get_stable_state_b(remaining_mass + grid.mass_at(x + 1, y))
+        - grid.mass_at(x + 1, y);
 
-        // Smoother flow.
-        if (flow > min_flow) flow *= 0.5;
+    // Smoother flow.
+    if (flow > min_flow) flow *= 0.5;
 
-        flow = constrain(flow, 0, std::min(max_speed, remaining_mass));
-        grid._next_mass[x][y] -= flow;
-        grid._next_mass[x + 1][y] += flow;
-        remaining_mass -= flow;
-    }
-    
-    if (remaining_mass <= 0) {
-        grid.set_at(x, y, CellType::AIR);
-        return;
-    } 
+    flow = constrain(flow, 0, std::min(max_speed, remaining_mass));
+    grid._next_mass[x][y] -= flow;
+    grid._next_mass[x + 1][y] += flow;
+    remaining_mass -= flow;
+  }
 
-    // Equalize water with right block.
-    if (IS_FLUID(context.right)) {
-        // Convert to water.
-        grid.set_at(x, y + 1, CellType::WATER);
+  if (remaining_mass <= 0) {
+    grid.set_at(x, y, CellType::AIR);
+    return;
+  }
 
-        flow = (grid.mass_at(x, y) - grid.mass_at(x, y + 1)) / 4;
+  // Equalize water with right block.
+  if (IS_FLUID(context.right)) {
+    // Convert to water.
+    grid.set_at(x, y + 1, CellType::WATER);
 
-        // Smoother flow.
-        if (flow > min_flow) flow *= 0.5;
+    flow = (grid.mass_at(x, y) - grid.mass_at(x, y + 1)) / 4;
 
-        flow = constrain(flow, 0, remaining_mass);
-        grid._next_mass[x][y] -= flow;
-        grid._next_mass[x][y + 1] += flow;
-        remaining_mass -= flow;
-    }
+    // Smoother flow.
+    if (flow > min_flow) flow *= 0.5;
 
-    if (remaining_mass <= 0) {
-        grid.set_at(x, y, CellType::AIR);
-        return;
-    } 
+    flow = constrain(flow, 0, remaining_mass);
+    grid._next_mass[x][y] -= flow;
+    grid._next_mass[x][y + 1] += flow;
+    remaining_mass -= flow;
+  }
 
-    // Equalize water with left block.
-    if (IS_FLUID(context.left)) {
-        // Convert to water.
-        grid.set_at(x, y - 1, CellType::WATER);
+  if (remaining_mass <= 0) {
+    grid.set_at(x, y, CellType::AIR);
+    return;
+  }
 
-        flow = (grid.mass_at(x, y) - grid.mass_at(x, y - 1)) / 4;
+  // Equalize water with left block.
+  if (IS_FLUID(context.left)) {
+    // Convert to water.
+    grid.set_at(x, y - 1, CellType::WATER);
 
-        // Smoother flow.
-        if (flow > min_flow) flow *= 0.5;
+    flow = (grid.mass_at(x, y) - grid.mass_at(x, y - 1)) / 4;
 
-        flow = constrain(flow, 0, remaining_mass);
-        grid._next_mass[x][y] -= flow;
-        grid._next_mass[x][y - 1] += flow;
-        remaining_mass -= flow;
-    }
+    // Smoother flow.
+    if (flow > min_flow) flow *= 0.5;
 
-    if (remaining_mass <= 0) {
-        grid.set_at(x, y, CellType::AIR);
-        return;
-    } 
+    flow = constrain(flow, 0, remaining_mass);
+    grid._next_mass[x][y] -= flow;
+    grid._next_mass[x][y - 1] += flow;
+    remaining_mass -= flow;
+  }
 
-    // If compressed, flow up.
-    if (IS_FLUID(context.top)) {
-        // Convert to water.
-        grid.set_at(x, y, CellType::WATER);
-        
-        flow = remaining_mass
-            - get_stable_state_b(remaining_mass + grid.mass_at(x - 1, y));
+  if (remaining_mass <= 0) {
+    grid.set_at(x, y, CellType::AIR);
+    return;
+  }
 
-        // Smoother flow.
-        if (flow > min_flow) flow *= 0.5;
+  // If compressed, flow up.
+  if (IS_FLUID(context.top)) {
+    // Convert to water.
+    grid.set_at(x, y, CellType::WATER);
 
-        flow = constrain(flow, 0, std::min(max_speed, remaining_mass));
+    flow = remaining_mass
+        - get_stable_state_b(remaining_mass + grid.mass_at(x - 1, y));
 
-        grid._next_mass[x][y] -= flow;
-        grid._next_mass[x - 1][y] += flow;
-        remaining_mass -= flow;
-    }
+    // Smoother flow.
+    if (flow > min_flow) flow *= 0.5;
+
+    flow = constrain(flow, 0, std::min(max_speed, remaining_mass));
+
+    grid._next_mass[x][y] -= flow;
+    grid._next_mass[x - 1][y] += flow;
+    remaining_mass -= flow;
+  }
 }
 
 } /* namespace simulake */

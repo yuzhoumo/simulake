@@ -35,6 +35,8 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
     state.selected_cell_type = simulake::CellType::SAND;
   if (key == GLFW_KEY_6 && action == GLFW_PRESS)
     state.selected_cell_type = simulake::CellType::JELLO;
+  if (key == GLFW_KEY_7 && action == GLFW_PRESS)
+    state.selected_cell_type = simulake::CellType::STONE;
 
   /* debug: print app state to console */
   if (key == GLFW_KEY_P && action == GLFW_PRESS)

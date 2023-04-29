@@ -41,10 +41,10 @@ void Renderer::initialize_graphics() noexcept {
 
   /* fullscreen quad vertices and tex coords */
   constexpr float FS_QUAD[] = {
-      -1.0f, 1.0f,  0.0f, 1.0f, // top-left corner
-      1.0f,  1.0f,  1.0f, 1.0f, // top-right corner
-      -1.0f, -1.0f, 0.0f, 0.0f, // lower-left corner
-      1.0f,  -1.0f, 1.0f, 0.0f, // lower-right corner
+    -1.0f,  1.0f, 0.0f, 1.0f, // top-left corner
+     1.0f,  1.0f, 1.0f, 1.0f, // top-right corner
+    -1.0f, -1.0f, 0.0f, 0.0f, // lower-left corner
+     1.0f, -1.0f, 1.0f, 0.0f, // lower-right corner
   };
 
   /* compile and bind shaders */
@@ -148,7 +148,7 @@ void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
       // TODO(vir): add support for mass / other properties
       // clang-format off
       texture_data[base_index] = static_cast<float>(grid.type_at(grid_height - row - 1, col));
-      texture_data[base_index + 1] = 1.f;
+      texture_data[base_index + 1] = static_cast<float>(grid.mass_at(grid_height - row - 1, col));
       // clang-format on
     }
   }

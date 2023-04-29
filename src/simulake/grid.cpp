@@ -52,8 +52,11 @@ void Grid::spawn_cells(const uint32_t x_center, const uint32_t y_center,
                     sqrt(pow(static_cast<int>(x_center) - x, 2) +
                          pow(static_cast<int>(y_center) - y, 2)));
 
-      if (dist <= paint_radius and type_at(y, x) == CellType::AIR)
+      if (dist <= paint_radius and type_at(y, x) == CellType::AIR) {
         set_state(y, x, paint_target);
+        if (paint_target == CellType::WATER)
+          _mass[y][x] = WaterCell::max_mass;
+      }
     }
   }
 }
@@ -63,52 +66,51 @@ void Grid::simulate() noexcept {
   _next_grid = _grid;
   _next_mass = _mass;
 
-  {
+
 #pragma omp parallel for
 #if 1
-    for (int i = height - 1; i >= 0; i -= 1) {
-      for (int j = width - 1; j >= 0; j -= 1) {
+  for (int i = height - 1; i >= 0; i -= 1) {
+    for (int j = width - 1; j >= 0; j -= 1) {
 
 #else
-    for (int i = 0; i < height; i += 1) {
-      for (int j = 0; j < width; j += 1) {
+  for (int i = 0; i < height; i += 1) {
+    for (int j = 0; j < width; j += 1) {
 #endif
-        switch (_grid[i][j]) {
-        case CellType::AIR:
-          AirCell::step({i, j}, *this);
-          break;
+      switch (_grid[i][j]) {
+      case CellType::AIR:
+        AirCell::step({i, j}, *this);
+        break;
 
-        case CellType::WATER:
-          WaterCell::step({i, j}, *this);
-          break;
+      case CellType::WATER:
+        WaterCell::step({i, j}, *this);
+        break;
 
-        case CellType::OIL:
-          // OilCell::step({i, j}, *this);
-          break;
+      case CellType::OIL:
+        // OilCell::step({i, j}, *this);
+        break;
 
-        case CellType::SAND:
-          SandCell::step({i, j}, *this);
-          break;
+      case CellType::SAND:
+        SandCell::step({i, j}, *this);
+        break;
 
-        case CellType::FIRE:
-          // FireCell::step({i, j}, *this);
-          break;
+      case CellType::FIRE:
+        // FireCell::step({i, j}, *this);
+        break;
 
-        case CellType::JELLO:
-          // JelloCell::step({i, j}, *this);
-          break;
+      case CellType::JELLO:
+        // JelloCell::step({i, j}, *this);
+        break;
 
-        case CellType::SMOKE:
-          // SmokeCell::step({i, j}, *this);
-          break;
+      case CellType::SMOKE:
+        // SmokeCell::step({i, j}, *this);
+        break;
 
-        case CellType::STONE:
-          break;
+      case CellType::STONE:
+        break;
 
-        default: // CellType::NONE
-          break;
-        };
-      }
+      default: // CellType::NONE
+        break;
+      };
     }
   }
 
@@ -163,10 +165,10 @@ bool Grid::set_state(std::uint32_t row, std::uint32_t col,
 
 // reads current mass grid
 float Grid::mass_at(std::uint32_t row, std::uint32_t col) const noexcept {
-    if (row >= height || col >= width)
-        return 0;
+  if (row >= height || col >= width)
+    return 0;
 
-    return _mass[row][col];
+  return _mass[row][col];
 }
 
 } // namespace simulake
