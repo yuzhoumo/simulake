@@ -97,7 +97,7 @@ void Grid::simulate() noexcept {
 bool Grid::set_at(std::uint32_t row, std::uint32_t col,
                   const CellType type) noexcept {
   // soft error when out of bounds
-  if (row >= height || col >= width) {
+  if (row >= height || col >= width) [[unlikely]] {
     std::cerr << "ERROR::grid pos out of bounds: " << row << ' ' << col
               << std::endl;
     return false;
@@ -113,7 +113,7 @@ bool Grid::set_at(std::uint32_t row, std::uint32_t col,
 bool Grid::set_state(std::uint32_t row, std::uint32_t col,
                      const CellType type) noexcept {
   // soft error when out of bounds
-  if (row >= height || col >= width) {
+  if (row >= height || col >= width) [[unlikely]] {
     std::cerr << "ERROR::grid pos out of bounds: " << row << ' ' << col
               << std::endl;
     return false;
