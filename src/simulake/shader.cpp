@@ -57,6 +57,7 @@ GLuint Shader::compile(const std::string_view shader_path,
     }
 
     assert(false);
+    std::exit(0);
   }();
 
   // read shader source code from path
@@ -72,7 +73,6 @@ GLuint Shader::compile(const std::string_view shader_path,
     std::cerr << "ERROR::SHADER::FILE_READ_FAILURE" << std::endl;
     assert(false);
   }
-
   const std::string shader_code = stream.str();
 
   // compile fragment shader

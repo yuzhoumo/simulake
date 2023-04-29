@@ -11,8 +11,7 @@ namespace simulake {
 class Grid {
 public:
   /* default: initialize empty grid */
-  explicit Grid(const std::uint32_t,
-                const std::uint32_t);
+  explicit Grid(const std::uint32_t, const std::uint32_t);
 
   /* enable moves */
   explicit Grid(Grid &&) = default;
@@ -37,9 +36,6 @@ public:
   /* set cell type at given position. returns true of successful */
   bool set_at(std::uint32_t, std::uint32_t, const CellType) noexcept;
   bool set_state(std::uint32_t, std::uint32_t, const CellType) noexcept;
-
-  /* utils */
-  // void set_random_state(const std::uint32_t) noexcept;
 
   inline std::uint32_t get_width() const noexcept { return width; }
   inline std::uint32_t get_height() const noexcept { return height; }

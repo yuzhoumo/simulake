@@ -4,24 +4,22 @@
 
 #include <omp.h>
 
-#include <glad/glad.h>
+#include "application/app.hpp"
+#include "simulake/simulake.hpp"
 
-#include <GLFW/glfw3.h>
+#include "simulake/renderer.hpp"
+#include "simulake/shader.hpp"
 
-#include "constants.hpp"
-#include "renderer.hpp"
-#include "shader.hpp"
-
-#include "grid.hpp"
+#include "simulake/device_grid.hpp"
+#include "simulake/grid.hpp"
 #include "utils.hpp"
 
-void test_renderer(int argc, char **argv) {
+void test_renderer() {
   PROFILE_FUNCTION();
-
-  constexpr auto WIDTH = 1280;
-  constexpr auto HEIGHT = 720;
-  constexpr auto CELL_SIZE = 4;
-  constexpr auto NUM_THREADS = 2;
+  constexpr auto WIDTH = 1920;
+  constexpr auto HEIGHT = 1080;
+  constexpr auto CELL_SIZE = 1;
+  constexpr auto NUM_THREADS = 10;
 
   {
     int rc = glfwInit();
@@ -30,6 +28,7 @@ void test_renderer(int argc, char **argv) {
     omp_set_num_threads(NUM_THREADS);
   }
 
+  simulake::Window window{WIDTH, HEIGHT, "simulake"};
   simulake::Renderer renderer(WIDTH, HEIGHT, CELL_SIZE);
   simulake::Grid test_grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE);
 
@@ -51,13 +50,15 @@ void test_renderer(int argc, char **argv) {
   renderer.submit_grid(test_grid);
 
   // application loop
-  while (!glfwWindowShouldClose(renderer.get_window().get_window_ptr())) {
+  while (!glfwWindowShouldClose(window.get_window_ptr())) {
+    PROFILE_SCOPE("main_loop");
     frame_count += 1;
 
     // render step
     {
       // PROFILE_SCOPE("render_pass");
       renderer.render();
+      window.swap_buffers();
     }
 
     // sim step
@@ -70,10 +71,8 @@ void test_renderer(int argc, char **argv) {
     glfwPollEvents();
 
     // escape key
-    if (glfwGetKey(renderer.get_window().get_window_ptr(), GLFW_KEY_ESCAPE) ==
-        GLFW_PRESS)
-      glfwSetWindowShouldClose(renderer.get_window().get_window_ptr(),
-                               GLFW_TRUE);
+    if (glfwGetKey(window.get_window_ptr(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+      glfwSetWindowShouldClose(window.get_window_ptr(), GLFW_TRUE);
   }
 
   // clang-format off
@@ -99,7 +98,6 @@ void test_simulation() {
 
   // example: demo sand simluation
   {
-    // simulake::scope_timer_t timer("full sim");
     PROFILE_SCOPE("sim");
 
     for (int i = 0; i < SIM_STEPS; i += 1) {
@@ -121,8 +119,85 @@ void test_simulation() {
     std::cout << grid << std::endl;
 }
 
+void test_device_grid() {
+  PROFILE_FUNCTION();
+  constexpr auto WIDTH = 1280;
+  constexpr auto HEIGHT = 720;
+  constexpr auto CELL_SIZE = 1;
+
+  {
+    int rc = glfwInit();
+    assert(rc != 0);
+  }
+
+  // example: demo sand simluation on gpu
+  simulake::Window window = simulake::Window{WIDTH, HEIGHT, "simulake"};
+  simulake::Renderer renderer{WIDTH, HEIGHT, CELL_SIZE};
+  simulake::DeviceGrid grid(WIDTH / CELL_SIZE, HEIGHT / CELL_SIZE, CELL_SIZE);
+
+  // initialize
+  grid.initialize_random();
+  renderer.submit_grid(grid);
+
+  // stats
+  std::uint64_t frame_count = 0;
+  std::chrono::time_point start = std::chrono::high_resolution_clock::now();
+
+  // application loop
+  while (!glfwWindowShouldClose(window.get_window_ptr())) {
+    PROFILE_SCOPE("main_loop");
+
+    frame_count += 1;
+
+    // render step
+    {
+      // PROFILE_SCOPE("render_pass");
+      renderer.render();
+      window.swap_buffers();
+    }
+
+    // sim step
+    {
+      // PROFILE_SCOPE("sim_pass");
+      grid.simulate();
+      renderer.submit_grid(grid);
+    }
+
+    glfwPollEvents();
+
+    // escape key
+    if (glfwGetKey(window.get_window_ptr(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+      glfwSetWindowShouldClose(window.get_window_ptr(), GLFW_TRUE);
+  }
+
+  // clang-format off
+  const auto delta = (std::chrono::high_resolution_clock::now() - start);
+  const auto duration_s = std::chrono::duration_cast<std::chrono::seconds>(delta);
+  std::cout << "average fps: " << frame_count / duration_s.count() << std::endl;
+  // clang-format on
+
+  glfwTerminate();
+}
+
 int main(int argc, char **argv) {
+  constexpr auto WIDTH = 1920;
+  constexpr auto HEIGHT = 1080;
+  constexpr auto CELL_SIZE = 1;
+  constexpr auto GPU_MODE = true;
+
+  int rc = glfwInit();
+  assert(rc != 0);
+
+  simulake::App app = simulake::App{WIDTH, HEIGHT, CELL_SIZE, "simulake"};
+
+  {
+    PROFILE_SCOPE("total run time");
+    app.run(GPU_MODE);
+  }
+
   // test_simulation();
-  test_renderer(argc, argv);
+  // test_renderer();
+  // test_device_grid();
+
   return 0;
 }

@@ -4,8 +4,8 @@
 #include <iostream>
 #include <vector>
 
-#include "cell.hpp"
-#include "grid.hpp"
+#include "simulake/cell.hpp"
+#include "simulake/grid.hpp"
 
 #if DEBUG
 #define BREAKPOINT __builtin_trap()
@@ -50,10 +50,14 @@ std::ostream &operator<<(std::ostream &, const simulake::Grid &);
 std::ostream &operator<<(std::ostream &, const simulake::CellType);
 
 /* pretty print context */
-std::ostream &operator<<(std::ostream &, const simulake::BaseCell::context_t&);
+std::ostream &operator<<(std::ostream &, const simulake::BaseCell::context_t &);
+
+/* pretty print app state */
+std::ostream& operator<<(std::ostream& stream, const simulake::AppState& state);
 
 namespace simulake {
 
+// TODO(vir): only Release mode should have disabled perf counters
 #if DEBUG
 #define PROFILE_SCOPE(name) ::simulake::scope_timer_t timer##__LINE__(name)
 #define PROFILE_FUNCTION() PROFILE_SCOPE(__PRETTY_FUNCTION__)

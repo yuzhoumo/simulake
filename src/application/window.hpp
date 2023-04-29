@@ -1,11 +1,10 @@
 #ifndef SIMULAKE_WINDOW_HPP
 #define SIMULAKE_WINDOW_HPP
 
+#include "graphics.hpp"
+
 #include <memory>
 #include <string_view>
-
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 namespace simulake {
 
@@ -16,21 +15,20 @@ public:
                   const std::string_view);
 
   /* enable moves */
-  explicit Window(Window &&);
-  Window &operator=(Window &&);
+  explicit Window(Window &&) = default;
+  Window &operator=(Window &&) = delete;
 
   /* disable copies */
   Window(const Window &) = delete;
   Window &operator=(const Window &) = delete;
 
+  bool should_close() const noexcept;
   void swap_buffers() const noexcept;
   GLFWwindow *get_window_ptr() const noexcept;
 
 private:
   /* print error and terminate */
-  [[noreturn]] void failure_exit() noexcept;
-
-  static void framebuffer_size_callback(GLFWwindow *, int, int);
+  [[noreturn]] void failure_exit() const noexcept;
 
   // clang-format off
   typedef decltype([](GLFWwindow *ptr) { glfwDestroyWindow(ptr); }) glfw_window_deleter_t;

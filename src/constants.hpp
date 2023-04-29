@@ -1,4 +1,0 @@
-#ifndef SIMULAKE_CONSTANTS_HPP
-#define SIMULAKE_CONSTANTS_HPP
-
-#endif
