@@ -6,7 +6,7 @@
 #define WATER_TYPE 4
 #define OIL_TYPE 5
 #define SAND_TYPE 6
-#define JELLO_TYPE 6
+#define JELLO_TYPE 7
 #define STONE_TYPE 8
 
 uniform sampler2D u_grid_data_texture;
