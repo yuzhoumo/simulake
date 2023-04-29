@@ -111,6 +111,7 @@ __kernel void spawn_cells(__global const char *grid, __global char *next_grid,
                           const uint target, const uint2 dims) {
   const uint col = get_global_id(0); // <= local grid size (cols)
   const uint row = get_global_id(1); // <= local grid size (rows)
+
   const uint width = dims[0];
   const uint height = dims[1];
 
