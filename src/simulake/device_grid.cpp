@@ -148,7 +148,7 @@ void DeviceGrid::spawn_cells(const std::tuple<float, float> &mouse,
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, flip_flag ? 1 : 0, sizeof(cl_mem), &sim_context.next_grid));
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 2, sizeof(cl_float2), &mouse_xy));
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 3, sizeof(float), &paint_radius));
-  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 4, sizeof(unsigned int), &paint_target));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 4, sizeof(unsigned int), &target));
   // clang-format on
 
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.spawn_kernel, 2,

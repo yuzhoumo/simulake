@@ -19,9 +19,10 @@ void AppState::set_mouse_pos(const float xpos, const float ypos) noexcept {
   state.prev_mouse_y = ypos;
 }
 
-void AppState::set_mouse_pressed(const bool pressed) noexcept {
+void AppState::set_mouse_pressed(const bool pressed, const bool erase_mode) noexcept {
   AppState &state = AppState::get_instance();
   state.mouse_pressed = pressed;
+  state.erase_mode = erase_mode;
 }
 
 void AppState::set_time(const float curr_time) noexcept {

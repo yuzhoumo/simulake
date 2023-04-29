@@ -23,10 +23,13 @@ void App::update_grid() noexcept {
 }
 
 void App::update_device_grid() noexcept {
-  if (state->mouse_pressed and state->selected_cell_type != CellType::NONE) {
+  const auto target_type =
+      state->erase_mode ? CellType::AIR : state->selected_cell_type;
+
+  if (state->mouse_pressed and target_type != CellType::NONE) {
     device_grid.spawn_cells({state->prev_mouse_x, state->prev_mouse_y},
-                            (float)state->spawn_radius,
-                            state->selected_cell_type);
+                            static_cast<float>(state->spawn_radius),
+                            target_type);
   }
 }
 
