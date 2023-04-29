@@ -106,7 +106,7 @@ __kernel void render_texture(__write_only image2d_t texture,
   write_imagef(texture, out_coord, out_color);
 }
 
-__kernel void spawn_cells(__global const char *grid, __global char *next_grid,
+__kernel void spawn_cells(__global char *grid, __global char *next_grid,
                           const float2 mouse, const float paint_radius,
                           const uint target, const uint2 dims) {
   const uint col = get_global_id(0); // <= local grid size (cols)
@@ -119,7 +119,9 @@ __kernel void spawn_cells(__global const char *grid, __global char *next_grid,
   const float d =
       sqrt(fabs(pow(mouse[0] - col, 2)) + fabs(pow(mouse[1] - row, 2)));
 
-  if (d <= paint_radius && VACANT(grid[idx])) {
+  const bool write = VACANT(grid[idx]) || (target == AIR_TYPE);
+  if (d <= paint_radius && write) {
     next_grid[idx] = target;
+    grid[idx] = target;
   }
 }

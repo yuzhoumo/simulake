@@ -49,11 +49,19 @@ void cursor_pos(GLFWwindow *window, double xpos, double ypos) {
 void mouse_button(GLFWwindow *window, int button, int action, int mods) {
   AppState &state = AppState::get_instance();
 
-  if (button == GLFW_MOUSE_BUTTON_LEFT) {
+  if (button == GLFW_MOUSE_BUTTON_LEFT and !(mods & GLFW_MOD_SHIFT)) {
     if (action == GLFW_PRESS) {
       state.set_mouse_pressed(true);
     } else if (action == GLFW_RELEASE) {
       state.set_mouse_pressed(false);
+    }
+  }
+
+  else if (button == GLFW_MOUSE_BUTTON_LEFT and (mods & GLFW_MOD_SHIFT)) {
+    if (action == GLFW_PRESS) {
+      state.set_mouse_pressed(true, true);
+    } else if (action == GLFW_RELEASE) {
+      state.set_mouse_pressed(false, false);
     }
   }
 }

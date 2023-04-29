@@ -34,7 +34,7 @@ public:
   static void set_mouse_pos(const float, const float) noexcept;
 
   /* update bool tracking if mouse button is pressed down */
-  static void set_mouse_pressed(const bool) noexcept;
+  static void set_mouse_pressed(const bool, const bool = false) noexcept;
 
   /* update time values based on current time */
   static void set_time(const float) noexcept;
@@ -50,6 +50,7 @@ public:
   std::uint32_t spawn_radius = 50;
   std::uint32_t cell_size = 1;
   bool mouse_pressed = false;
+  bool erase_mode = false;
 
   /* track height and width of the window */
   std::uint32_t window_width = 0;
