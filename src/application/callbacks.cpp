@@ -46,8 +46,19 @@ void cursor_pos(GLFWwindow *window, double xpos, double ypos) {
   state.set_mouse_pos(xpos, ypos);
 }
 
+void mouse_button(GLFWwindow *window, int button, int action, int mods) {
+  AppState& state = AppState::get_instance();
+  if (button == GLFW_MOUSE_BUTTON_LEFT) {
+    if (action == GLFW_PRESS) {
+      state.set_mouse_pressed(true);
+    } else if (action == GLFW_RELEASE) {
+      state.set_mouse_pressed(false);
+    }
+  }
+}
+
 void scroll(GLFWwindow *window, double xoffset, double yoffset) {
-  AppState &state = AppState::get_instance();
+  AppState& state = AppState::get_instance();
   int offset = state.spawn_radius + static_cast<int>(yoffset);
   int min_dim = std::min(state.window_width, state.window_height) / 4;
   offset = std::clamp(offset, 1, min_dim + 1);

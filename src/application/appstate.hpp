@@ -18,7 +18,7 @@ public:
     return instance;
   }
 
-  // disable direct instantiation, copies, moves
+  /* disable direct instantiation, copies, moves */
   AppState(const AppState &) = delete;
   void operator=(const AppState &) = delete;
   AppState(AppState &&) = delete;
@@ -33,6 +33,9 @@ public:
   /* update previous mouse position */
   static void set_mouse_pos(const float, const float) noexcept;
 
+  /* update bool tracking if mouse button is pressed down */
+  static void set_mouse_pressed(const bool) noexcept;
+
   /* update time values based on current time */
   static void set_time(const float) noexcept;
 
@@ -46,6 +49,7 @@ public:
   simulake::CellType selected_cell_type = simulake::CellType::NONE;
   std::uint32_t spawn_radius = 1;
   std::uint32_t cell_size = 1;
+  bool mouse_pressed = false;
 
   /* track height and width of the window */
   std::uint32_t window_width = 0;

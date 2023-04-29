@@ -43,19 +43,13 @@ private:
   /* initialize opengl and shaders */
   void initialize_graphics() noexcept;
 
-  /* set state */
-  void set_cell_size(const std::uint32_t) noexcept;
-
   glm::ivec2 grid_size;     /* grid width, height in cells */
   glm::ivec2 viewport_size; /* viewport width, height in pixels */
   std::uint32_t num_cells;  /* number of cells to render */
   std::uint32_t cell_size;  /* each cell pixels = (cell_size * cell_size) */
 
-  std::vector<float> vertices;
-  std::vector<unsigned int> ebo_indices;
-
   Shader shader;
-  GLuint _VAO, _VBO, _EBO, _GRID_DATA_TEXTURE;
+  GLuint _VAO, _VBO, _GRID_DATA_TEXTURE;
 };
 
 } // namespace simulake

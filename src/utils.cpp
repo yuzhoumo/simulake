@@ -17,6 +17,7 @@ std::ostream &operator<<(std::ostream &stream,
   stream << "  window_height: " << state.window_height << "\n";
   stream << "  prev_mouse_x: " << state.prev_mouse_x << "\n";
   stream << "  prev_mouse_y: " << state.prev_mouse_y << "\n";
+  stream << "  mouse_pressed: " << state.mouse_pressed << "\n";
   stream << "  time: " << state.time << "\n";
   stream << "  prev_time: " << state.prev_time << "\n";
   stream << "  delta_time: " << state.delta_time << "\n";

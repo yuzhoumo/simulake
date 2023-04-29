@@ -14,13 +14,23 @@ public:
   ~App() = default;
 
   /* run main render loop */
-  void run() noexcept;
+  void run(bool gpu_mode) noexcept;
+
+  /* update grid based on current app state */
+  void update_grid() noexcept; // TODO(joe): merge these into one function after
+                               //            grid class refactor
+  void update_device_grid() noexcept;
+
+  void run_gpu_sim() noexcept;
+  void run_cpu_sim() noexcept;
 
 private:
   AppState *state;
   Window window;
 
-  DeviceGrid grid;
+  Grid grid; // TODO(joe): inherit device_grid from grid into one class
+             //            so that there is one grid variable
+  DeviceGrid device_grid;
   Renderer renderer;
 };
 

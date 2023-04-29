@@ -6,8 +6,6 @@
 
 #include "simulake.hpp"
 
-#include "grid.hpp"
-
 namespace simulake {
 
 // TODO(vir): only Release mode should have disabled asserts

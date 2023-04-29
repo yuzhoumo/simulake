@@ -13,8 +13,8 @@ namespace simulake {
 Renderer::Renderer(const std::uint32_t width, const std::uint32_t height,
                    const std::uint32_t cell_size) {
   /* set state variables */
+  this->cell_size = cell_size;
   num_cells = 0;
-  set_cell_size(cell_size);
 
   /* initialize opengl and shaders */
   initialize_graphics();
@@ -55,7 +55,6 @@ void Renderer::initialize_graphics() noexcept {
   /* create VAO, VBO, EBO, and texture */
   glGenVertexArrays(1, &_VAO);
   glGenBuffers(1, &_VBO);
-  glGenBuffers(1, &_EBO);
   glGenTextures(1, &_GRID_DATA_TEXTURE);
 
   /* bind buffers */
@@ -156,11 +155,6 @@ void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,
                GL_FLOAT, texture_data.data());
-}
-
-void Renderer::set_cell_size(const std::uint32_t new_size) noexcept {
-  cell_size = new_size;
-  shader.set_int("u_cell_size", cell_size);
 }
 
 } /* namespace simulake */

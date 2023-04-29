@@ -183,6 +183,7 @@ int main(int argc, char **argv) {
   constexpr auto WIDTH = 1280;
   constexpr auto HEIGHT = 720;
   constexpr auto CELL_SIZE = 1;
+  constexpr auto GPU_MODE = true;
 
   int rc = glfwInit();
   assert(rc != 0);
@@ -191,7 +192,7 @@ int main(int argc, char **argv) {
 
   {
     PROFILE_SCOPE("total run time");
-    app.run();
+    app.run(GPU_MODE);
   }
 
   // test_simulation();
