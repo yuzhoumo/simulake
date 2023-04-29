@@ -24,11 +24,17 @@ public:
   /* dealloc memory on destruction */
   ~Grid();
 
+  /* simulate the next step, update grid */
+  void simulate() noexcept;
+
   /* reset to empty grid */
   void reset() noexcept;
 
-  /* simulate the next step, update grid */
-  void simulate() noexcept;
+  /* mouse input api */
+  void spawn_cells(const std::uint32_t x_center,
+                   const std::uint32_t y_center,
+                   const std::uint32_t paint_radius,
+                   const CellType paint_target) noexcept;
 
   /* get cell type at given position */
   [[nodiscard]] CellType type_at(std::uint32_t, std::uint32_t) const noexcept;

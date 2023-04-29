@@ -180,10 +180,10 @@ void test_device_grid() {
 }
 
 int main(int argc, char **argv) {
-  constexpr auto WIDTH = 1920;
-  constexpr auto HEIGHT = 1080;
-  constexpr auto CELL_SIZE = 1;
-  constexpr auto GPU_MODE = true;
+  constexpr auto WIDTH = 1280;
+  constexpr auto HEIGHT = 720;
+  constexpr auto CELL_SIZE = 4;
+  constexpr auto GPU_MODE = false;
 
   int rc = glfwInit();
   assert(rc != 0);

@@ -27,6 +27,30 @@ Grid::~Grid() {
   // empty
 }
 
+void Grid::spawn_cells(const uint32_t x_center, const uint32_t y_center,
+                       const uint32_t paint_radius,
+                       const CellType paint_target) noexcept {
+
+  const int y_start = std::max(static_cast<int>(y_center - paint_radius), 0);
+  const int y_end = std::min(static_cast<int>(y_center + paint_radius),
+                       static_cast<int>(height - 1));
+
+  const int x_start = std::max(static_cast<int>(x_center - paint_radius), 0);
+  const int x_end = std::min(static_cast<int>(x_center + paint_radius),
+                       static_cast<int>(width - 1));
+
+  for (int y = y_start; y < y_end; ++y) {
+    for (int x = x_start; x < x_end; ++x) {
+      uint32_t dist = static_cast<uint32_t>(
+                    sqrt(pow(static_cast<int>(x_center) - x, 2) +
+                         pow(static_cast<int>(y_center) - y, 2)));
+
+      if (dist <= paint_radius and type_at(y, x) == CellType::AIR)
+        set_state(y, x, paint_target);
+    }
+  }
+}
+
 void Grid::simulate() noexcept {
   // copy old grid into new
   _next_grid = _grid;

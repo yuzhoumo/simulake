@@ -28,11 +28,11 @@ public:
   explicit DeviceGrid(const std::uint32_t, const std::uint32_t,
                       const std::uint32_t);
 
-  // enable moves
+  /* enable moves */
   explicit DeviceGrid(DeviceGrid &&) = default;
   DeviceGrid &operator=(DeviceGrid &&) = default;
 
-  // disable copies
+  /* disable copies */
   explicit DeviceGrid(const DeviceGrid &) = delete;
   DeviceGrid &operator=(const DeviceGrid &) = delete;
 
