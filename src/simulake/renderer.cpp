@@ -126,7 +126,7 @@ void Renderer::submit_grid(DeviceGrid &grid) noexcept {
 
 void Renderer::render() noexcept {
   /* clear framebuffer and draw */
-  glClear(GL_COLOR_BUFFER_BIT);
+  // glClear(GL_COLOR_BUFFER_BIT);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 

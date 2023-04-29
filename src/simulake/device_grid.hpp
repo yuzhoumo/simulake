@@ -48,6 +48,10 @@ public:
   /* set gl texture target */
   void set_texture_target(const GLuint) noexcept;
 
+  /* mouse input api */
+  void spawn_cells(const std::tuple<float, float> &, const float,
+                   const CellType) const noexcept;
+
   /* useful for testing */
   void initialize_random() const noexcept;
   void print_current() const noexcept;
@@ -71,6 +75,7 @@ private:
     cl_kernel init_kernel = nullptr;
     cl_kernel rand_kernel = nullptr;
     cl_kernel render_kernel = nullptr;
+    cl_kernel spawn_kernel = nullptr;
 
     /* buffers */
     cl_mem grid = nullptr;
