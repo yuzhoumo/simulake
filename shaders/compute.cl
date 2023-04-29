@@ -85,7 +85,8 @@
   }
 
 // cell attributes
-typedef struct /* __attribute__((packed)) */ {
+// TODO(vir): benchmark
+typedef struct __attribute__((packed, aligned(8))) {
   char type;
   float mass;
 
