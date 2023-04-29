@@ -9,6 +9,9 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
                const std::string_view _title)
     : width(_width), height(_height), title(_title) {
 
+  int rc = glfwInit();
+  assert(rc != 0);
+
   glfwSetErrorCallback(callbacks::error);
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
