@@ -229,6 +229,7 @@ void DeviceGrid::print_cl_debug_info() const noexcept {
   std::cout << "\nmax_work_group_size:    " << max_work_group_size;
   std::cout << "\nmax_work_item_dims:     " << max_work_item_dims;
   std::cout << "\nmax_work_item_sizes:    " << work_item_sizes[0];
+  std::cout << "\n------------------------";
 
   std::cout << "\n---OPENCL EXTENSIONS---\n";
   std::cout << extensions;
@@ -255,13 +256,13 @@ void DeviceGrid::print_cl_image_debug_info(
   CL_CALL(clGetImageInfo(image, CL_IMAGE_DEPTH, sizeof(size_t), &image_depth, nullptr));
   // clang-format on
 
-  std::cout << "---OPENCL-OPENGL texture-cl_iamge---\n";
-  std::cout << "image_channel_order: " << format.image_channel_order;
+  std::cout << "---OPENCL-OPENGL texture-cl_iamge---";
+  std::cout << "\nimage_channel_order:     " << format.image_channel_order;
   std::cout << "\nimage_channel_data_type: " << format.image_channel_data_type;
-  std::cout << "\nelem_size (bytes): " << elem_size;
-  std::cout << "\nimage_width: " << image_width;
-  std::cout << "\nimage_height: " << image_height;
-  std::cout << "\nimage_depth: " << image_depth;
+  std::cout << "\nelem_size (bytes):       " << elem_size;
+  std::cout << "\nimage_width:             " << image_width;
+  std::cout << "\nimage_height:            " << image_height;
+  std::cout << "\nimage_depth:             " << image_depth;
   std::cout << "\n------------------------------------" << std::endl;
 }
 

@@ -183,10 +183,16 @@ int main(int argc, char **argv) {
   constexpr auto WIDTH = 1280;
   constexpr auto HEIGHT = 720;
   constexpr auto CELL_SIZE = 1;
-  int rc = glfwInit(); assert(rc != 0);
+
+  int rc = glfwInit();
+  assert(rc != 0);
 
   simulake::App app = simulake::App{WIDTH, HEIGHT, CELL_SIZE, "simulake"};
-  app.run();
+
+  {
+    PROFILE_SCOPE("total run time");
+    app.run();
+  }
 
   // test_simulation();
   // test_renderer();

@@ -1,24 +1,23 @@
 #ifndef APP_HPP
 #define APP_HPP
 
+#include "../simulake/renderer.hpp"
 #include "appstate.hpp"
 #include "window.hpp"
-#include "../simulake/renderer.hpp"
 
 namespace simulake {
 
 class App {
 public:
-  App(uint32_t width, uint32_t height, uint32_t cell_size,
-      std::string_view title);
-
-  ~App() {}
+  App(const std::uint32_t width, const std::uint32_t height,
+      const std::uint32_t cell_size, const std::string_view title);
+  ~App() = default;
 
   /* run main render loop */
-  void run();
+  void run() noexcept;
 
 private:
-  AppState* state;
+  AppState *state;
   Window window;
 
   DeviceGrid grid;

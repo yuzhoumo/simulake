@@ -41,10 +41,10 @@ void Renderer::initialize_graphics() noexcept {
 
   /* fullscreen quad vertices and tex coords */
   constexpr float FS_QUAD[] = {
-    -1.0f,  1.0f, 0.0f, 1.0f,  // top-left corner
-     1.0f,  1.0f, 1.0f, 1.0f,  // top-right corner
-    -1.0f, -1.0f, 0.0f, 0.0f,  // lower-left corner
-     1.0f, -1.0f, 1.0f, 0.0f,  // lower-right corner
+      -1.0f, 1.0f,  0.0f, 1.0f, // top-left corner
+      1.0f,  1.0f,  1.0f, 1.0f, // top-right corner
+      -1.0f, -1.0f, 0.0f, 0.0f, // lower-left corner
+      1.0f,  -1.0f, 1.0f, 0.0f, // lower-right corner
   };
 
   /* compile and bind shaders */
@@ -72,12 +72,12 @@ void Renderer::initialize_graphics() noexcept {
   /* location 0: vertex positions */
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
-                        (void*)(0));
+                        (void *)(0));
 
   /* location 1: texture coordinates */
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
-                        (void*)(2 * sizeof(float)));
+                        (void *)(2 * sizeof(float)));
 
   /* load vertices and tex coords into buffer */
   glBufferData(GL_ARRAY_BUFFER, sizeof(FS_QUAD), FS_QUAD, GL_STATIC_DRAW);
@@ -139,7 +139,7 @@ void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
   const auto grid_height = grid_size.y;
 
   /* number of cell attributes */
-  const uint32_t stride = 2;
+  const std::uint32_t stride = 2;
 
   std::vector<float> texture_data(num_cells * stride);
   for (std::uint32_t row = 0; row < grid_height; row += 1) {

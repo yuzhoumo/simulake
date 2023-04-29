@@ -1,5 +1,5 @@
 #ifndef APP_STATE_HPP
-#define APP_STATE_HPP 
+#define APP_STATE_HPP
 
 #include "../simulake/cell.hpp"
 
@@ -13,51 +13,54 @@ namespace simulake {
 
 class AppState {
 public:
-  static AppState& get_instance() {
-    static AppState instance;
+  [[nodiscard]] static AppState &get_instance() {
+    static AppState instance{};
     return instance;
   }
 
-  AppState(const AppState&) = delete;
-  void operator=(const AppState&) = delete;
+  // disable direct instantiation, copies, moves
+  AppState(const AppState &) = delete;
+  void operator=(const AppState &) = delete;
+  AppState(AppState &&) = delete;
+  void operator=(AppState &&) = delete;
 
   /* update the cell size (pixels) */
-  static void set_cell_size(uint32_t cell_size);
+  static void set_cell_size(const std::uint32_t) noexcept;
 
   /* update the window width and height */
-  static void set_window_size(float width, float height);
+  static void set_window_size(const float, const float) noexcept;
 
   /* update previous mouse position */
-  static void set_mouse_pos(float xpos, float ypos);
+  static void set_mouse_pos(const float, const float) noexcept;
 
   /* update time values based on current time */
-  static void set_time(float curr_time);
+  static void set_time(const float) noexcept;
 
   /* update the currently selected cell type */
-  static void set_selected_cell_type(simulake::CellType type);
+  static void set_selected_cell_type(const simulake::CellType) noexcept;
 
   /* update the mouse interaction spawn radius (in cells) */
-  static void set_spawn_radius(uint32_t num_cells);
+  static void set_spawn_radius(const std::uint32_t) noexcept;
 
   /* simulake */
   simulake::CellType selected_cell_type = simulake::CellType::NONE;
-  uint32_t spawn_radius = 1;
-  uint32_t cell_size = 1;
+  std::uint32_t spawn_radius = 1;
+  std::uint32_t cell_size = 1;
 
   /* track height and width of the window */
-  uint32_t window_width;
-  uint32_t window_height;
+  std::uint32_t window_width = 0;
+  std::uint32_t window_height = 0;
 
   /* previous mouse coordinates */
-  float prev_mouse_x;
-  float prev_mouse_y;
+  float prev_mouse_x = 0;
+  float prev_mouse_y = 0;
 
-  float time = 0.0f;        /* time at the current frame */
-  float prev_time = 0.0f;   /* time at the previous frame */
-  float delta_time = 0.0f;  /* time between previous and current frame*/
+  float time = 0.0f;       /* time at the current frame */
+  float prev_time = 0.0f;  /* time at the previous frame */
+  float delta_time = 0.0f; /* time between previous and current frame*/
 
 private:
-  AppState() {}
+  AppState() = default;
 };
 
 } /* namespace simulake */
