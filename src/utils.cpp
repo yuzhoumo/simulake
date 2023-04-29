@@ -7,7 +7,8 @@
 #include "simulake/cell.hpp"
 #include "simulake/grid.hpp"
 
-std::ostream& operator<<(std::ostream& stream, const simulake::AppState& state) {
+std::ostream &operator<<(std::ostream &stream,
+                         const simulake::AppState &state) {
   stream << "AppState:\n";
   stream << "  selected_cell_type: " << state.selected_cell_type << "\n";
   stream << "  spawn_radius: " << state.spawn_radius << "\n";

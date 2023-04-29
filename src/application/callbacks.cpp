@@ -13,8 +13,8 @@ void error(int errorcode, const char *description) {
   std::cerr << description << std::endl;
 }
 
-void key(GLFWwindow* window, int key, int scancode, int action, int mods) {
-  AppState& state = AppState::get_instance();
+void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
+  AppState &state = AppState::get_instance();
 
   /* close window with escape key */
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -41,21 +41,21 @@ void key(GLFWwindow* window, int key, int scancode, int action, int mods) {
     std::cout << state;
 }
 
-void cursor_pos(GLFWwindow* window, double xpos, double ypos) {
-  AppState& state = AppState::get_instance();
+void cursor_pos(GLFWwindow *window, double xpos, double ypos) {
+  AppState &state = AppState::get_instance();
   state.set_mouse_pos(xpos, ypos);
 }
 
-void scroll(GLFWwindow* window, double xoffset, double yoffset) {
-  AppState& state = AppState::get_instance();
+void scroll(GLFWwindow *window, double xoffset, double yoffset) {
+  AppState &state = AppState::get_instance();
   int offset = state.spawn_radius + static_cast<int>(yoffset);
   int min_dim = std::min(state.window_width, state.window_height) / 4;
   offset = std::clamp(offset, 1, min_dim + 1);
-  state.set_spawn_radius(static_cast<uint32_t>(offset));
+  state.set_spawn_radius(static_cast<std::uint32_t>(offset));
 }
 
-void framebuffer_size(GLFWwindow* window, int width, int height) {
-  AppState& state = AppState::get_instance();
+void framebuffer_size(GLFWwindow *window, int width, int height) {
+  AppState &state = AppState::get_instance();
   state.set_window_size(width, height);
 }
 

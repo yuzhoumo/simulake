@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "window.hpp"
 #include "callbacks.hpp"
+#include "window.hpp"
 
 namespace simulake {
 
