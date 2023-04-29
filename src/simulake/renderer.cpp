@@ -115,7 +115,7 @@ void Renderer::submit_grid(DeviceGrid &grid) noexcept {
     glViewport(0, 0, viewport_size[0], viewport_size[1]);
 
     /* resize texture, fill with 0.f */
-    std::vector<float> texture_data(num_cells * grid.get_stride(), 0.f);
+    std::vector<DeviceGrid::device_cell_t> texture_data(num_cells);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,
                  GL_FLOAT, texture_data.data());
 

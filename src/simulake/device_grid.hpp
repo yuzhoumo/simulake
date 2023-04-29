@@ -24,6 +24,13 @@ namespace simulake {
 
 class DeviceGrid {
 public:
+  /* cell and its attributes in memory */
+  struct device_cell_t /* __attribute__((packed)) */ {
+    CellType type = CellType::NONE;
+    float mass = 0.0f;
+    bool updated = false;
+  };
+
   /* initialize device grid with empty (AIR) cells */
   explicit DeviceGrid(const std::uint32_t, const std::uint32_t,
                       const std::uint32_t);
@@ -59,7 +66,9 @@ public:
 
   inline std::uint32_t get_width() const noexcept { return width; }
   inline std::uint32_t get_height() const noexcept { return height; }
-  inline std::uint32_t get_stride() const noexcept { return stride; }
+  constexpr std::uint32_t get_stride() const noexcept {
+    return sizeof(device_cell_t);
+  }
 
 private:
   /* opencl structures */
@@ -95,7 +104,6 @@ private:
   void print_cl_image_debug_info(const cl_image) const noexcept;
 
   GLuint texture_target;
-  std::uint32_t stride;
   std::uint32_t num_cells;
   std::uint32_t memory_size;
   sim_context_t sim_context;

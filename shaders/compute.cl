@@ -1,14 +1,98 @@
 // vim: ft=cpp :
 
-#define NONE_TYPE 0
-#define AIR_TYPE 1
-#define WATER_TYPE 4
-#define SAND_TYPE 6
+// clang-format off
+#define   NONE_TYPE    0
+#define   AIR_TYPE     1
+#define   SMOKE_TYPE   2
+#define   FIRE_TYPE    3
+#define   WATER_TYPE   4
+#define   OIL_TYPE     5
+#define   SAND_TYPE    6
+#define   JELLO_TYPE   7
+// clang-format on
 
-#define FALLS_DOWN(x) (x > WATER_TYPE)
-#define VACANT(x) (x == AIR_TYPE)
+#define FALLS_DOWN(x) (x.type > WATER_TYPE)
+#define VACANT(x) (x.type == AIR_TYPE)
 
-__kernel void initialize(__global char *grid, __global char *next_grid,
+#define SET_CELL(x, type)                                                      \
+  {                                                                            \
+    switch (type) {                                                            \
+    case SMOKE_TYPE:                                                           \
+      SET_SMOKE(x);                                                            \
+      break;                                                                   \
+    case FIRE_TYPE:                                                            \
+      SET_FIRE(x);                                                             \
+      break;                                                                   \
+    case WATER_TYPE:                                                           \
+      SET_WATER(x);                                                            \
+      break;                                                                   \
+    case OIL_TYPE:                                                             \
+      SET_OIL(x);                                                              \
+      break;                                                                   \
+    case SAND_TYPE:                                                            \
+      SET_SAND(x);                                                             \
+      break;                                                                   \
+    case JELLO_TYPE:                                                           \
+      SET_JELLO(x);                                                            \
+      break;                                                                   \
+    case AIR_TYPE:                                                             \
+    default:                                                                   \
+      SET_AIR(x);                                                              \
+      break;                                                                   \
+    };                                                                         \
+  }
+
+#define SET_AIR(x)                                                             \
+  {                                                                            \
+    x.type = AIR_TYPE;                                                         \
+    x.mass = 0.0f;                                                             \
+  }
+
+#define SET_SMOKE(x)                                                           \
+  {                                                                            \
+    x.type = SMOKE_TYPE;                                                       \
+    x.mass = 1.0f;                                                             \
+  }
+
+#define SET_FIRE(x)                                                            \
+  {                                                                            \
+    x.type = FIRE_TYPE;                                                        \
+    x.mass = 1.0f;                                                             \
+  }
+
+#define SET_WATER(x)                                                           \
+  {                                                                            \
+    x.type = WATER_TYPE;                                                       \
+    x.mass = 1.0f;                                                             \
+  }
+
+#define SET_OIL(x)                                                             \
+  {                                                                            \
+    x.type = OIL_TYPE;                                                         \
+    x.mass = 1.0f;                                                             \
+  }
+
+#define SET_SAND(x)                                                            \
+  {                                                                            \
+    x.type = SAND_TYPE;                                                        \
+    x.mass = 1.0f;                                                             \
+  }
+
+#define SET_JELLO(x)                                                           \
+  {                                                                            \
+    x.type = JELLO_TYPE;                                                       \
+    x.mass = 1.0f;                                                             \
+  }
+
+// cell attributes
+typedef struct /* __attribute__((packed)) */ {
+  char type;
+  float mass;
+
+  bool updated;
+} grid_t;
+
+__kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
                          uint2 dims) {
   // const unsigned int width, const unsigned int height;
   const uint width = dims[0];
@@ -22,12 +106,14 @@ __kernel void initialize(__global char *grid, __global char *next_grid,
 
   // printf("%d-%d-%d\n", row, col, idx);
 
-  grid[idx] = AIR_TYPE;
-  next_grid[idx] = AIR_TYPE;
+  SET_AIR(grid[idx]);
+  SET_AIR(next_grid[idx]);
+  grid[idx].updated = false;
+  next_grid[idx].updated = false;
 }
 
-__kernel void random_init(__global char *grid, const __global char *next_grid,
-                          const uint2 dims) {
+__kernel void random_init(__global grid_t *grid,
+                          const __global grid_t *next_grid, const uint2 dims) {
   const uint col = get_global_id(0);
   const uint row = get_global_id(1);
   const uint width = dims[0];
@@ -40,11 +126,13 @@ __kernel void random_init(__global char *grid, const __global char *next_grid,
 
   if (rand % 5 == 0) {
     const unsigned int idx = row * width + col;
-    grid[idx] = SAND_TYPE;
+
+    SET_SAND(grid[idx]);
+    grid[idx].updated = false;
   }
 }
 
-__kernel void simulate(__global const char *grid, __global char *next_grid,
+__kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
                        const uint2 dims) {
   const uint col = get_global_id(0); // <= local grid size (cols)
   const uint row = get_global_id(1); // <= local grid size (rows)
@@ -65,30 +153,51 @@ __kernel void simulate(__global const char *grid, __global char *next_grid,
   const uint idx_bot_right = (row + 1) * width + (col + 1);
   // clang-format on
 
-  const uint type = (uint)grid[idx];              // scale up from std::uint8_t
+  const uint type = (uint)grid[idx].type;         // scale up from std::uint8_t
   if (type == SAND_TYPE && idx_bot < num_cells) { // cant fall below ground
     // printf("%d-%d-%d\n", grid > next_grid ? 0 : 1, idx, idx_bot);
 
-    if (VACANT(grid[idx_bot])) {
-      next_grid[idx_bot] = SAND_TYPE;
-      next_grid[idx] = AIR_TYPE;
+    if (VACANT(grid[idx_bot]) && !grid[idx_bot].updated) {
+      SET_AIR(next_grid[idx]);
+      SET_SAND(next_grid[idx_bot]);
+
+      next_grid[idx].updated = false;
+      next_grid[idx_bot].updated = false;
+
+      // mark this cell updated
+      grid[idx].updated = true;
+      grid[idx_bot].updated = true;
     }
 
-    else if (VACANT(grid[idx_bot_left])) {
-      next_grid[idx_bot_left] = SAND_TYPE;
-      next_grid[idx] = AIR_TYPE;
+    else if (VACANT(grid[idx_bot_left]) && !grid[idx_bot_left].updated) {
+      SET_AIR(next_grid[idx]);
+      SET_SAND(next_grid[idx_bot_left]);
+
+      next_grid[idx].updated = false;
+      next_grid[idx_bot_left].updated = false;
+
+      // mark this cell updated
+      grid[idx].updated = true;
+      grid[idx_bot_left].updated = true;
     }
 
-    else if (VACANT(grid[idx_bot_right])) {
-      next_grid[idx_bot_right] = SAND_TYPE;
-      next_grid[idx] = AIR_TYPE;
+    else if (VACANT(grid[idx_bot_right]) && !grid[idx_bot_left].updated) {
+      SET_AIR(next_grid[idx]);
+      SET_SAND(next_grid[idx_bot_right]);
+
+      next_grid[idx].updated = false;
+      next_grid[idx_bot_right].updated = false;
+
+      // mark this cell updated
+      grid[idx_bot_right].updated = true;
+      grid[idx_bot_right].updated = true;
     }
   }
 }
 
 __kernel void render_texture(__write_only image2d_t texture,
-                             __global const char *grid,
-                             __global const char *next_grid, const uint2 dims,
+                             __global const grid_t *grid,
+                             __global const grid_t *next_grid, const uint2 dims,
                              const uint cell_size) {
   const uint col = get_global_id(0); // <= local grid size (cols)
   const uint row = get_global_id(1); // <= local grid size (rows)
@@ -97,7 +206,7 @@ __kernel void render_texture(__write_only image2d_t texture,
   const uint height = dims[1];
 
   const uint idx = (row + 0) * width + (col + 0);
-  const uint type = (int)grid[idx]; // scale up from std::uint8_t
+  const uint type = (int)grid[idx].type; // scale up from std::uint8_t
 
   // write texture
   // attributes go here
@@ -106,7 +215,7 @@ __kernel void render_texture(__write_only image2d_t texture,
   write_imagef(texture, out_coord, out_color);
 }
 
-__kernel void spawn_cells(__global char *grid, __global char *next_grid,
+__kernel void spawn_cells(__global grid_t *grid, __global grid_t *next_grid,
                           const float2 mouse, const float paint_radius,
                           const uint target, const uint2 dims) {
   const uint col = get_global_id(0); // <= local grid size (cols)
@@ -119,9 +228,11 @@ __kernel void spawn_cells(__global char *grid, __global char *next_grid,
   const float d =
       sqrt(fabs(pow(mouse[0] - col, 2)) + fabs(pow(mouse[1] - row, 2)));
 
-  const bool write = VACANT(grid[idx]) || (target == AIR_TYPE);
-  if (d <= paint_radius && write) {
-    next_grid[idx] = target;
-    grid[idx] = target;
+  if (d <= paint_radius && (VACANT(grid[idx]) || (target == AIR_TYPE))) {
+    SET_CELL(next_grid[idx], target);
+    SET_CELL(grid[idx], target);
+
+    next_grid[idx].updated = false;
+    grid[idx].updated = false;
   }
 }
