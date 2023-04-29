@@ -58,6 +58,9 @@ std::ostream& operator<<(std::ostream& stream, const simulake::AppState& state);
 // Helper for modeling water flow.
 float constrain(float, float, float);
 
+// Helper for modeling water flow.
+float constrain(float, float, float);
+
 namespace simulake {
 
 // TODO(vir): only Release mode should have disabled perf counters

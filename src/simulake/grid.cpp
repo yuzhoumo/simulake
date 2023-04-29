@@ -94,7 +94,7 @@ void Grid::simulate() noexcept {
         break;
 
       case CellType::FIRE:
-        // FireCell::step({i, j}, *this);
+        FireCell::step({i, j}, *this);
         break;
 
       case CellType::JELLO:
@@ -102,7 +102,7 @@ void Grid::simulate() noexcept {
         break;
 
       case CellType::SMOKE:
-        // SmokeCell::step({i, j}, *this);
+        SmokeCell::step({i, j}, *this);
         break;
 
       case CellType::STONE:

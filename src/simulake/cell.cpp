@@ -1,5 +1,6 @@
 #include <iostream>
 #include <utility>
+#include <random>
 
 #include "utils.hpp"
 
@@ -55,6 +56,85 @@ void SandCell::step(const position_t &pos, Grid &grid) noexcept {
   else if (IS_FLUID(context.bottom_right)) {
     grid.set_at(x, y, CellType::AIR);
     grid.set_at(x + 1, y + 1, CellType::SAND);
+  }
+}
+
+void FireCell::helper(CellType curr, Grid &grid, int x, int y) {
+  if (IS_FLAMMABLE(curr)) {
+    grid.set_at(x, y, CellType::FIRE);
+  } else if (curr == CellType::AIR) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0, 1);
+    float p = 0.4;
+    double rand_num = dis(gen);
+    if (rand_num < p) {
+      grid.set_at(x, y, CellType::SMOKE);
+    }
+  }
+}
+void FireCell::step(const position_t &pos, Grid &grid) noexcept {
+  const auto [x, y] = pos;
+  const auto context = BaseCell::get_cell_context(pos, grid);
+
+  FireCell::helper(context.top, grid, x - 1, y);
+  FireCell::helper(context.top_left, grid, x - 1, y - 1);
+  FireCell::helper(context.top_right, grid, x - 1, y + 1);
+
+  FireCell::helper(context.bottom, grid, x + 1, y);
+  FireCell::helper(context.bottom_left, grid, x + 1, y - 1);
+  FireCell::helper(context.bottom_right, grid, x + 1, y + 1);
+
+  FireCell::helper(context.left, grid, x, y - 1);
+  FireCell::helper(context.right, grid, x, y + 1);
+
+
+  // With a low probability, the fire will die down and become air
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> dis(0, 1);
+  float p = 0.01;
+  double rand_num = dis(gen);
+  if (rand_num < p) {
+    grid.set_at(x, y, CellType::AIR);
+  }
+}
+
+void SmokeCell::step(const position_t &pos, Grid &grid) noexcept {
+  const auto [x, y] = pos;
+  const auto context = BaseCell::get_cell_context(pos, grid);
+
+  // Initialize random number generator
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> dis(0, 1);
+  float p = 0.4;
+
+  // Generate a random number between 0 and 1
+  double rand_num = dis(gen);
+
+  /* will flow up if possible */
+  if (IS_FLUID(context.top)) {
+    if (rand_num < p) {
+        grid.set_at(x, y, CellType::AIR);
+        grid.set_at(x - 1, y, CellType::SMOKE);
+    }
+  }
+
+  /* else flow left if possible */
+  else if (IS_FLUID(context.top_left)) {
+    if (rand_num < p) {
+      grid.set_at(x, y, CellType::AIR);
+      grid.set_at(x - 1, y - 1, CellType::SMOKE);
+    }
+  }
+
+  /* else flow right if possible */
+  else if (IS_FLUID(context.top_right)) {
+    if (rand_num < p) {
+      grid.set_at(x, y, CellType::AIR);
+      grid.set_at(x - 1, y + 1, CellType::SMOKE);
+    }
   }
 }
 
