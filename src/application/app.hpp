@@ -14,7 +14,7 @@ public:
   ~App() = default;
 
   /* run main render loop */
-  void run(bool gpu_mode) noexcept;
+  void run(const bool) noexcept;
 
   /* update grid based on current app state */
   void update_grid() noexcept; // TODO(joe): merge these into one function after

@@ -137,7 +137,9 @@ void DeviceGrid::set_texture_target(const GLuint target) noexcept {
 void DeviceGrid::spawn_cells(const std::tuple<float, float> &mouse,
                              const float paint_radius,
                              const CellType paint_target) const noexcept {
-  const cl_float2 mouse_xy = {std::get<0>(mouse), std::get<1>(mouse)};
+  const size_t global_item_size[] = {width, height};
+  const size_t local_item_size[] = {10, 10};
+  const cl_float2 mouse_xy = {width - std::get<0>(mouse), std::get<1>(mouse)};
   const auto target = static_cast<unsigned int>(paint_target);
 
   // update the last rendered grid, do not overwrite existing non-vacant cells
@@ -148,6 +150,10 @@ void DeviceGrid::spawn_cells(const std::tuple<float, float> &mouse,
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 3, sizeof(float), &paint_radius));
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 4, sizeof(unsigned int), &paint_target));
   // clang-format on
+
+  CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.spawn_kernel, 2,
+                                 nullptr, global_item_size, local_item_size, 0,
+                                 nullptr, nullptr));
 }
 
 void DeviceGrid::print_current() const noexcept {

@@ -12,13 +12,21 @@ App::App(std::uint32_t width, std::uint32_t height, std::uint32_t cell_size,
   state->set_time(glfwGetTime());
 }
 
-void App::update_device_grid() noexcept {
+void App::update_grid() noexcept {
   if (state->mouse_pressed) {
-    // TODO: set grid cells
+    // TODO(joe): set grid cells
     // state->selected_cell_type
     // state->prev_mouse_x
     // state->prev_mouse_y
     // state->spawn_radius
+  }
+}
+
+void App::update_device_grid() noexcept {
+  if (state->mouse_pressed and state->selected_cell_type != CellType::NONE) {
+    device_grid.spawn_cells({state->prev_mouse_x, state->prev_mouse_y},
+                            (float)state->spawn_radius,
+                            state->selected_cell_type);
   }
 }
 
@@ -44,6 +52,8 @@ void App::run_gpu_sim() noexcept {
 
     /* update state */
     state->set_time(glfwGetTime());
+
+    /* handle inputs */
     glfwPollEvents();
     update_device_grid();
 
@@ -59,26 +69,15 @@ void App::run_gpu_sim() noexcept {
 #endif
 }
 
-void App::update_grid() noexcept {
-  if (state->mouse_pressed) {
-    // TODO(joe): set grid cells
-    // state->selected_cell_type
-    // state->prev_mouse_x
-    // state->prev_mouse_y
-    // state->spawn_radius
-  }
-}
-
 void App::run_cpu_sim() noexcept {
   // TODO(joe): implement
 }
 
-void App::run(bool gpu_mode) noexcept {
-  if (gpu_mode) {
+void App::run(const bool gpu_mode) noexcept {
+  if (gpu_mode)
     run_gpu_sim();
-  } else {
+  else
     run_cpu_sim();
-  }
 }
 
 } /* namespace simulake */

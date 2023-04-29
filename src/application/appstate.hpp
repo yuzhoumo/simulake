@@ -47,7 +47,7 @@ public:
 
   /* simulake */
   simulake::CellType selected_cell_type = simulake::CellType::NONE;
-  std::uint32_t spawn_radius = 1;
+  std::uint32_t spawn_radius = 50;
   std::uint32_t cell_size = 1;
   bool mouse_pressed = false;
 

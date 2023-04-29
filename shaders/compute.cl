@@ -118,7 +118,7 @@ __kernel void spawn_cells(__global const char *grid, __global char *next_grid,
   const float d =
       sqrt(fabs(pow(mouse[0] - col, 2)) + fabs(pow(mouse[1] - row, 2)));
 
-  if (d < paint_radius && VACANT(grid[idx])) {
+  if (d <= paint_radius && VACANT(grid[idx])) {
     next_grid[idx] = target;
   }
 }

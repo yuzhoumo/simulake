@@ -29,6 +29,7 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
   glfwSetKeyCallback(_window.get(), callbacks::key);
   glfwSetCursorPosCallback(_window.get(), callbacks::cursor_pos);
   glfwSetScrollCallback(_window.get(), callbacks::scroll);
+  glfwSetMouseButtonCallback(_window.get(), callbacks::mouse_button);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     failure_exit();
