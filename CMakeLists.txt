@@ -110,6 +110,11 @@ add_subdirectory(${VENDOR_DIR}/glfw/)
 target_include_directories(${PROJECT_NAME} PRIVATE ${VENDOR_DIR}/glfw/include/)
 target_link_libraries(${PROJECT_NAME} glfw)
 
+# cxxopts
+add_subdirectory(${VENDOR_DIR}/cxxopts/)
+target_include_directories(${PROJECT_NAME} PRIVATE ${VENDOR_DIR}/cxxopts/include/)
+target_link_libraries(${PROJECT_NAME} cxxopts)
+
 # benchmark
 # include(FetchContent)
 # set(BENCHMARK_DOWNLOAD_DEPENDENCIES ON)
