@@ -9,9 +9,6 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
                const std::string_view _title)
     : width(_width), height(_height), title(_title) {
 
-  int rc = glfwInit();
-  assert(rc != 0);
-
   glfwSetErrorCallback(callbacks::error);
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -37,6 +34,13 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     failure_exit();
   }
+}
+
+std::tuple<std::uint32_t, std::uint32_t> Window::get_window_size() const noexcept {
+  int width, height;
+  glfwGetWindowSize(_window.get(), &width, &height);
+  return std::make_tuple(static_cast<uint32_t>(width),
+                         static_cast<uint32_t>(height));
 }
 
 bool Window::should_close() const noexcept {

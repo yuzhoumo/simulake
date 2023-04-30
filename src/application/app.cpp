@@ -7,9 +7,14 @@ App::App(std::uint32_t width, std::uint32_t height, std::uint32_t cell_size,
     : window(width, height, title), renderer(width, height, cell_size),
       device_grid(width / cell_size, height / cell_size, cell_size),
       grid(width / cell_size, height / cell_size) { // TODO(joe): merge grids
+
   state = &AppState::get_instance();
-  state->set_window_size(width, height);
   state->set_time(glfwGetTime());
+
+  /* note(joe): actual window size may differ from `width` & `height` if it
+   * doesn't fit the screen, so add additional query on app instantiation. */
+  const auto& size = window.get_window_size();
+  state->set_window_size(std::get<0>(size), std::get<1>(size));
 }
 
 void App::update_device_grid() noexcept {

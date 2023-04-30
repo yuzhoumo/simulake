@@ -25,7 +25,9 @@ public:
   bool should_close() const noexcept;
   void swap_buffers() const noexcept;
   GLFWwindow *get_window_ptr() const noexcept;
+  std::tuple<std::uint32_t, std::uint32_t> get_window_size() const noexcept;
 
+  void init_window_context();
 private:
   /* print error and terminate */
   [[noreturn]] void failure_exit() const noexcept;
