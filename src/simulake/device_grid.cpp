@@ -9,12 +9,9 @@ namespace simulake {
 DeviceGrid::DeviceGrid(const std::uint32_t _width, const std::uint32_t _height,
                        const std::uint32_t _cell_size)
     : flip_flag(true), width(_width), height(_height), cell_size(_cell_size) {
-  // TODO(vir): add support for more cell attributes
-  stride = 2;
-
   flip_flag = true;
   num_cells = width * height;
-  memory_size = num_cells * sizeof(CellType);
+  memory_size = num_cells * sizeof(device_cell_t);
 
   initialize_device();
   initialize_kernels();
@@ -111,8 +108,7 @@ void DeviceGrid::render_texture() const noexcept {
   }();
 #endif
 
-  CL_CALL(clEnqueueAcquireGLObjects(sim_context.queue, 1, &image, 0, nullptr,
-                                    nullptr));
+  // NOTE(vir): no need to call clEnqueueAcquireGLObjects
 
   // clang-format off
   // TODO(vir): do we need both current and previous frame? might be useful for effects
@@ -125,9 +121,6 @@ void DeviceGrid::render_texture() const noexcept {
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.render_kernel,
                                  2, nullptr, global_item_size, local_item_size,
                                  0, nullptr, nullptr));
-
-  CL_CALL(clEnqueueReleaseGLObjects(sim_context.queue, 1, &image, 0, nullptr,
-                                    nullptr));
 }
 
 void DeviceGrid::set_texture_target(const GLuint target) noexcept {
@@ -139,7 +132,7 @@ void DeviceGrid::spawn_cells(const std::tuple<float, float> &mouse,
                              const CellType paint_target) const noexcept {
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {10, 10};
-  const cl_float2 mouse_xy = {width - std::get<0>(mouse), std::get<1>(mouse)};
+  const cl_float2 mouse_xy = {std::get<0>(mouse), std::get<1>(mouse)};
   const auto target = static_cast<unsigned int>(paint_target);
 
   // update the last rendered grid, do not overwrite existing non-vacant cells
@@ -157,7 +150,7 @@ void DeviceGrid::spawn_cells(const std::tuple<float, float> &mouse,
 }
 
 void DeviceGrid::print_current() const noexcept {
-  std::vector<CellType> grid(num_cells, CellType::NONE);
+  std::vector<device_cell_t> grid(num_cells);
 
   CL_CALL(clEnqueueReadBuffer(
       sim_context.queue, flip_flag ? sim_context.grid : sim_context.next_grid,
@@ -167,7 +160,7 @@ void DeviceGrid::print_current() const noexcept {
   for (int row = 0; row < height; row += 1) {
     for (int col = 0; col < width; col += 1) {
       const auto index = row * width + col;
-      std::cout << grid[index];
+      std::cout << grid[index].type;
     }
     std::cout << '\n';
   }
@@ -176,8 +169,8 @@ void DeviceGrid::print_current() const noexcept {
 }
 
 void DeviceGrid::print_both() const noexcept {
-  std::vector<CellType> grid(num_cells, CellType::NONE);
-  std::vector<CellType> next_grid(num_cells, CellType::NONE);
+  std::vector<device_cell_t> grid(num_cells);
+  std::vector<device_cell_t> next_grid(num_cells);
 
   // copy data device -> cpu
   // clang-format off
@@ -190,14 +183,14 @@ void DeviceGrid::print_both() const noexcept {
   for (int row = 0; row < height; row += 1) {
     for (int col = 0; col < width; col += 1) {
       const auto index = row * width + col;
-      std::cout << grid[index];
+      std::cout << grid[index].type;
     }
 
     std::cout << '|';
 
     for (int col = 0; col < width; col += 1) {
       const auto index = row * width + col;
-      std::cout << next_grid[index];
+      std::cout << next_grid[index].type;
     }
 
     std::cout << '\n';
@@ -414,6 +407,7 @@ void DeviceGrid::initialize_kernels() noexcept {
   // NOTE(vir): we set spawn kernel data args in DeviceGrid::spawn_cells()
   // these are the fixed ones
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 5, sizeof(cl_uint2), &grid_dim));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 6, sizeof(unsigned int), &cell_size));
 
   // NOTE(vir): we set sim kernel data args in DeviceGrid::simulate()
   // these are the fixed ones
