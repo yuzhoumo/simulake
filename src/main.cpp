@@ -28,9 +28,10 @@ int main(int argc, char *argv[]) {
 
     /* set args */
     cell_size = result["cellsize"].as<std::uint32_t>();
-    gpu_mode = result["gpu"].as<bool>();
     height = result["height"].as<std::uint32_t>();
     width = result["width"].as<std::uint32_t>();
+    gpu_mode = result["gpu"].as<bool>() or true;
+    std::cout << "gpu_mode: " << gpu_mode << std::endl; /*__DEBUG_PRINT__*/
   } catch (const cxxopts::exceptions::exception &e) {
     std::cerr << "error: " << e.what() << std::endl;
     exit(EXIT_FAILURE);
