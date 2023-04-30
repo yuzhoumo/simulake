@@ -27,7 +27,7 @@ std::ostream &operator<<(std::ostream &stream,
 std::ostream &operator<<(std::ostream &stream, const simulake::CellType type) {
   switch (type) {
   case simulake::CellType::AIR:
-    stream << ' ';
+    stream << 'A';
     break;
   case simulake::CellType::WATER:
     stream << 'W';

@@ -40,11 +40,11 @@ void Grid::spawn_cells(const uint32_t x_center, const uint32_t y_center,
 
   const int y_start = std::max(static_cast<int>(y_center - paint_radius), 0);
   const int y_end = std::min(static_cast<int>(y_center + paint_radius),
-                       static_cast<int>(height - 1));
+                       static_cast<int>(height));
 
   const int x_start = std::max(static_cast<int>(x_center - paint_radius), 0);
   const int x_end = std::min(static_cast<int>(x_center + paint_radius),
-                       static_cast<int>(width - 1));
+                       static_cast<int>(width));
 
   for (int y = y_start; y < y_end; ++y) {
     for (int x = x_start; x < x_end; ++x) {
@@ -52,7 +52,10 @@ void Grid::spawn_cells(const uint32_t x_center, const uint32_t y_center,
                     sqrt(pow(static_cast<int>(x_center) - x, 2) +
                          pow(static_cast<int>(y_center) - y, 2)));
 
-      if (dist <= paint_radius and type_at(y, x) == CellType::AIR) {
+      bool should_paint = dist <= paint_radius and
+        (paint_target == CellType::AIR or type_at(y, x) == CellType::AIR);
+
+      if (should_paint) {
         set_state(y, x, paint_target);
         if (paint_target == CellType::WATER)
           _mass[y][x] = WaterCell::max_mass;

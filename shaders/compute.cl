@@ -124,7 +124,7 @@ __kernel void random_init(__global grid_t *grid,
   const uint rand = (7331 + col) ^ ((7331 + col) >> 19) ^ (t ^ (t >> 8));
 
   if (rand % 5) {
-    printf("%d\n", col);
+    // printf("%d\n", col);
 
     const uint idx = row * width + col;
     SET_SAND(grid[idx]);

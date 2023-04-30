@@ -7,7 +7,6 @@ App::App(std::uint32_t width, std::uint32_t height, std::uint32_t cell_size,
     : window(width, height, title), renderer(width, height, cell_size),
       device_grid(width / cell_size, height / cell_size, cell_size),
       grid(width / cell_size, height / cell_size) { // TODO(joe): merge grids
-
   state = &AppState::get_instance();
   state->set_time(glfwGetTime());
 
