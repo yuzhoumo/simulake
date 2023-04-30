@@ -63,8 +63,7 @@ float constrain(float, float, float);
 
 namespace simulake {
 
-// TODO(vir): only Release mode should have disabled perf counters
-#if DEBUG
+#if ENABLE_PROFILING
 #define PROFILE_SCOPE(name) ::simulake::scope_timer_t timer##__LINE__(name)
 #define PROFILE_FUNCTION() PROFILE_SCOPE(__PRETTY_FUNCTION__)
 #else

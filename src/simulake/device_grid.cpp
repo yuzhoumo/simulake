@@ -132,7 +132,7 @@ void DeviceGrid::spawn_cells(const std::tuple<float, float> &mouse,
                              const CellType paint_target) const noexcept {
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {10, 10};
-  const cl_float2 mouse_xy = {width - std::get<0>(mouse), std::get<1>(mouse)};
+  const cl_float2 mouse_xy = {std::get<0>(mouse), std::get<1>(mouse)};
   const auto target = static_cast<unsigned int>(paint_target);
 
   // update the last rendered grid, do not overwrite existing non-vacant cells
@@ -407,6 +407,7 @@ void DeviceGrid::initialize_kernels() noexcept {
   // NOTE(vir): we set spawn kernel data args in DeviceGrid::spawn_cells()
   // these are the fixed ones
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 5, sizeof(cl_uint2), &grid_dim));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 6, sizeof(unsigned int), &cell_size));
 
   // NOTE(vir): we set sim kernel data args in DeviceGrid::simulate()
   // these are the fixed ones

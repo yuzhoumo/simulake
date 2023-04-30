@@ -25,7 +25,7 @@ namespace simulake {
 class DeviceGrid {
 public:
   /* cell and its attributes in memory */
-  struct device_cell_t /* __attribute__((packed)) */ {
+  struct __attribute__((packed, aligned(8))) device_cell_t {
     CellType type = CellType::NONE;
     float mass = 0.0f;
     bool updated = false;

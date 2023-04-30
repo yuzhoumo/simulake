@@ -1,7 +1,7 @@
 #include <cxxopts.hpp>
 
-#include "application/graphics.hpp"
 #include "application/app.hpp"
+#include "application/graphics.hpp"
 #include "test.hpp"
 
 int main(int argc, char *argv[]) {
@@ -9,8 +9,8 @@ int main(int argc, char *argv[]) {
   bool gpu_mode;
 
   try {
-    cxxopts::Options options(
-        argv[0], "A cellular automata physics simulator.\n");
+    cxxopts::Options options(argv[0],
+                             "A cellular automata physics simulator.\n");
 
     // clang-format off
     options.add_options()
@@ -33,15 +33,14 @@ int main(int argc, char *argv[]) {
     gpu_mode = result["gpu"].as<bool>();
     height = result["height"].as<std::uint32_t>();
     width = result["width"].as<std::uint32_t>();
-  }
-  catch (const cxxopts::exceptions::exception& e) {
+  } catch (const cxxopts::exceptions::exception &e) {
     std::cerr << "error: " << e.what() << std::endl;
     exit(EXIT_FAILURE);
   }
 
   /* init and run application */
   simulake::init_window_context();
-  simulake::App app = simulake::App { width, height, cell_size, "simulake" };
+  simulake::App app = simulake::App{width, height, cell_size, "simulake"};
 
   {
     PROFILE_SCOPE("total run time");

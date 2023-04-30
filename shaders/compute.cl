@@ -95,16 +95,13 @@ typedef struct __attribute__((packed, aligned(8))) {
 
 __kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
                          uint2 dims) {
-  // const unsigned int width, const unsigned int height;
-  const uint width = dims[0];
-  const uint height = dims[1];
-
   const uint size = get_global_size(0); // full grid size (rows)
   const uint col = get_global_id(0);
   const uint row = get_global_id(1);
+  const uint width = dims[0];
+  const uint height = dims[1];
 
   const unsigned int idx = row * width + col;
-
   // printf("%d-%d-%d\n", row, col, idx);
 
   SET_AIR(grid[idx]);
@@ -117,6 +114,7 @@ __kernel void random_init(__global grid_t *grid,
                           const __global grid_t *next_grid, const uint2 dims) {
   const uint col = get_global_id(0);
   const uint row = get_global_id(1);
+
   const uint width = dims[0];
   const uint height = dims[1];
 
@@ -125,9 +123,10 @@ __kernel void random_init(__global grid_t *grid,
   const uint t = seed ^ (seed << 11);
   const uint rand = (7331 + col) ^ ((7331 + col) >> 19) ^ (t ^ (t >> 8));
 
-  if (rand % 5 == 0) {
-    const unsigned int idx = row * width + col;
+  if (rand % 5) {
+    printf("%d\n", col);
 
+    const uint idx = row * width + col;
     SET_SAND(grid[idx]);
     grid[idx].updated = false;
   }
@@ -142,6 +141,11 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
   const uint height = dims[1];
   const uint num_cells = width * height;
 
+  const bool top_valid = (row - 1) >= 0;
+  const bool bot_valid = (row + 1) < height;
+  const bool left_valid = ((long)col - 1) > 0;
+  const bool right_valid = (col + 1) < width;
+
   // clang-format off
   const uint idx_top_left  = (row - 1) * width + (col - 1);
   const uint idx_top       = (row - 1) * width + (col + 0);
@@ -154,8 +158,8 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
   const uint idx_bot_right = (row + 1) * width + (col + 1);
   // clang-format on
 
-  const uint type = (uint)grid[idx].type;         // scale up from std::uint8_t
-  if (type == SAND_TYPE && idx_bot < num_cells) { // cant fall below ground
+  const uint type = (uint)grid[idx].type; // scale up from std::uint8_t
+  if (type == SAND_TYPE && bot_valid) {   // cant fall below ground
     // printf("%d-%d-%d\n", grid > next_grid ? 0 : 1, idx, idx_bot);
 
     if (VACANT(grid[idx_bot]) && !grid[idx_bot].updated) {
@@ -170,7 +174,8 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       grid[idx_bot].updated = true;
     }
 
-    else if (VACANT(grid[idx_bot_left]) && !grid[idx_bot_left].updated) {
+    else if (left_valid && VACANT(grid[idx_bot_left]) &&
+             !grid[idx_bot_left].updated) {
       SET_AIR(next_grid[idx]);
       SET_SAND(next_grid[idx_bot_left]);
 
@@ -182,7 +187,8 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       grid[idx_bot_left].updated = true;
     }
 
-    else if (VACANT(grid[idx_bot_right]) && !grid[idx_bot_left].updated) {
+    else if (right_valid && VACANT(grid[idx_bot_right]) &&
+             !grid[idx_bot_right].updated) {
       SET_AIR(next_grid[idx]);
       SET_SAND(next_grid[idx_bot_right]);
 
@@ -218,16 +224,20 @@ __kernel void render_texture(__write_only image2d_t texture,
 
 __kernel void spawn_cells(__global grid_t *grid, __global grid_t *next_grid,
                           const float2 mouse, const float paint_radius,
-                          const uint target, const uint2 dims) {
+                          const uint target, const uint2 dims,
+                          const uint cell_size) {
   const uint col = get_global_id(0); // <= local grid size (cols)
   const uint row = get_global_id(1); // <= local grid size (rows)
 
   const uint width = dims[0];
   const uint height = dims[1];
+  const uint screen_col = width - col - 1;
 
-  const uint idx = (row + 0) * width + (col + 0);
+  const float2 mouse_norm = mouse / cell_size;
+
+  const uint idx = (row + 0) * width + (screen_col + 0);
   const float d =
-      sqrt(fabs(pow(mouse[0] - col, 2)) + fabs(pow(mouse[1] - row, 2)));
+      sqrt(pow(col - (mouse_norm[0]), 2) + pow(row - mouse_norm[1], 2));
 
   if (d <= paint_radius && (VACANT(grid[idx]) || (target == AIR_TYPE))) {
     SET_CELL(next_grid[idx], target);
