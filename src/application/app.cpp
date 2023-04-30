@@ -116,9 +116,6 @@ void App::run_cpu_sim() noexcept {
 }
 
 void App::run(const bool gpu_mode) noexcept {
-  int rc = glfwInit();
-  assert(rc != 0);
-
   if (gpu_mode)
     run_gpu_sim();
   else
