@@ -24,6 +24,9 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
 
   glfwMakeContextCurrent(_window.get());
 
+  /* enable vsync */
+  glfwSwapInterval(1);
+
   /* register window event callbacks */
   glfwSetFramebufferSizeCallback(_window.get(), callbacks::framebuffer_size);
   glfwSetKeyCallback(_window.get(), callbacks::key);
@@ -35,6 +38,11 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     failure_exit();
   }
+}
+
+Window::~Window() {
+  glfwDestroyWindow(_window.get());
+  glfwTerminate();
 }
 
 std::tuple<std::uint32_t, std::uint32_t> Window::get_window_size() const noexcept {

@@ -14,6 +14,9 @@ public:
   explicit Window(const std::uint32_t, const std::uint32_t,
                   const std::string_view);
 
+  /* clean up resources */
+  ~Window();
+
   /* enable moves */
   explicit Window(Window &&) = default;
   Window &operator=(Window &&) = delete;
