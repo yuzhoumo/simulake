@@ -1,6 +1,6 @@
 # Simulake
 
-A physics simulator with cellular automata.
+A cellular automata physics simulator.
 
 ## Cloning
 
@@ -28,7 +28,7 @@ For debug build, use the `-DCMAKE_BUILD_TYPE=Debug` flag.
 
 -x, --width arg     width (default: 800)
 -y, --height arg    height (default: 600)
--c, --cellsize arg  cell size (default: 4)
+-c, --cellsize arg  cell size (default: 1)
 -g, --gpu           enable GPU acceleration
 -h, --help          print help
 ```
@@ -45,6 +45,7 @@ For debug build, use the `-DCMAKE_BUILD_TYPE=Debug` flag.
 | Select JELLO cell type  | `6`            |
 | Select STONE cell type  | `7`            |
 | Print app state (debug) | `P`            |
+| Pause the simulation    | `SPACEBAR`     |
 | Change "brush" size     | (Scroll wheel) |
 
 ## Dependencies
