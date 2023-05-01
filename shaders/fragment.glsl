@@ -25,7 +25,7 @@ vec4 shade_mouse_ring() {
   vec2 mouse_pos = vec2(u_mouse_pos.x, u_resolution.y - u_mouse_pos.y) /
                                                            vec2(u_resolution);
   float rad = float(u_spawn_radius * u_cell_size);
-  float thickness = 1.5 * float(u_cell_size);
+  float thickness = float(u_cell_size);
   vec2 aspect_ratio = vec2(1.0, u_resolution.x / u_resolution.y);
   vec2 diff = (st - mouse_pos) * aspect_ratio;
   float dist = length(diff * vec2(u_resolution));
@@ -39,7 +39,7 @@ vec4 shade_mouse_ring() {
 }
 
 vec4 shade_air() {
-  return vec4(0.5, 0.5, 1.0, 1.0); // gray
+  return vec4(0.5, 0.5, 0.5, 1.0); // gray
 }
 
 vec4 shade_smoke() {
