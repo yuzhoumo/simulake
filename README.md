@@ -50,12 +50,13 @@ For debug build, use the `-DCMAKE_BUILD_TYPE=Debug` flag.
 
 ## Dependencies
 
+- [cmake](http://www.cmake.org/)
+- [cxxopts](https://github.com/jarro2783/cxxopts)
 - [glfw](https://github.com/glfw/glfw)
 - [glad](https://github.com/Dav1dde/glad)
 - [glm](https://github.com/g-truc/glm)
-- [cxxopts](https://github.com/jarro2783/cxxopts)
+- [imgui](https://github.com/ocornut/imgui)
 - [threadpool](https://github.com/bshoshany/thread-pool)
-- [cmake](http://www.cmake.org/)
 
 ## Resources
 
