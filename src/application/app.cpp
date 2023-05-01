@@ -37,13 +37,16 @@ void App::update_device_grid() noexcept {
 }
 
 void App::update_grid() noexcept {
+  const auto target_type =
+      state->erase_mode ? CellType::AIR : state->selected_cell_type;
+
   if (state->mouse_pressed and state->selected_cell_type != CellType::NONE) {
     std::uint32_t x = static_cast<std::uint32_t>(
       grid.get_width() * (state->prev_mouse_x / state->window_width));
     std::uint32_t y = static_cast<std::uint32_t>(
       grid.get_height() * (state->prev_mouse_y / state->window_height));
 
-    grid.spawn_cells(x, y, state->spawn_radius, state->selected_cell_type);
+    grid.spawn_cells(x, y, state->spawn_radius, target_type);
   }
 }
 
@@ -72,10 +75,11 @@ void App::run_gpu_sim() noexcept {
 
     /* handle inputs */
     window.poll_events();
-    update_device_grid();
 
-    /* step simulation */
-    device_grid.simulate();
+    if (!state->paused) {
+      update_device_grid();
+      device_grid.simulate();
+    }
   }
 
 #if DEBUG
@@ -109,11 +113,12 @@ void App::run_cpu_sim() noexcept {
 
     /* handle inputs */
     window.poll_events();
-    update_grid();
 
-    /* step simulation */
-    grid.simulate();
-    renderer.submit_grid(grid);
+    if (!state->paused) {
+      update_grid();
+      grid.simulate();
+      renderer.submit_grid(grid);
+    }
   }
 
 #if DEBUG

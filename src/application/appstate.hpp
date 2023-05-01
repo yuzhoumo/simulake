@@ -36,7 +36,7 @@ public:
   static void set_cell_size(const std::uint32_t) noexcept;
 
   /* update bool tracking if mouse button is pressed down */
-  static void set_mouse_pressed(const bool, const bool = false) noexcept;
+  static void set_mouse_pressed(const bool) noexcept;
 
   /* update boolean denoting erase mode */
   static void set_erase_mode(const bool) noexcept;
@@ -49,6 +49,9 @@ public:
 
   /* update time values based on current time */
   static void set_time(const float) noexcept;
+
+  /* set play/pause */
+  static void set_paused(const bool) noexcept;
 
   /* simulake */
   simulake::CellType selected_cell_type = simulake::CellType::NONE;
@@ -68,6 +71,8 @@ public:
   float time = 0.0f;       /* time at the current frame */
   float prev_time = 0.0f;  /* time at the previous frame */
   float delta_time = 0.0f; /* time between previous and current frame*/
+
+  bool paused = false; /* pause the simulation when true */
 
   Grid *grid;
   DeviceGrid *device_grid;

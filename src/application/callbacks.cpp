@@ -6,6 +6,14 @@
 #include "../utils.hpp"
 
 namespace simulake {
+
+void toggle_pause(GLFWwindow *window) {
+  AppState &state = AppState::get_instance();
+  state.set_paused(!state.paused);
+  glfwSetInputMode(window, GLFW_CURSOR, state.paused ? GLFW_CURSOR_NORMAL :
+                                                       GLFW_CURSOR_HIDDEN);
+}
+
 namespace callbacks {
 
 void error(int errorcode, const char *description) {
@@ -18,6 +26,10 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
   /* close window with escape key */
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     glfwSetWindowShouldClose(window, GL_TRUE);
+
+  /* pause/unpause simulation with spacebar */
+  if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+    toggle_pause(window);
 
   /* select a cell type */
   if (key == GLFW_KEY_0 && action == GLFW_PRESS)
@@ -42,8 +54,9 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
     std::cout << state;
 }
 
-void cursor_enter(GLFWwindow* window, int entered) {
-  if (entered) {
+void cursor_enter(GLFWwindow *window, int entered) {
+  AppState &state = AppState::get_instance();
+  if (entered and !state.paused) {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
   } else {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -68,9 +81,11 @@ void mouse_button(GLFWwindow *window, int button, int action, int mods) {
 
   else if (button == GLFW_MOUSE_BUTTON_LEFT and (mods & GLFW_MOD_SHIFT)) {
     if (action == GLFW_PRESS) {
-      state.set_mouse_pressed(true, true);
+      state.set_mouse_pressed(true);
+      state.set_erase_mode(true);
     } else if (action == GLFW_RELEASE) {
-      state.set_mouse_pressed(false, false);
+      state.set_mouse_pressed(false);
+      state.set_erase_mode(false);
     }
   }
 }

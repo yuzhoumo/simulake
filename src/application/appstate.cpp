@@ -11,10 +11,12 @@ void AppState::set_spawn_radius(const std::uint32_t num_cells) noexcept {
   AppState &state = AppState::get_instance();
   state.spawn_radius = num_cells;
 
-  Renderer::uniform_opts_t uniforms_to_update = {
-    {Renderer::UniformId::SPAWN_RADIUS, static_cast<int>(state.spawn_radius)}};
+  if (!state.paused) {
+    Renderer::uniform_opts_t uniforms_to_update = {
+      {Renderer::UniformId::SPAWN_RADIUS, static_cast<int>(state.spawn_radius)}};
 
-  state.renderer->submit_shader_uniforms(uniforms_to_update);
+    state.renderer->submit_shader_uniforms(uniforms_to_update);
+  }
 }
 
 void AppState::set_cell_size(const std::uint32_t cell_size) noexcept {
@@ -27,10 +29,17 @@ void AppState::set_cell_size(const std::uint32_t cell_size) noexcept {
   state.renderer->submit_shader_uniforms(uniforms_to_update);
 }
 
-void AppState::set_mouse_pressed(const bool pressed, const bool erase_mode) noexcept {
+void AppState::set_mouse_pressed(const bool pressed) noexcept {
   AppState &state = AppState::get_instance();
+  if (state.paused and pressed) {
+    Renderer::uniform_opts_t uniforms_to_update = {
+      {Renderer::UniformId::MOUSE_POS, glm::vec2{state.prev_mouse_x,
+                                                 state.prev_mouse_y}}};
+    state.renderer->submit_shader_uniforms(uniforms_to_update);
+    state.set_paused(false);
+  }
+
   state.mouse_pressed = pressed;
-  state.set_erase_mode(erase_mode);
 }
 
 void AppState::set_erase_mode(const bool erase_mode) noexcept {
@@ -57,11 +66,12 @@ void AppState::set_mouse_pos(const float xpos, const float ypos) noexcept {
   state.prev_mouse_x = xpos;
   state.prev_mouse_y = ypos;
 
-  Renderer::uniform_opts_t uniforms_to_update = {
-    {Renderer::UniformId::MOUSE_POS, glm::vec2{xpos, ypos}}
-  };
+  if (!state.paused) {
+    Renderer::uniform_opts_t uniforms_to_update = {
+      {Renderer::UniformId::MOUSE_POS, glm::vec2{xpos, ypos}}};
 
-  state.renderer->submit_shader_uniforms(uniforms_to_update);
+    state.renderer->submit_shader_uniforms(uniforms_to_update);
+  }
 }
 
 void AppState::set_time(const float curr_time) noexcept {
@@ -69,6 +79,15 @@ void AppState::set_time(const float curr_time) noexcept {
   state.delta_time = curr_time - state.prev_time;
   state.prev_time = state.time;
   state.time = curr_time;
+}
+
+void AppState::set_paused(const bool paused) noexcept {
+  AppState &state = AppState::get_instance();
+  if (state.paused != paused) {
+    /* make sure time is updated on pause/unpause */
+    state.set_time(state.window->get_time());
+    state.paused = paused;
+  }
 }
 
 } /* namespace simulake */
