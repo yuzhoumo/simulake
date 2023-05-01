@@ -267,13 +267,15 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       int left, right;
 
       for (left = col; left >= col - horizontal_reach; --left) {
-          if (!IS_FLUID(grid[to_col_major(row, left, height)])) break;
+          uint idx = to_col_major(row, left, height);
+          if (!IS_FLUID(grid[idx])) break;
       }
       left++;
 
       // Find right limit.
       for (right = col; right <= col + horizontal_reach; ++right) {
-          if (!IS_FLUID(grid[to_col_major(row, right, height)])) break;
+          uint idx = to_col_major(row, right, height);
+          if (!IS_FLUID(grid[idx])) break;
       }
       right--;
 
@@ -291,7 +293,7 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
           // grid._next_mass[x][j] = mean_mass;
           next_grid[idx].mass += mean_mass;
           next_grid[idx].mass /= 2;
-          next_grid[idx].updated = false;
+          next_grid[idx].updated = true;
       }
 
       remaining_mass = next_grid[idx].mass;

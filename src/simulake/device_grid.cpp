@@ -5,6 +5,9 @@
 
 #include "device_grid.hpp"
 
+const size_t LOCAL_WIDTH = 1;
+const size_t LOCAL_HEIGHT = 10;
+
 namespace simulake {
 DeviceGrid::DeviceGrid(const std::uint32_t _width, const std::uint32_t _height,
                        const std::uint32_t _cell_size)
@@ -34,7 +37,7 @@ DeviceGrid::~DeviceGrid() {
 void DeviceGrid::reset() const noexcept {
   // max work group size is 256 = 16 * 16
   const size_t global_item_size[] = {width, height};
-  const size_t local_item_size[] = {10, 10};
+  const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
 
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.init_kernel, 2,
                                  nullptr, global_item_size, local_item_size, 0,
@@ -47,7 +50,7 @@ void DeviceGrid::reset() const noexcept {
 void DeviceGrid::initialize_random() const noexcept {
   // max work group size is 256 = 16 * 16
   const size_t global_item_size[] = {width, height};
-  const size_t local_item_size[] = {10, 10};
+  const size_t local_item_size[] = {1, 10};
 
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.rand_kernel, 2,
                                  nullptr, global_item_size, local_item_size, 0,
@@ -60,7 +63,7 @@ void DeviceGrid::initialize_random() const noexcept {
 void DeviceGrid::simulate() noexcept {
   // max work group size is 256 = 16 * 16
   const size_t global_item_size[] = {width, height};
-  const size_t local_item_size[] = {10, 10};
+  const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
 
   // simulation step
   {
@@ -88,7 +91,7 @@ void DeviceGrid::simulate() noexcept {
 
 void DeviceGrid::render_texture() const noexcept {
   const size_t global_item_size[] = {width, height};
-  const size_t local_item_size[] = {10, 10};
+  const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
 
   // NOTE(vir):
   // - image is CL_MEM_OBJECT_IMAGE2D;
@@ -131,7 +134,7 @@ void DeviceGrid::spawn_cells(const std::tuple<float, float> &mouse,
                              const float paint_radius,
                              const CellType paint_target) const noexcept {
   const size_t global_item_size[] = {width, height};
-  const size_t local_item_size[] = {10, 10};
+  const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
   const cl_float2 mouse_xy = {std::get<0>(mouse), std::get<1>(mouse)};
   const auto target = static_cast<unsigned int>(paint_target);
 
