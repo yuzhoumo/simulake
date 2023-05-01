@@ -99,7 +99,7 @@ __kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
   const uint width = dims[0];
   const uint height = dims[1];
 
-  const unsigned int idx = row * width + col;
+  const unsigned int idx = to_row_major(row, col, width);
   // printf("%d-%d-%d\n", row, col, idx);
 
   grid[idx].type = AIR_TYPE;
@@ -119,7 +119,7 @@ __kernel void random_init(__global grid_t *grid,
 
   const uint width = dims[0];
   const uint height = dims[1];
-  const uint idx = row * width + col;
+  const uint idx = to_row_major(row, col, width);
 
   // get a random number using xorshift
   const uint seed = 1337 + row;
@@ -148,16 +148,6 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
   const bool right_valid = (col + 1) < width;
 
   // clang-format off
-  // const uint idx_top_left  = (row - 1) * width + (col - 1);
-  // const uint idx_top       = (row - 1) * width + (col + 0);
-  // const uint idx_top_right = (row - 1) * width + (col + 1);
-  // const uint idx_left      = (row + 0) * width + (col - 1);
-  // const uint idx           = (row + 0) * width + (col + 0);
-  // const uint idx_right     = (row + 0) * width + (col + 1);
-  // const uint idx_bot_left  = (row + 1) * width + (col - 1);
-  // const uint idx_bot       = (row + 1) * width + (col + 0);
-  // const uint idx_bot_right = (row + 1) * width + (col + 1);
-  //
   const uint idx_top_left  = to_row_major(row - 1, col - 1, width);
   const uint idx_top       = to_row_major(row - 1, col + 0, width);
   const uint idx_top_right = to_row_major(row - 1, col + 1, width);
@@ -315,8 +305,6 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
     // }
 
     {
-      int base = row * width;
-
       int left, right;
 
       for (left = col; left >= col - horizontal_reach; --left) {
