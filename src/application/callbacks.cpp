@@ -1,10 +1,8 @@
 #include <algorithm>
 
-#include "appstate.hpp"
 #include "callbacks.hpp"
 
 #include "../simulake/cell.hpp"
-#include "../simulake/renderer.hpp"
 #include "../utils.hpp"
 
 namespace simulake {
@@ -55,12 +53,6 @@ void cursor_enter(GLFWwindow* window, int entered) {
 void cursor_pos(GLFWwindow *window, double xpos, double ypos) {
   AppState &state = AppState::get_instance();
   state.set_mouse_pos(xpos, ypos);
-
-  Renderer::uniform_opts_t uniforms_to_update = {
-    {Renderer::UniformId::MOUSE_POS, glm::vec2{xpos, ypos}}
-  };
-
-  state.renderer->submit_shader_uniforms(uniforms_to_update);
 }
 
 void mouse_button(GLFWwindow *window, int button, int action, int mods) {
@@ -89,22 +81,11 @@ void scroll(GLFWwindow *window, double xoffset, double yoffset) {
   int min_dim = std::min(state.window_width, state.window_height) / 4;
   offset = std::clamp(offset, 1, min_dim + 1);
   state.set_spawn_radius(static_cast<std::uint32_t>(offset));
-
-  Renderer::uniform_opts_t uniforms_to_update = {
-    {Renderer::UniformId::SPAWN_RADIUS, static_cast<int>(state.spawn_radius)}};
-
-  state.renderer->submit_shader_uniforms(uniforms_to_update);
 }
 
 void framebuffer_size(GLFWwindow *window, int width, int height) {
   AppState &state = AppState::get_instance();
   state.set_window_size(width, height);
-
-  Renderer::uniform_opts_t uniforms_to_update = {
-    {Renderer::UniformId::RESOLUTION, glm::ivec2{static_cast<int>(width),
-                                                 static_cast<int>(height)}}};
-
-  state.renderer->submit_shader_uniforms(uniforms_to_update);
 }
 
 } /* namespace callbacks */

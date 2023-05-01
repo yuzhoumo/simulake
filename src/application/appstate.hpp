@@ -26,8 +26,20 @@ public:
   AppState(AppState &&) = delete;
   void operator=(AppState &&) = delete;
 
+  /* update the currently selected cell type */
+  static void set_selected_cell_type(const simulake::CellType) noexcept;
+
+  /* update the mouse interaction spawn radius (in cells) */
+  static void set_spawn_radius(const std::uint32_t) noexcept;
+
   /* update the cell size (pixels) */
   static void set_cell_size(const std::uint32_t) noexcept;
+
+  /* update bool tracking if mouse button is pressed down */
+  static void set_mouse_pressed(const bool, const bool = false) noexcept;
+
+  /* update boolean denoting erase mode */
+  static void set_erase_mode(const bool) noexcept;
 
   /* update the window width and height */
   static void set_window_size(const float, const float) noexcept;
@@ -35,17 +47,8 @@ public:
   /* update previous mouse position */
   static void set_mouse_pos(const float, const float) noexcept;
 
-  /* update bool tracking if mouse button is pressed down */
-  static void set_mouse_pressed(const bool, const bool = false) noexcept;
-
   /* update time values based on current time */
   static void set_time(const float) noexcept;
-
-  /* update the currently selected cell type */
-  static void set_selected_cell_type(const simulake::CellType) noexcept;
-
-  /* update the mouse interaction spawn radius (in cells) */
-  static void set_spawn_radius(const std::uint32_t) noexcept;
 
   /* simulake */
   simulake::CellType selected_cell_type = simulake::CellType::NONE;
@@ -66,11 +69,11 @@ public:
   float prev_time = 0.0f;  /* time at the previous frame */
   float delta_time = 0.0f; /* time between previous and current frame*/
 
-  Renderer *renderer;
-  Window *window;
-
   Grid *grid;
   DeviceGrid *device_grid;
+
+  Renderer *renderer;
+  Window *window;
 
 private:
   AppState() = default;
