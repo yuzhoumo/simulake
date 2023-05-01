@@ -83,6 +83,14 @@ float get_stable_state_b(const float total_mass) {
   }
 }
 
+uint to_row_major(uint x, uint y, uint width) {
+  return x * width + y;
+}
+
+uint to_col_major(uint x, uint y, uint height) {
+  return y * height + x;
+}
+
 __kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
                          uint2 dims) {
   const uint size = get_global_size(0); // full grid size (rows)
@@ -140,15 +148,25 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
   const bool right_valid = (col + 1) < width;
 
   // clang-format off
-  const uint idx_top_left  = (row - 1) * width + (col - 1);
-  const uint idx_top       = (row - 1) * width + (col + 0);
-  const uint idx_top_right = (row - 1) * width + (col + 1);
-  const uint idx_left      = (row + 0) * width + (col - 1);
-  const uint idx           = (row + 0) * width + (col + 0);
-  const uint idx_right     = (row + 0) * width + (col + 1);
-  const uint idx_bot_left  = (row + 1) * width + (col - 1);
-  const uint idx_bot       = (row + 1) * width + (col + 0);
-  const uint idx_bot_right = (row + 1) * width + (col + 1);
+  // const uint idx_top_left  = (row - 1) * width + (col - 1);
+  // const uint idx_top       = (row - 1) * width + (col + 0);
+  // const uint idx_top_right = (row - 1) * width + (col + 1);
+  // const uint idx_left      = (row + 0) * width + (col - 1);
+  // const uint idx           = (row + 0) * width + (col + 0);
+  // const uint idx_right     = (row + 0) * width + (col + 1);
+  // const uint idx_bot_left  = (row + 1) * width + (col - 1);
+  // const uint idx_bot       = (row + 1) * width + (col + 0);
+  // const uint idx_bot_right = (row + 1) * width + (col + 1);
+  //
+  const uint idx_top_left  = to_row_major(row - 1, col - 1, width);
+  const uint idx_top       = to_row_major(row - 1, col + 0, width);
+  const uint idx_top_right = to_row_major(row - 1, col + 1, width);
+  const uint idx_left      = to_row_major(row + 0, col - 1, width);
+  const uint idx           = to_row_major(row + 0, col + 0, width);
+  const uint idx_right     = to_row_major(row + 0, col + 1, width);
+  const uint idx_bot_left  = to_row_major(row + 1, col - 1, width);
+  const uint idx_bot       = to_row_major(row + 1, col + 0, width);
+  const uint idx_bot_right = to_row_major(row + 1, col + 1, width);
   // clang-format on
 
   const uint type = (uint)grid[idx].type; // scale up from std::uint8_t
@@ -210,7 +228,7 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
   // water step
   // else if (type == WATER_TYPE && !grid[idx].updated) {
   else if (type == WATER_TYPE) {
-      printf("row: %d, col: %d\n", row, col);
+      // printf("row: %d, col: %d\n", row, col);
 
     const float min_mass = 0.0001f;
     const float max_speed = 1.0f;
@@ -302,29 +320,31 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       int left, right;
 
       for (left = col; left >= col - horizontal_reach; --left) {
-          if (!IS_FLUID(grid[base + left])) break;
+          if (!IS_FLUID(grid[to_row_major(row, left, width)])) break;
       }
       left++;
 
       // Find right limit.
       for (right = col; right <= col + horizontal_reach; ++right) {
-          if (!IS_FLUID(grid[base + right])) break;
+          if (!IS_FLUID(grid[to_row_major(row, right, width)])) break;
       }
       right--;
 
       // Find mean mass.
       float mean_mass = .0f;
       for (int j = left; j <= right; ++j) {
-          mean_mass += next_grid[base + j].mass;
+          mean_mass += next_grid[to_row_major(row, j, width)].mass;
       }
       mean_mass /= (right - left + 1);
 
       // Equalize-ish.
       for (int j = left; j <= right; ++j) {
-          next_grid[base + j].type = WATER_TYPE;
+          uint idx = to_row_major(row, j, width);
+          next_grid[idx].type = WATER_TYPE;
           // grid._next_mass[x][j] = mean_mass;
-          next_grid[base + j].mass += mean_mass;
-          next_grid[base + j].mass /= 2;
+          next_grid[idx].mass += mean_mass;
+          next_grid[idx].mass /= 2;
+          next_grid[idx].updated = false;
       }
 
       // int left = col;
@@ -344,14 +364,15 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       // }
       // mean_mass /= (right - left - 1);
 
-      for (int j = left; j <= right; j += 1) {
-        if (IS_FLUID(grid[base + j])) {
-          next_grid[base + j].type = WATER_TYPE;
-          next_grid[base + j].mass += mean_mass;
-          next_grid[base + j].mass /= 2;
-          next_grid[base + j].updated = false;
-        }
-      }
+      // for (int j = left; j <= right; j += 1) {
+      //     uint idx = to_row_major(row, j, width);
+      //   if (IS_FLUID(grid[idx])) {
+      //     next_grid[idx].type = WATER_TYPE;
+      //     next_grid[idx].mass += mean_mass;
+      //     next_grid[idx].mass /= 2;
+      //     next_grid[idx].updated = false;
+      //   }
+      // }
 
       remaining_mass = next_grid[idx].mass;
     }
@@ -392,7 +413,8 @@ __kernel void render_texture(__write_only image2d_t texture,
   const uint width = dims[0];
   const uint height = dims[1];
 
-  const uint idx = (row + 0) * width + (col + 0);
+  // const uint idx = (row + 0) * width + (col + 0);
+  const uint idx = to_row_major(row, col, width);
   const uint type = (int)grid[idx].type; // scale up from std::uint8_t
 
   // write texture
@@ -415,7 +437,8 @@ __kernel void spawn_cells(__global grid_t *grid, __global grid_t *next_grid,
 
   const float2 mouse_norm = mouse / cell_size;
 
-  const uint idx = (row + 0) * width + (screen_col + 0);
+  // const uint idx = (row + 0) * width + (screen_col + 0);
+  const uint idx = to_row_major(row, screen_col, width);
   const float d =
       sqrt(pow(col - (mouse_norm[0]), 2) + pow(row - mouse_norm[1], 2));
 
