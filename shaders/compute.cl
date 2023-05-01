@@ -208,7 +208,10 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
   }
 
   // water step
-  else if (type == WATER_TYPE && !grid[idx].updated) {
+  // else if (type == WATER_TYPE && !grid[idx].updated) {
+  else if (type == WATER_TYPE) {
+      printf("row: %d, col: %d\n", row, col);
+
     const float min_mass = 0.0001f;
     const float max_speed = 1.0f;
     const float min_flow = 0.01f;
@@ -251,80 +254,107 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       return;
     }
 
-    {
-      // equalize water with right block.
-      if (IS_FLUID(grid[idx_right]) && right_valid) {
-        next_grid[idx_right].type = WATER_TYPE;
-        next_grid[idx_right].updated = false;
-        grid[idx].updated = true;
-        next_grid[idx].updated = false; // other cells updated by this cell
-
-        flow = (grid[idx].mass - grid[idx_right].mass) / 4;
-        flow *= flow > min_flow ? 0.5 : 1; // smoothen flow
-        flow = FCLAMP(flow, 0, remaining_mass);
-
-        next_grid[idx].mass -= flow;
-        next_grid[idx_right].mass += flow;
-        remaining_mass -= flow;
-      }
-
-      if (remaining_mass <= 0) {
-        next_grid[idx].type = AIR_TYPE;
-        next_grid[idx].mass = AIR_MASS;
-        next_grid[idx].updated = false;
-        grid[idx].updated = true;
-        return;
-      }
-
-      // equalize water with left block.
-      if (IS_FLUID(grid[idx_left]) && left_valid) {
-        next_grid[idx_left].type = WATER_TYPE;
-        next_grid[idx_left].updated = false;
-        grid[idx].updated = true;
-        next_grid[idx].updated = false; // other cells updated by this cell
-
-        flow = (grid[idx].mass - grid[idx_left].mass) / 4;
-        flow *= flow > min_flow ? 0.5 : 1; // smoothen flow
-        flow = FCLAMP(flow, 0, remaining_mass);
-
-        remaining_mass -= flow;
-        next_grid[idx].mass -= flow;
-        next_grid[idx_left].mass += flow;
-      }
-    }
-
     // {
-    //   int base = row * width;
-    //   float mean_mass = 0.0f;
-
-    //   int left = col;
-    //   for (; left >= max((int)col - horizontal_reach, 0); left -= 1) {
-    //     break;
-
-    //     mean_mass += next_grid[base + left].mass;
+    //   // equalize water with right block.
+    //   if (IS_FLUID(grid[idx_right]) && right_valid) {
+    //     next_grid[idx_right].type = WATER_TYPE;
+    //     next_grid[idx_right].updated = false;
+    //     grid[idx].updated = true;
+    //     next_grid[idx].updated = false; // other cells updated by this cell
+    //
+    //     flow = (grid[idx].mass - grid[idx_right].mass) / 4;
+    //     flow *= flow > min_flow ? 0.5 : 1; // smoothen flow
+    //     flow = FCLAMP(flow, 0, remaining_mass);
+    //
+    //     next_grid[idx].mass -= flow;
+    //     next_grid[idx_right].mass += flow;
+    //     remaining_mass -= flow;
     //   }
-
-    //   int right = col;
-    //   for (; right <= min((int)col + horizontal_reach, (int)width);
-    //        right += 1) {
-    //     if (!IS_FLUID(grid[base + right]))
-    //       break;
-
-    //     mean_mass += next_grid[base + right].mass;
+    //
+    //   if (remaining_mass <= 0) {
+    //     next_grid[idx].type = AIR_TYPE;
+    //     next_grid[idx].mass = AIR_MASS;
+    //     next_grid[idx].updated = false;
+    //     grid[idx].updated = true;
+    //     return;
     //   }
-    //   mean_mass /= (right - left - 1);
-
-    //   for (int j = left; j <= right; j += 1) {
-    //     if (IS_FLUID(grid[base + j])) {
-    //       next_grid[base + j].type = WATER_TYPE;
-    //       next_grid[base + j].mass += mean_mass;
-    //       next_grid[base + j].mass /= 2;
-    //       next_grid[base + j].updated = false;
-    //     }
+    //
+    //   // equalize water with left block.
+    //   if (IS_FLUID(grid[idx_left]) && left_valid) {
+    //     next_grid[idx_left].type = WATER_TYPE;
+    //     next_grid[idx_left].updated = false;
+    //     grid[idx].updated = true;
+    //     next_grid[idx].updated = false; // other cells updated by this cell
+    //
+    //     flow = (grid[idx].mass - grid[idx_left].mass) / 4;
+    //     flow *= flow > min_flow ? 0.5 : 1; // smoothen flow
+    //     flow = FCLAMP(flow, 0, remaining_mass);
+    //
+    //     remaining_mass -= flow;
+    //     next_grid[idx].mass -= flow;
+    //     next_grid[idx_left].mass += flow;
     //   }
-
-    //   remaining_mass = next_grid[idx].mass;
     // }
+
+    {
+      int base = row * width;
+
+      int left, right;
+
+      for (left = col; left >= col - horizontal_reach; --left) {
+          if (!IS_FLUID(grid[base + left])) break;
+      }
+      left++;
+
+      // Find right limit.
+      for (right = col; right <= col + horizontal_reach; ++right) {
+          if (!IS_FLUID(grid[base + right])) break;
+      }
+      right--;
+
+      // Find mean mass.
+      float mean_mass = .0f;
+      for (int j = left; j <= right; ++j) {
+          mean_mass += next_grid[base + j].mass;
+      }
+      mean_mass /= (right - left + 1);
+
+      // Equalize-ish.
+      for (int j = left; j <= right; ++j) {
+          next_grid[base + j].type = WATER_TYPE;
+          // grid._next_mass[x][j] = mean_mass;
+          next_grid[base + j].mass += mean_mass;
+          next_grid[base + j].mass /= 2;
+      }
+
+      // int left = col;
+      // for (; left >= max((int)col - horizontal_reach, 0); left -= 1) {
+      //   break;
+      //
+      //   mean_mass += next_grid[base + left].mass;
+      // }
+      //
+      // int right = col;
+      // for (; right <= min((int)col + horizontal_reach, (int)width);
+      //      right += 1) {
+      //   if (!IS_FLUID(grid[base + right]))
+      //     break;
+      //
+      //   mean_mass += next_grid[base + right].mass;
+      // }
+      // mean_mass /= (right - left - 1);
+
+      for (int j = left; j <= right; j += 1) {
+        if (IS_FLUID(grid[base + j])) {
+          next_grid[base + j].type = WATER_TYPE;
+          next_grid[base + j].mass += mean_mass;
+          next_grid[base + j].mass /= 2;
+          next_grid[base + j].updated = false;
+        }
+      }
+
+      remaining_mass = next_grid[idx].mass;
+    }
 
     if (remaining_mass <= 0) {
       next_grid[idx].type = AIR_TYPE;
