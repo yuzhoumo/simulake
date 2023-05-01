@@ -2,6 +2,8 @@
 #define APP_STATE_HPP
 
 #include "../simulake/cell.hpp"
+#include "../simulake/renderer.hpp"
+#include "window.hpp"
 
 /* `AppState` is a singleton class used to store and update data required by
  * glfw callback functions. Because glfw takes static functions as callbacks,
@@ -63,6 +65,12 @@ public:
   float time = 0.0f;       /* time at the current frame */
   float prev_time = 0.0f;  /* time at the previous frame */
   float delta_time = 0.0f; /* time between previous and current frame*/
+
+  Renderer *renderer;
+  Window *window;
+
+  Grid *grid;
+  DeviceGrid *device_grid;
 
 private:
   AppState() = default;

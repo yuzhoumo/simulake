@@ -36,6 +36,9 @@ public:
   /* utility functions for setting uniforms */
   void set_bool(const std::string_view, const bool) const noexcept;
   void set_int(const std::string_view, const int) const noexcept;
+  void set_int2(const std::string_view, const glm::ivec2) const noexcept;
+  void set_int3(const std::string_view, const glm::ivec3) const noexcept;
+  void set_int4(const std::string_view, const glm::ivec4) const noexcept;
   void set_float(const std::string_view, const float) const noexcept;
   void set_float2(const std::string_view, const glm::vec2) const noexcept;
   void set_float3(const std::string_view, const glm::vec3) const noexcept;

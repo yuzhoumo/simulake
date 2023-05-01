@@ -10,6 +10,8 @@ void error(int errorcode, const char *description);
 
 void key(GLFWwindow *window, int key, int scancode, int action, int mods);
 
+void cursor_enter(GLFWwindow* window, int entered);
+
 void cursor_pos(GLFWwindow *window, double xpos, double ypos);
 
 void mouse_button(GLFWwindow *window, int button, int action, int mods);

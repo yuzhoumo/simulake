@@ -27,11 +27,10 @@ public:
 private:
   AppState *state;
   Window window;
-
-  Grid grid; // TODO(joe): inherit device_grid from grid into one class
-             //            so that there is one grid variable
-  DeviceGrid device_grid;
   Renderer renderer;
+
+  Grid grid;
+  DeviceGrid device_grid;
 };
 
 } /* namespace simulake */

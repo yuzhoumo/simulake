@@ -122,6 +122,23 @@ void Shader::set_int(const std::string_view name,
   glUniform1i(glGetUniformLocation(_id, name.data()), value);
 }
 
+void Shader::set_int2(const std::string_view name,
+                      const glm::ivec2 values) const noexcept {
+  glUniform2i(glGetUniformLocation(_id, name.data()), values.x, values.y);
+}
+
+void Shader::set_int3(const std::string_view name,
+                      const glm::ivec3 values) const noexcept {
+  glUniform3i(glGetUniformLocation(_id, name.data()), values.x, values.y,
+              values.z);
+}
+
+void Shader::set_int4(const std::string_view name,
+                      const glm::ivec4 values) const noexcept {
+  glUniform4i(glGetUniformLocation(_id, name.data()), values.x, values.y,
+              values.z, values.w);
+}
+
 void Shader::set_float(const std::string_view name,
                        const float value) const noexcept {
   glUniform1f(glGetUniformLocation(_id, name.data()), value);

@@ -1,11 +1,8 @@
 #include <iostream>
 
-#include <glm/glm.hpp>
-
 #include "simulake.hpp"
 
 #include "renderer.hpp"
-#include "shader.hpp"
 #include "utils.hpp"
 
 namespace simulake {
@@ -80,6 +77,25 @@ void Renderer::initialize_graphics() noexcept {
 
   /* load vertices and tex coords into buffer */
   glBufferData(GL_ARRAY_BUFFER, sizeof(FS_QUAD), FS_QUAD, GL_STATIC_DRAW);
+}
+
+void Renderer::submit_shader_uniforms(uniform_opts_t &uniform_updates) noexcept {
+  for (const auto& [uniform, value] : uniform_updates) {
+    switch (uniform) {
+    case Renderer::UniformId::CELL_SIZE:
+      shader.set_int("u_cell_size", std::get<int>(value));
+      break;
+    case Renderer::UniformId::SPAWN_RADIUS:
+      shader.set_int("u_spawn_radius", std::get<int>(value));
+      break;
+    case Renderer::UniformId::MOUSE_POS:
+      shader.set_float2("u_mouse_pos", std::get<glm::vec2>(value));
+      break;
+    case Renderer::UniformId::RESOLUTION:
+      shader.set_int2("u_resolution", std::get<glm::ivec2>(value));
+      break;
+    }
+  }
 }
 
 void Renderer::submit_grid(const Grid &grid) noexcept {

@@ -27,6 +27,7 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
   /* register window event callbacks */
   glfwSetFramebufferSizeCallback(_window.get(), callbacks::framebuffer_size);
   glfwSetKeyCallback(_window.get(), callbacks::key);
+  glfwSetCursorEnterCallback(_window.get(), callbacks::cursor_enter);
   glfwSetCursorPosCallback(_window.get(), callbacks::cursor_pos);
   glfwSetScrollCallback(_window.get(), callbacks::scroll);
   glfwSetMouseButtonCallback(_window.get(), callbacks::mouse_button);

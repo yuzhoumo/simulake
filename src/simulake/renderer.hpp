@@ -1,9 +1,9 @@
 #ifndef SIMULAKE_RENDERER_HPP
 #define SIMULAKE_RENDERER_HPP
 
-#include <vector>
-
 #include <glm/glm.hpp>
+#include <variant>
+#include <unordered_map>
 
 #include "device_grid.hpp"
 #include "grid.hpp"
@@ -11,14 +11,6 @@
 
 namespace simulake {
 
-// template <typename G>
-// concept grid_t = requires(G grid) {
-//                    { grid.reset() };
-//                    { grid.simulate() };
-//                    { grid.get_width() } -> std::integral;
-//                    { grid.get_height() } -> std::integral;
-//                    { grid.get_height() } -> std::integral;
-//                  };
 
 class Renderer {
 public:
@@ -41,6 +33,14 @@ public:
   /* submit new grid data to renderer */
   void submit_grid(const Grid &) noexcept;
   void submit_grid(DeviceGrid &) noexcept;
+
+  enum class UniformId { CELL_SIZE, SPAWN_RADIUS, MOUSE_POS, RESOLUTION };
+  typedef std::variant<glm::ivec2, glm::vec2, int> shader_uniform_t;
+  typedef std::unordered_map<UniformId, shader_uniform_t> uniform_opts_t;
+
+  /* submit updated uniforms to shader, use enum + unordered mapping to
+   * update only the specified shader uniforms */
+  void submit_shader_uniforms(uniform_opts_t &uniform_updates) noexcept;
 
   /* render frame based on dataptr */
   void render() noexcept;

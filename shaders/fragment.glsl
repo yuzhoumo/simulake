@@ -14,45 +14,68 @@ uniform sampler2D u_grid_data_texture;
 uniform ivec2 u_resolution;
 uniform vec2 u_mouse_pos;
 
+uniform int u_spawn_radius;
+uniform int u_cell_size;
+
 in vec2 tex_coord;
 out vec4 frag_color;
 
-void shade_air() {
-  frag_color = vec4(0.5, 0.5, 0.5, 1.0); // gray
+vec4 shade_mouse_ring() {
+  vec2 st = gl_FragCoord.xy / vec2(u_resolution);
+  vec2 mouse_pos = vec2(u_mouse_pos.x, u_resolution.y - u_mouse_pos.y) /
+                                                           vec2(u_resolution);
+  float rad = float(u_spawn_radius * u_cell_size);
+  float thickness = 1.5 * float(u_cell_size);
+  vec2 aspect_ratio = vec2(1.0, u_resolution.x / u_resolution.y);
+  vec2 diff = (st - mouse_pos) * aspect_ratio;
+  float dist = length(diff * vec2(u_resolution));
+
+  float inner_radius = rad - thickness / 2.0;
+  float outer_radius = rad + thickness / 2.0;
+  float ring_alpha = step(inner_radius, dist) *
+                    (1.0 - step(outer_radius, dist));
+
+  return vec4(1.0, 1.0, 1.0, ring_alpha);
 }
 
-void shade_smoke() {
-  frag_color = vec4(0.0, 1.0, 0.0, 1.0); // green
+vec4 shade_air() {
+  return vec4(0.5, 0.5, 1.0, 1.0); // gray
 }
 
-void shade_fire() {
-  frag_color = vec4(1.0, 0.0, 0.0, 1.0); // red
+vec4 shade_smoke() {
+  return vec4(0.0, 1.0, 0.0, 1.0); // green
 }
 
-void shade_water(float mass) {
+vec4 shade_fire() {
+  return vec4(1.0, 0.0, 0.0, 1.0); // red
+}
+
+vec4 shade_water(float mass) {
   vec3 light_blue = vec3(0.0, 0.5, 1.0); // light blue
   vec3 dark_blue = vec3(0.0, 0.0, 0.5);  // dark blue
-  frag_color = vec4(mix(light_blue, dark_blue, mass), 1.0); // interpolated
+  return vec4(mix(light_blue, dark_blue, mass), 1.0); // interpolated
 }
 
-void shade_oil() {
+vec4 shade_oil() {
   // TODO: implement
+  return vec4(0.0);
 }
 
-void shade_sand() {
-  frag_color = vec4(1.0, 1.0, 0.0, 1.0); // yellow
+vec4 shade_sand() {
+  return vec4(1.0, 1.0, 0.0, 1.0); // yellow
 }
 
-void shade_jello() {
+vec4 shade_jello() {
   // TODO: implement
+  return vec4(0.0);
 }
 
-void shade_stone() {
-  frag_color = vec4(0.0, 0.0, 0.0, 1.0); // black
+vec4 shade_stone() {
+  return vec4(0.0, 0.0, 0.0, 1.0); // black
 }
 
-void shade_default() {
-  frag_color = vec4(0.0, 0.0, 0.0, 1.0); // black
+vec4 shade_default() {
+  return vec4(0.0, 0.0, 0.0, 1.0); // black
 }
 
 void main() {
@@ -61,32 +84,36 @@ void main() {
   int cell_type = int(grid_data.r);
   float mass = grid_data.g;
 
+  vec4 color = vec4(0.0);
   switch (cell_type) {
   case AIR_TYPE:
-    shade_air();
+    color = shade_air();
     break;
   case SMOKE_TYPE:
-    shade_smoke();
+    color = shade_smoke();
     break;
   case FIRE_TYPE:
-    shade_fire();
+    color = shade_fire();
     break;
   case WATER_TYPE:
-    shade_water(mass);
+    color = shade_water(mass);
     break;
   case OIL_TYPE:
-    shade_oil();
+    color = shade_oil();
     break;
   case SAND_TYPE:
-    shade_sand();
+    color = shade_sand();
     break;
   case JELLO_TYPE:
-    shade_jello();
+    color = shade_jello();
     break;
   case STONE_TYPE:
-    shade_stone();
+    color = shade_stone();
     break;
   default:
-    shade_default();
+    color = shade_default();
   }
+
+  vec4 mouse_ring = shade_mouse_ring();
+  frag_color = mix(color, mouse_ring, mouse_ring.a);
 }
