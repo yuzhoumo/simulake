@@ -79,6 +79,11 @@ void Renderer::initialize_graphics() noexcept {
   glBufferData(GL_ARRAY_BUFFER, sizeof(FS_QUAD), FS_QUAD, GL_STATIC_DRAW);
 }
 
+void Renderer::set_viewport_size(std::uint32_t width,
+                                 std::uint32_t height) noexcept {
+  glViewport(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height));
+}
+
 void Renderer::submit_shader_uniforms(uniform_opts_t &uniform_updates) noexcept {
   for (const auto& [uniform, value] : uniform_updates) {
     switch (uniform) {
@@ -108,9 +113,6 @@ void Renderer::submit_grid(const Grid &grid) noexcept {
     num_cells = new_num_cells;
     grid_size[0] = grid_width;
     grid_size[1] = grid_height;
-    viewport_size[0] = cell_size * grid_width;
-    viewport_size[1] = cell_size * grid_height;
-    glViewport(0, 0, viewport_size[0], viewport_size[1]);
   }
 
   update_grid_data_texture(grid);
@@ -126,9 +128,6 @@ void Renderer::submit_grid(DeviceGrid &grid) noexcept {
     num_cells = new_num_cells;
     grid_size[0] = grid_width;
     grid_size[1] = grid_height;
-    viewport_size[0] = cell_size * grid_width;
-    viewport_size[1] = cell_size * grid_height;
-    glViewport(0, 0, viewport_size[0], viewport_size[1]);
 
     /* resize texture, fill with 0.f */
     std::vector<DeviceGrid::device_cell_t> texture_data(num_cells);

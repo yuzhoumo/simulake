@@ -42,7 +42,7 @@ public:
   static void set_erase_mode(const bool) noexcept;
 
   /* update the window width and height */
-  static void set_window_size(const float, const float) noexcept;
+  static void set_window_size(const std::uint32_t, const std::uint32_t) noexcept;
 
   /* update previous mouse position */
   static void set_mouse_pos(const float, const float) noexcept;

@@ -24,8 +24,12 @@ public:
 
   bool should_close() const noexcept;
   void swap_buffers() const noexcept;
+
   GLFWwindow *get_window_ptr() const noexcept;
   std::tuple<std::uint32_t, std::uint32_t> get_window_size() const noexcept;
+  float get_time() const noexcept;
+
+  void poll_events() noexcept;
 
   void init_window_context();
 private:

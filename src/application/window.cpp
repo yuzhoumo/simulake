@@ -44,6 +44,15 @@ std::tuple<std::uint32_t, std::uint32_t> Window::get_window_size() const noexcep
                          static_cast<uint32_t>(height));
 }
 
+float Window::get_time() const noexcept {
+  double time = glfwGetTime();
+  return static_cast<float>(time);
+}
+
+void Window::poll_events() noexcept {
+  glfwPollEvents();
+}
+
 bool Window::should_close() const noexcept {
   return glfwWindowShouldClose(_window.get());
 }

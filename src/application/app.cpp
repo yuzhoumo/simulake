@@ -13,34 +13,16 @@ App::App(std::uint32_t width, std::uint32_t height, std::uint32_t cell_size,
   state->window = &window;
   state->grid = &grid;
   state->device_grid = &device_grid;
-  state->set_time(glfwGetTime());
+  state->set_time(window.get_time());
+  state->set_cell_size(cell_size);
+
+  /* set spawn radius approx. 10% of grid size */
+  state->set_spawn_radius( std::min(width / cell_size, height / cell_size) / 10);
 
   /* note(joe): actual window size may differ from `width` & `height` if it
    * doesn't fit the screen, so add additional query on app instantiation. */
   const auto& size = window.get_window_size();
   state->set_window_size(std::get<0>(size), std::get<1>(size));
-
-  Renderer::uniform_opts_t uniforms_to_update = {
-    {
-      Renderer::UniformId::CELL_SIZE,
-      static_cast<int>(cell_size)
-    },
-    {
-      Renderer::UniformId::MOUSE_POS,
-      glm::vec2{state->prev_mouse_x, state->prev_mouse_y}
-    },
-    {
-      Renderer::UniformId::SPAWN_RADIUS,
-      static_cast<int>(state->spawn_radius)
-    },
-    {
-      Renderer::UniformId::RESOLUTION,
-      glm::ivec2{static_cast<int>(state->window_width),
-                 static_cast<int>(state->window_height)}
-    }
-  };
-
-  renderer.submit_shader_uniforms(uniforms_to_update);
 }
 
 void App::update_device_grid() noexcept {
@@ -86,10 +68,10 @@ void App::run_gpu_sim() noexcept {
     window.swap_buffers();
 
     /* update state */
-    state->set_time(glfwGetTime());
+    state->set_time(window.get_time());
 
     /* handle inputs */
-    glfwPollEvents();
+    window.poll_events();
     update_device_grid();
 
     /* step simulation */
@@ -123,10 +105,10 @@ void App::run_cpu_sim() noexcept {
     window.swap_buffers();
 
     /* update state */
-    state->set_time(glfwGetTime());
+    state->set_time(window.get_time());
 
     /* handle inputs */
-    glfwPollEvents();
+    window.poll_events();
     update_grid();
 
     /* step simulation */

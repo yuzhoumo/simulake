@@ -45,6 +45,9 @@ public:
   /* render frame based on dataptr */
   void render() noexcept;
 
+  /* set the viewport dimensions */
+  void set_viewport_size(std::uint32_t width, std::uint32_t height) noexcept;
+
 private:
   /* update grid texture based on new simulation state */
   void update_grid_data_texture(const Grid &) noexcept;
@@ -53,7 +56,6 @@ private:
   void initialize_graphics() noexcept;
 
   glm::ivec2 grid_size;     /* grid width, height in cells */
-  glm::ivec2 viewport_size; /* viewport width, height in pixels */
   std::uint32_t num_cells;  /* number of cells to render */
   std::uint32_t cell_size;  /* each cell pixels = (cell_size * cell_size) */
 

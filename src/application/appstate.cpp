@@ -38,7 +38,8 @@ void AppState::set_erase_mode(const bool erase_mode) noexcept {
   state.erase_mode = erase_mode;
 }
 
-void AppState::set_window_size(const float width, const float height) noexcept {
+void AppState::set_window_size(const std::uint32_t width,
+                               const std::uint32_t height) noexcept {
   AppState &state = AppState::get_instance();
   state.window_width = width;
   state.window_height = height;
@@ -48,6 +49,7 @@ void AppState::set_window_size(const float width, const float height) noexcept {
                                                  static_cast<int>(height)}}};
 
   state.renderer->submit_shader_uniforms(uniforms_to_update);
+  state.renderer->set_viewport_size(width, height);
 }
 
 void AppState::set_mouse_pos(const float xpos, const float ypos) noexcept {
