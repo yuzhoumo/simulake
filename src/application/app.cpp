@@ -57,16 +57,15 @@ void App::step_cpu_sim() noexcept {
 void App::run(const bool gpu_mode) noexcept {
 
   /* init grid and simulation update function */
-  // clang-format off
   const auto step_sim_func = [this, &gpu_mode]() {
-    if (gpu_mode) return std::bind(&App::step_gpu_sim, this);
-    else          return std::bind(&App::step_cpu_sim, this);
+    if (gpu_mode) {
+      renderer.submit_grid(device_grid);
+      return std::bind(&App::step_gpu_sim, this);
+    } else {
+      renderer.submit_grid(grid);
+      return std::bind(&App::step_cpu_sim, this);
+    }
   }();
-  // clang-format on
-
-  if (gpu_mode) {
-    renderer.submit_grid(device_grid);
-  }
 
 #if DEBUG
   std::uint64_t frame_count = 0;
