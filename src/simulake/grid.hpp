@@ -31,10 +31,13 @@ public:
   void reset() noexcept;
 
   /* mouse input api */
-  void spawn_cells(const std::uint32_t x_center,
-                   const std::uint32_t y_center,
-                   const std::uint32_t paint_radius,
-                   const CellType paint_target) noexcept;
+  void spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &,
+                   const std::uint32_t,
+                   const CellType) noexcept;
+
+  inline std::uint32_t get_width() const noexcept { return width; }
+  inline std::uint32_t get_height() const noexcept { return height; }
+  inline std::uint32_t get_stride() const noexcept { return stride; }
 
   /* get cell type at given position */
   [[nodiscard]] CellType type_at(std::uint32_t, std::uint32_t) const noexcept;
@@ -42,10 +45,6 @@ public:
   /* set cell type at given position. returns true of successful */
   bool set_at(std::uint32_t, std::uint32_t, const CellType) noexcept;
   bool set_state(std::uint32_t, std::uint32_t, const CellType) noexcept;
-
-  inline std::uint32_t get_width() const noexcept { return width; }
-  inline std::uint32_t get_height() const noexcept { return height; }
-  inline std::uint32_t get_stride() const noexcept { return stride; }
 
   /* Temp support for mass. */
   float mass_at(std::uint32_t, std::uint32_t) const noexcept;

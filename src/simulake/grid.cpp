@@ -2,7 +2,6 @@
 #include <iostream>
 #include <optional>
 #include <thread>
-#include <vector>
 
 #include <omp.h>
 
@@ -40,23 +39,26 @@ Grid::~Grid() {
   // empty
 }
 
-void Grid::spawn_cells(const uint32_t x_center, const uint32_t y_center,
-                       const uint32_t paint_radius,
+void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
+                       const std::uint32_t paint_radius,
                        const CellType paint_target) noexcept {
 
-  const int y_start = std::max(static_cast<int>(y_center - paint_radius), 0);
-  const int y_end = std::min(static_cast<int>(y_center + paint_radius),
+  float cx = std::get<0>(center);
+  float cy = std::get<1>(center);
+
+  const int y_start = std::max(static_cast<int>(cy - paint_radius), 0);
+  const int y_end = std::min(static_cast<int>(cy + paint_radius),
                              static_cast<int>(height));
 
-  const int x_start = std::max(static_cast<int>(x_center - paint_radius), 0);
-  const int x_end = std::min(static_cast<int>(x_center + paint_radius),
+  const int x_start = std::max(static_cast<int>(cx - paint_radius), 0);
+  const int x_end = std::min(static_cast<int>(cx + paint_radius),
                              static_cast<int>(width));
 
   for (int y = y_start; y < y_end; ++y) {
     for (int x = x_start; x < x_end; ++x) {
-      uint32_t dist =
-          static_cast<uint32_t>(sqrt(pow(static_cast<int>(x_center) - x, 2) +
-                                     pow(static_cast<int>(y_center) - y, 2)));
+      int dist =
+          static_cast<int>(sqrt(pow(static_cast<int>(cx) - x, 2) +
+                                pow(static_cast<int>(cy) - y, 2)));
 
       bool should_paint =
           dist <= paint_radius and

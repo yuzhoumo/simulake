@@ -52,23 +52,24 @@ public:
   /* reset grid to empty (AIR) cells */
   void reset() const noexcept;
 
-  /* set gl texture target */
-  void set_texture_target(const GLuint) noexcept;
-
   /* mouse input api */
-  void spawn_cells(const std::tuple<float, float> &, const float,
+  void spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &,
+                   const std::uint32_t,
                    const CellType) const noexcept;
-
-  /* useful for testing */
-  void initialize_random() const noexcept;
-  void print_current() const noexcept;
-  void print_both() const noexcept;
 
   inline std::uint32_t get_width() const noexcept { return width; }
   inline std::uint32_t get_height() const noexcept { return height; }
   constexpr std::uint32_t get_stride() const noexcept {
     return sizeof(device_cell_t);
   }
+
+  /* set gl texture target */
+  void set_texture_target(const GLuint) noexcept;
+
+  /* useful for testing */
+  void initialize_random() const noexcept;
+  void print_current() const noexcept;
+  void print_both() const noexcept;
 
 private:
   constexpr inline static size_t LOCAL_WIDTH = 10;

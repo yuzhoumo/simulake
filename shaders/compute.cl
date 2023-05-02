@@ -528,21 +528,19 @@ __kernel void render_texture(__write_only image2d_t texture,
 
 // {{{ spawn cells kernel
 __kernel void spawn_cells(__global grid_t *grid, __global grid_t *next_grid,
-                          const float2 mouse, const float paint_radius,
+                          const uint2 center, const uint paint_radius,
                           const uint target, const uint2 dims,
                           const uint cell_size) {
   const uint col = get_global_id(0); // <= local grid size (cols)
   const uint row = get_global_id(1); // <= local grid size (rows)
 
-  const uint width = dims[0];
-  const uint height = dims[1];
+  const uint width = dims.x;
+  const uint height = dims.y;
   const uint screen_col = width - col - 1;
-
-  const float2 mouse_norm = mouse / cell_size;
 
   const uint idx = GET_INDEX(row, screen_col, width, height);
   const float d =
-      sqrt(pow(col - (mouse_norm[0]), 2) + pow(row - mouse_norm[1], 2));
+      sqrt(pow(col - (float)center.x, 2) + pow(row - (float)center.y, 2));
 
   if (d <= paint_radius && (VACANT(grid[idx]) || (target == AIR_TYPE))) {
     next_grid[idx].type = target;

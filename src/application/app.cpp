@@ -27,9 +27,12 @@ void App::step_gpu_sim(bool paused) noexcept {
   const auto target_type = state->get_target_type();
 
   if (state->is_mouse_pressed() and target_type != CellType::NONE) {
-    device_grid.spawn_cells(
-        {state->get_prev_mouse_x(), state->get_prev_mouse_y()},
-        static_cast<float>(state->get_spawn_radius()), target_type);
+    std::uint32_t x = static_cast<std::uint32_t>(grid.get_width() *
+        (state->get_prev_mouse_x() / state->get_window_width()));
+    std::uint32_t y = static_cast<std::uint32_t>(grid.get_height() *
+        (state->get_prev_mouse_y() / state->get_window_height()));
+
+    device_grid.spawn_cells({x, y}, state->get_spawn_radius(), target_type);
   }
 
   if (!paused) device_grid.simulate();
@@ -39,14 +42,12 @@ void App::step_cpu_sim(bool paused) noexcept {
   const auto target_type = state->get_target_type();
 
   if (state->is_mouse_pressed() and target_type != CellType::NONE) {
-    std::uint32_t x = static_cast<std::uint32_t>(
-        grid.get_width() *
+    std::uint32_t x = static_cast<std::uint32_t>(grid.get_width() *
         (state->get_prev_mouse_x() / state->get_window_width()));
-    std::uint32_t y = static_cast<std::uint32_t>(
-        grid.get_height() *
+    std::uint32_t y = static_cast<std::uint32_t>(grid.get_height() *
         (state->get_prev_mouse_y() / state->get_window_height()));
 
-    grid.spawn_cells(x, y, state->get_spawn_radius(), target_type);
+    grid.spawn_cells({x, y}, state->get_spawn_radius(), target_type);
   }
 
   if (!paused) grid.simulate();

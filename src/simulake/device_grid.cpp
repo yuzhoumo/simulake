@@ -127,20 +127,25 @@ void DeviceGrid::set_texture_target(const GLuint target) noexcept {
   texture_target = target;
 }
 
-void DeviceGrid::spawn_cells(const std::tuple<float, float> &mouse,
-                             const float paint_radius,
-                             const CellType paint_target) const noexcept {
+void DeviceGrid::spawn_cells(
+    const std::tuple<std::uint32_t, std::uint32_t> &center,
+    const std::uint32_t paint_radius,
+    const CellType paint_target) const noexcept {
+
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
-  const cl_float2 mouse_xy = {std::get<0>(mouse), std::get<1>(mouse)};
+  const auto radius = static_cast<unsigned int>(paint_radius);
   const auto target = static_cast<unsigned int>(paint_target);
+  const cl_uint2 grid_xy = {
+    static_cast<unsigned int>(std::get<0>(center)),
+    static_cast<unsigned int>(std::get<1>(center))};
 
   // update the last rendered grid, do not overwrite existing non-vacant cells
   // clang-format off
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, flip_flag ? 0 : 1, sizeof(cl_mem), &sim_context.grid));
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, flip_flag ? 1 : 0, sizeof(cl_mem), &sim_context.next_grid));
-  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 2, sizeof(cl_float2), &mouse_xy));
-  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 3, sizeof(float), &paint_radius));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 2, sizeof(cl_uint2), &grid_xy));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 3, sizeof(unsigned int), &radius));
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 4, sizeof(unsigned int), &target));
   // clang-format on
 
