@@ -12,6 +12,11 @@ void AppState::set_window(Window *window) noexcept {
   state.window = window;
 }
 
+void AppState::set_grid(GridBase *grid) noexcept {
+  AppState &state = AppState::get_instance();
+  state.grid = grid;
+}
+
 void AppState::set_selected_cell_type(const simulake::CellType type) noexcept {
   AppState &state = AppState::get_instance();
   state.selected_cell_type = type;
@@ -97,6 +102,11 @@ Renderer *AppState::get_renderer() noexcept {
 Window *AppState::get_window() noexcept {
   AppState &state = AppState::get_instance();
   return state.window;
+}
+
+GridBase *AppState::get_grid() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.grid;
 }
 
 simulake::CellType AppState::get_selected_cell_type() noexcept {

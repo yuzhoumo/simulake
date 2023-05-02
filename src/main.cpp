@@ -2,10 +2,13 @@
 
 #include "application/app.hpp"
 #include "application/graphics.hpp"
+#include "application/loader.hpp"
+
 #include "test.hpp"
 
 int main(int argc, char *argv[]) {
   std::uint32_t width, height, cell_size;
+  std::string grid_file = "";
   bool gpu_mode;
 
   cxxopts::Options options(argv[0], "A cellular automata physics simulator.\n");
@@ -16,6 +19,7 @@ int main(int argc, char *argv[]) {
     ("y,height",     "height",                  cxxopts::value<std::uint32_t>()->default_value("600"))
     ("c,cellsize",   "cell size",               cxxopts::value<std::uint32_t>()->default_value("4"))
     ("g,gpu",        "enable GPU acceleration", cxxopts::value<bool>()->default_value("false"))
+    ("l,load",       "load scene from disk",    cxxopts::value<std::string>())
     ("h,help",       "print help");
   // clang-format on
 
@@ -24,6 +28,10 @@ int main(int argc, char *argv[]) {
     if (result.count("help")) {
       std::cout << options.help() << std::endl;
       exit(EXIT_SUCCESS);
+    }
+
+    if (result.count("load")) {
+      grid_file = result["load"].as<std::string>();
     }
 
     /* set args */
@@ -42,7 +50,7 @@ int main(int argc, char *argv[]) {
 
   {
     PROFILE_SCOPE("total run time");
-    app.run(gpu_mode);
+    app.run(gpu_mode, grid_file);
   }
 
   // simulake::test::test_renderer();

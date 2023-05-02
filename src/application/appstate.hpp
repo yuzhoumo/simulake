@@ -3,6 +3,7 @@
 
 #include "../simulake/cell.hpp"
 #include "../simulake/renderer.hpp"
+#include "../simulake/grid_base.hpp"
 #include "window.hpp"
 
 /* `AppState` is a singleton class used to store and update data required by
@@ -31,6 +32,9 @@ public:
 
   /* set window pointer */
   static void set_window(Window *) noexcept;
+
+  /* set grid pointer */
+  static void set_grid(GridBase *) noexcept;
 
   /* set/get the currently selected cell type */
   static void set_selected_cell_type(const simulake::CellType) noexcept;
@@ -65,6 +69,7 @@ public:
   /* raw accessor methods for private variables */
   static Renderer *get_renderer() noexcept;
   static Window *get_window() noexcept;
+  static GridBase *get_grid() noexcept;
   static simulake::CellType get_selected_cell_type() noexcept;
   static std::uint32_t get_spawn_radius() noexcept;
   static std::uint32_t get_cell_size() noexcept;
@@ -82,6 +87,7 @@ public:
 private:
   AppState() = default;
 
+  GridBase *grid;
   Renderer *renderer;
   Window *window;
 

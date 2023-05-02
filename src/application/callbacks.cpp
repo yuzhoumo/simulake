@@ -5,6 +5,7 @@
 
 #include "../simulake/cell.hpp"
 #include "../utils.hpp"
+#include "loader.hpp"
 
 namespace simulake {
 namespace callbacks {
@@ -45,6 +46,11 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
   /* debug: print app state to console */
   if (key == GLFW_KEY_P && action == GLFW_PRESS)
     std::cout << state;
+
+  if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+    std::cout << "stored grid to disk" << std::endl;
+    Loader::store_grid(state.get_grid()->serialize());
+  }
 }
 
 void cursor_enter(GLFWwindow *window, int entered) {
