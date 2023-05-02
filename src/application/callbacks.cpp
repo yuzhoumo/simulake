@@ -9,9 +9,9 @@ namespace simulake {
 
 void toggle_pause(GLFWwindow *window) {
   AppState &state = AppState::get_instance();
-  state.set_paused(!state.paused);
-  glfwSetInputMode(window, GLFW_CURSOR, state.paused ? GLFW_CURSOR_NORMAL :
-                                                       GLFW_CURSOR_HIDDEN);
+  state.set_paused(!state.get_paused());
+  glfwSetInputMode(window, GLFW_CURSOR,
+                 state.get_paused() ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
 }
 
 namespace callbacks {
@@ -33,21 +33,21 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
 
   /* select a cell type */
   if (key == GLFW_KEY_0 && action == GLFW_PRESS)
-    state.selected_cell_type = simulake::CellType::AIR;
+    state.set_selected_cell_type(simulake::CellType::AIR);
   if (key == GLFW_KEY_1 && action == GLFW_PRESS)
-    state.selected_cell_type = simulake::CellType::SMOKE;
+    state.set_selected_cell_type(simulake::CellType::SMOKE);
   if (key == GLFW_KEY_2 && action == GLFW_PRESS)
-    state.selected_cell_type = simulake::CellType::FIRE;
+    state.set_selected_cell_type(simulake::CellType::FIRE);
   if (key == GLFW_KEY_3 && action == GLFW_PRESS)
-    state.selected_cell_type = simulake::CellType::WATER;
+    state.set_selected_cell_type(simulake::CellType::WATER);
   if (key == GLFW_KEY_4 && action == GLFW_PRESS)
-    state.selected_cell_type = simulake::CellType::OIL;
+    state.set_selected_cell_type(simulake::CellType::OIL);
   if (key == GLFW_KEY_5 && action == GLFW_PRESS)
-    state.selected_cell_type = simulake::CellType::SAND;
+    state.set_selected_cell_type(simulake::CellType::SAND);
   if (key == GLFW_KEY_6 && action == GLFW_PRESS)
-    state.selected_cell_type = simulake::CellType::JELLO;
+    state.set_selected_cell_type(simulake::CellType::JELLO);
   if (key == GLFW_KEY_7 && action == GLFW_PRESS)
-    state.selected_cell_type = simulake::CellType::STONE;
+    state.set_selected_cell_type(simulake::CellType::STONE);
 
   /* debug: print app state to console */
   if (key == GLFW_KEY_P && action == GLFW_PRESS)
@@ -56,7 +56,7 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
 
 void cursor_enter(GLFWwindow *window, int entered) {
   AppState &state = AppState::get_instance();
-  if (entered and !state.paused) {
+  if (entered and !state.get_paused()) {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
   } else {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);

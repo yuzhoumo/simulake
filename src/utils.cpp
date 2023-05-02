@@ -10,17 +10,18 @@
 std::ostream &operator<<(std::ostream &stream,
                          const simulake::AppState &state) {
   stream << "AppState:\n";
-  stream << "  selected_cell_type: " << state.selected_cell_type << "\n";
-  stream << "  spawn_radius: " << state.spawn_radius << "\n";
-  stream << "  cell_size: " << state.cell_size << "\n";
-  stream << "  window_width: " << state.window_width << "\n";
-  stream << "  window_height: " << state.window_height << "\n";
-  stream << "  prev_mouse_x: " << state.prev_mouse_x << "\n";
-  stream << "  prev_mouse_y: " << state.prev_mouse_y << "\n";
-  stream << "  mouse_pressed: " << state.mouse_pressed << "\n";
+  stream << "  target cell type: " << state.get_target_type() << "\n";
+  stream << "  simulation paused: " << state.get_paused() << "\n";
+  stream << "  spawn radius: " << state.spawn_radius << "\n";
+  stream << "  cell size: " << state.cell_size << "\n";
+  stream << "  window width: " << state.window_width << "\n";
+  stream << "  window height: " << state.window_height << "\n";
+  stream << "  prev mouse x: " << state.prev_mouse_x << "\n";
+  stream << "  prev mouse y: " << state.prev_mouse_y << "\n";
+  stream << "  mouse pressed: " << state.mouse_pressed << "\n";
   stream << "  time: " << state.time << "\n";
-  stream << "  prev_time: " << state.prev_time << "\n";
-  stream << "  delta_time: " << state.delta_time << "\n";
+  stream << "  prev time: " << state.prev_time << "\n";
+  stream << "  delta time: " << state.delta_time << "\n";
   return stream;
 }
 

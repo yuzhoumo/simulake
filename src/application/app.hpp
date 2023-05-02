@@ -16,15 +16,10 @@ public:
   /* run main render loop */
   void run(const bool) noexcept;
 
-  /* update grid based on current app state */
-  void update_grid() noexcept; // TODO(joe): merge these into one function after
-                               //            grid class refactor
-  void update_device_grid() noexcept;
-
-  void run_gpu_sim() noexcept;
-  void run_cpu_sim() noexcept;
-
 private:
+  void step_gpu_sim() noexcept;
+  void step_cpu_sim() noexcept;
+
   AppState *state;
   Window window;
   Renderer renderer;

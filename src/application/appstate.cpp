@@ -90,4 +90,16 @@ void AppState::set_paused(const bool paused) noexcept {
   }
 }
 
+bool AppState::get_paused() const noexcept {
+  return paused;
+}
+
+CellType AppState::get_selected_cell_type() const noexcept {
+  return selected_cell_type;
+}
+
+CellType AppState::get_target_type() const noexcept {
+  return erase_mode ? CellType::AIR : selected_cell_type;
+}
+
 } /* namespace simulake */

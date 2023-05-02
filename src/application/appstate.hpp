@@ -26,8 +26,14 @@ public:
   AppState(AppState &&) = delete;
   void operator=(AppState &&) = delete;
 
-  /* update the currently selected cell type */
+  // TODO(joe): make all variables private
+
+  /* set/get the currently selected cell type */
   static void set_selected_cell_type(const simulake::CellType) noexcept;
+  CellType get_selected_cell_type() const noexcept;
+
+  /* get current target cell type accounting for modifiers (e.g. erase mode) */
+  CellType get_target_type() const noexcept;
 
   /* update the mouse interaction spawn radius (in cells) */
   static void set_spawn_radius(const std::uint32_t) noexcept;
@@ -50,15 +56,14 @@ public:
   /* update time values based on current time */
   static void set_time(const float) noexcept;
 
-  /* set play/pause */
+  /* set/get if simulation is paused */
   static void set_paused(const bool) noexcept;
+  bool get_paused() const noexcept;
 
   /* simulake */
-  simulake::CellType selected_cell_type = simulake::CellType::NONE;
   std::uint32_t spawn_radius = 50;
   std::uint32_t cell_size = 1;
   bool mouse_pressed = false;
-  bool erase_mode = false;
 
   /* track height and width of the window */
   std::uint32_t window_width = 0;
@@ -72,8 +77,6 @@ public:
   float prev_time = 0.0f;  /* time at the previous frame */
   float delta_time = 0.0f; /* time between previous and current frame*/
 
-  bool paused = false; /* pause the simulation when true */
-
   Grid *grid;
   DeviceGrid *device_grid;
 
@@ -82,6 +85,12 @@ public:
 
 private:
   AppState() = default;
+
+  /* simulake */
+  simulake::CellType selected_cell_type = simulake::CellType::NONE;
+  bool erase_mode = false;
+
+  bool paused = false; /* pause the simulation when true */
 };
 
 } /* namespace simulake */
