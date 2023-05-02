@@ -36,13 +36,17 @@ public:
                    const std::uint32_t,
                    const CellType) noexcept override;
 
+  constexpr bool is_device_grid() const noexcept override {
+    return false;
+  }
+
   inline std::uint32_t get_width() const noexcept override { return width; }
   inline std::uint32_t get_height() const noexcept override { return height; }
   inline std::uint32_t get_stride() const noexcept override { return stride; }
 
-  constexpr bool is_device_grid() const noexcept override {
-    return false;
-  }
+  std::vector<float> serialize() const noexcept override;
+  void deserialize(std::uint32_t width, std::uint32_t height,
+            std::uint32_t stride, std::vector<float> buffer) noexcept override;
 
   /* get cell type at given position */
   [[nodiscard]] CellType type_at(std::uint32_t, std::uint32_t) const noexcept;

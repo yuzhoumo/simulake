@@ -126,27 +126,12 @@ void Renderer::submit_grid(GridBase *grid) noexcept {
     }
   }
 
-  if (is_device_grid) return;
-
   /* update cpu grid texture */
-  const auto stride = grid->get_stride();
-  const Grid* g = static_cast<Grid *>(grid);
-
-  std::vector<float> texture_data(num_cells * stride);
-  for (std::uint32_t row = 0; row < grid_height; row += 1) {
-    for (std::uint32_t col = 0; col < grid_width; col += 1) {
-      const std::uint64_t base_index = (row * grid_width + col) * stride;
-
-      texture_data[base_index] =
-        static_cast<float>(g->type_at(grid_height - row - 1, col));
-
-      texture_data[base_index + 1] =
-        static_cast<float>(g->mass_at(grid_height - row - 1, col));
-    }
+  if (!is_device_grid) {
+    const auto texture_data = grid->serialize();
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,
+                 GL_FLOAT, texture_data.data());
   }
-
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,
-               GL_FLOAT, texture_data.data());
 }
 
 void Renderer::render() const noexcept {

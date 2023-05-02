@@ -12,8 +12,8 @@ int main(int argc, char *argv[]) {
 
   // clang-format off
   options.add_options()
-    ("x,width",      "width",                   cxxopts::value<std::uint32_t>()->default_value("1920"))
-    ("y,height",     "height",                  cxxopts::value<std::uint32_t>()->default_value("1080"))
+    ("x,width",      "width",                   cxxopts::value<std::uint32_t>()->default_value("800"))
+    ("y,height",     "height",                  cxxopts::value<std::uint32_t>()->default_value("600"))
     ("c,cellsize",   "cell size",               cxxopts::value<std::uint32_t>()->default_value("4"))
     ("g,gpu",        "enable GPU acceleration", cxxopts::value<bool>()->default_value("false"))
     ("h,help",       "print help");

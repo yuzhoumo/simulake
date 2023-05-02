@@ -133,6 +133,48 @@ void Grid::simulate() noexcept {
   std::swap(_mass, _next_mass);
 }
 
+std::vector<float> Grid::serialize() const noexcept {
+  std::vector<float> buf(width * height * stride);
+
+  for (std::uint32_t row = 0; row < height; row += 1) {
+    for (std::uint32_t col = 0; col < width; col += 1) {
+      const std::uint64_t base_index = (row * width + col) * stride;
+
+      buf[base_index] = static_cast<float>(type_at(height - row - 1, col));
+      buf[base_index + 1] = static_cast<float>(mass_at(height - row - 1, col));
+    }
+  }
+
+  return buf;
+}
+
+void Grid::deserialize(std::uint32_t new_width, std::uint32_t new_height,
+                std::uint32_t new_stride, std::vector<float> buffer) noexcept {
+  if (buffer.size() != new_width * new_height * new_stride) {
+    std::cerr << "ERROR::GRID::DESERIALIZE: Incorrect buffer size" << std::endl;
+    return;
+  }
+
+  if (width != new_width or height != new_height or stride != new_stride) {
+    //TODO(joe): implment grid resize
+    std::cerr << "NOT_IMPLEMENTED::GRID::DESERIALIZE: buffer resize" << std::endl;
+    return;
+  }
+
+  for (std::uint32_t row = 0; row < height; row += 1) {
+    for (std::uint32_t col = 0; col < width; col += 1) {
+      const std::uint64_t base_index = (row * width + col) * stride;
+      /* cast the buffer value back to CellType enum */
+      CellType type = static_cast<CellType>(
+            static_cast<std::uint32_t>(buffer[base_index]));
+      float mass = buffer[base_index + 1];
+
+      _grid[height - row - 1][col] = type;
+      _mass[height - row - 1][col] = mass;
+    }
+  }
+}
+
 // reads current grid
 [[nodiscard]] CellType Grid::type_at(std::uint32_t row,
                                      std::uint32_t col) const noexcept {

@@ -64,6 +64,10 @@ public:
     return sizeof(device_cell_t);
   }
 
+  std::vector<float> serialize() const noexcept override;
+  void deserialize(std::uint32_t width, std::uint32_t height,
+            std::uint32_t stride, std::vector<float> buffer) noexcept override;
+
   constexpr bool is_device_grid() const noexcept override {
     return true;
   }
