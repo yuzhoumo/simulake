@@ -71,6 +71,9 @@ public:
   }
 
 private:
+  constexpr inline static size_t LOCAL_WIDTH = 10;
+  constexpr inline static size_t LOCAL_HEIGHT = 10;
+
   /* opencl structures */
   struct sim_context_t {
     cl_platform_id platform = nullptr;

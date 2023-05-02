@@ -5,9 +5,6 @@
 
 #include "device_grid.hpp"
 
-const size_t LOCAL_WIDTH = 1;
-const size_t LOCAL_HEIGHT = 10;
-
 namespace simulake {
 DeviceGrid::DeviceGrid(const std::uint32_t _width, const std::uint32_t _height,
                        const std::uint32_t _cell_size)
@@ -50,7 +47,7 @@ void DeviceGrid::reset() const noexcept {
 void DeviceGrid::initialize_random() const noexcept {
   // max work group size is 256 = 16 * 16
   const size_t global_item_size[] = {width, height};
-  const size_t local_item_size[] = {1, 10};
+  const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
 
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.rand_kernel, 2,
                                  nullptr, global_item_size, local_item_size, 0,
