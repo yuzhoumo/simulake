@@ -17,7 +17,7 @@ Grid::Grid(const std::uint32_t _width, const std::uint32_t _height)
   reset();
 
   const auto NUM_THREADS = std::thread::hardware_concurrency();
-  omp_set_num_threads(NUM_THREADS - 2);
+  omp_set_num_threads(std::max(1, static_cast<int>(NUM_THREADS - 2)));
 }
 
 // reset empty grid (full of AIR cells)
