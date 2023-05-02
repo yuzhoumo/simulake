@@ -9,80 +9,56 @@
 #define   OIL_TYPE     5
 #define   SAND_TYPE    6
 #define   JELLO_TYPE   7
+#define   STONE_TYPE   8
 // clang-format on
 
 #define FALLS_DOWN(x) (x.type > WATER_TYPE)
 #define VACANT(x) (x.type == AIR_TYPE)
 
-#define SET_CELL(x, type)                                                      \
-  {                                                                            \
-    switch (type) {                                                            \
-    case SMOKE_TYPE:                                                           \
-      SET_SMOKE(x);                                                            \
-      break;                                                                   \
-    case FIRE_TYPE:                                                            \
-      SET_FIRE(x);                                                             \
-      break;                                                                   \
-    case WATER_TYPE:                                                           \
-      SET_WATER(x);                                                            \
-      break;                                                                   \
-    case OIL_TYPE:                                                             \
-      SET_OIL(x);                                                              \
-      break;                                                                   \
-    case SAND_TYPE:                                                            \
-      SET_SAND(x);                                                             \
-      break;                                                                   \
-    case JELLO_TYPE:                                                           \
-      SET_JELLO(x);                                                            \
-      break;                                                                   \
-    case AIR_TYPE:                                                             \
-    default:                                                                   \
-      SET_AIR(x);                                                              \
-      break;                                                                   \
-    };                                                                         \
-  }
+#define IS_FLUID(x) (x.type >= AIR_TYPE && x.type <= OIL_TYPE)
+#define IS_AIR(x) (x.type == AIR_TYPE)
+#define IS_FLAMMABLE(x)                                                        \
+  (x.type >= AIR_TYPE && (x.type == OIL_TYPE || x.type == SAND_TYPE))
 
-#define SET_AIR(x)                                                             \
-  {                                                                            \
-    x.type = AIR_TYPE;                                                         \
-    x.mass = 0.0f;                                                             \
-  }
+#define FCLAMP(x, l, h) (fmax(l, fmin(x, h)))
 
-#define SET_SMOKE(x)                                                           \
-  {                                                                            \
-    x.type = SMOKE_TYPE;                                                       \
-    x.mass = 1.0f;                                                             \
-  }
+// clang-format off
+#define   AIR_MASS     0.0f
+#define   SMOKE_MASS   0.2f
+#define   FIRE_MASS    0.3f
+#define   WATER_MASS   1.0f
+#define   OIL_MASS     0.8f
+#define   SAND_MASS    1.5f
+#define   JELLO_MASS   1.7f
+#define   STONE_MASS   3.0f
+// clang-format on
 
-#define SET_FIRE(x)                                                            \
-  {                                                                            \
-    x.type = FIRE_TYPE;                                                        \
-    x.mass = 1.0f;                                                             \
-  }
+float get_mass(const uint type) {
+  switch (type) {
+  case SMOKE_TYPE:
+    return SMOKE_MASS;
+    break;
+  case FIRE_TYPE:
+    return FIRE_MASS;
+    break;
+  case WATER_TYPE:
+    return WATER_MASS;
+    break;
+  case OIL_TYPE:
+    return OIL_MASS;
+    break;
+  case SAND_TYPE:
+    return SAND_MASS;
+    break;
+  case JELLO_TYPE:
+    return JELLO_MASS;
+    break;
 
-#define SET_WATER(x)                                                           \
-  {                                                                            \
-    x.type = WATER_TYPE;                                                       \
-    x.mass = 1.0f;                                                             \
+  case AIR_TYPE:
+  default:
+    return AIR_MASS;
   }
-
-#define SET_OIL(x)                                                             \
-  {                                                                            \
-    x.type = OIL_TYPE;                                                         \
-    x.mass = 1.0f;                                                             \
-  }
-
-#define SET_SAND(x)                                                            \
-  {                                                                            \
-    x.type = SAND_TYPE;                                                        \
-    x.mass = 1.0f;                                                             \
-  }
-
-#define SET_JELLO(x)                                                           \
-  {                                                                            \
-    x.type = JELLO_TYPE;                                                       \
-    x.mass = 1.0f;                                                             \
-  }
+}
 
 // cell attributes
 // TODO(vir): benchmark
@@ -92,6 +68,20 @@ typedef struct __attribute__((packed, aligned(8))) {
 
   bool updated;
 } grid_t;
+
+float get_stable_state_b(const float total_mass) {
+  const float max_mass = 1.0f;
+  const float max_compress = 0.02f;
+
+  if (total_mass <= 1) {
+    return 1;
+  } else if (total_mass < 2 * max_mass + max_compress) {
+    return (max_mass * max_mass + total_mass * max_compress) /
+           (max_mass + max_compress);
+  } else {
+    return (total_mass + max_compress) / 2;
+  }
+}
 
 __kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
                          uint2 dims) {
@@ -104,8 +94,12 @@ __kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
   const unsigned int idx = row * width + col;
   // printf("%d-%d-%d\n", row, col, idx);
 
-  SET_AIR(grid[idx]);
-  SET_AIR(next_grid[idx]);
+  grid[idx].type = AIR_TYPE;
+  next_grid[idx].type = AIR_TYPE;
+
+  grid[idx].mass = AIR_MASS;
+  next_grid[idx].mass = AIR_MASS;
+
   grid[idx].updated = false;
   next_grid[idx].updated = false;
 }
@@ -117,17 +111,16 @@ __kernel void random_init(__global grid_t *grid,
 
   const uint width = dims[0];
   const uint height = dims[1];
+  const uint idx = row * width + col;
 
   // get a random number using xorshift
   const uint seed = 1337 + row;
   const uint t = seed ^ (seed << 11);
   const uint rand = (7331 + col) ^ ((7331 + col) >> 19) ^ (t ^ (t >> 8));
 
-  if (rand % 5) {
-    // printf("%d\n", col);
-
-    const uint idx = row * width + col;
-    SET_SAND(grid[idx]);
+  if (rand % 20) {
+    grid[idx].type = SAND_TYPE;
+    grid[idx].mass = SAND_TYPE;
     grid[idx].updated = false;
   }
 }
@@ -159,12 +152,17 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
   // clang-format on
 
   const uint type = (uint)grid[idx].type; // scale up from std::uint8_t
-  if (type == SAND_TYPE && bot_valid) {   // cant fall below ground
+
+  // sand step
+  if (type == SAND_TYPE && bot_valid) { // cant fall below ground
     // printf("%d-%d-%d\n", grid > next_grid ? 0 : 1, idx, idx_bot);
 
     if (VACANT(grid[idx_bot]) && !grid[idx_bot].updated) {
-      SET_AIR(next_grid[idx]);
-      SET_SAND(next_grid[idx_bot]);
+      next_grid[idx].type = grid[idx_bot].type;
+      next_grid[idx_bot].type = SAND_TYPE;
+
+      next_grid[idx].mass = grid[idx_bot].mass;
+      next_grid[idx_bot].mass = SAND_MASS;
 
       next_grid[idx].updated = false;
       next_grid[idx_bot].updated = false;
@@ -176,8 +174,11 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
 
     else if (left_valid && VACANT(grid[idx_bot_left]) &&
              !grid[idx_bot_left].updated) {
-      SET_AIR(next_grid[idx]);
-      SET_SAND(next_grid[idx_bot_left]);
+      next_grid[idx].type = grid[idx_bot_left].type;
+      next_grid[idx_bot_left].type = SAND_TYPE;
+
+      next_grid[idx].mass = grid[idx_bot_left].mass;
+      next_grid[idx_bot_left].mass = SAND_MASS;
 
       next_grid[idx].updated = false;
       next_grid[idx_bot_left].updated = false;
@@ -189,8 +190,11 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
 
     else if (right_valid && VACANT(grid[idx_bot_right]) &&
              !grid[idx_bot_right].updated) {
-      SET_AIR(next_grid[idx]);
-      SET_SAND(next_grid[idx_bot_right]);
+      next_grid[idx].type = grid[idx_bot_right].type;
+      next_grid[idx_bot_right].type = SAND_TYPE;
+
+      next_grid[idx].mass = grid[idx_bot_right].mass;
+      next_grid[idx_bot_right].mass = SAND_MASS;
 
       next_grid[idx].updated = false;
       next_grid[idx_bot_right].updated = false;
@@ -198,6 +202,152 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       // mark this cell updated
       grid[idx_bot_right].updated = true;
       grid[idx_bot_right].updated = true;
+    }
+
+    return;
+  }
+
+  // water step
+  else if (type == WATER_TYPE && !grid[idx].updated) {
+    const float min_mass = 0.0001f;
+    const float max_speed = 1.0f;
+    const float min_flow = 0.01f;
+    const int horizontal_reach = 2;
+
+    float flow = 0;
+    float remaining_mass = next_grid[idx].mass;
+
+    if (remaining_mass <= 0) {
+      next_grid[idx].type = AIR_TYPE;
+      next_grid[idx].mass = AIR_MASS;
+      next_grid[idx].updated = false;
+      grid[idx].updated = true;
+      return;
+    }
+
+    // try to flow down
+    if (IS_FLUID(grid[idx_bot]) && bot_valid) {
+      next_grid[idx_bot].type = WATER_TYPE;
+      next_grid[idx_bot].updated = false;
+      grid[idx].updated = true;
+      next_grid[idx].updated = false; // other cells updated by this call
+
+      // calculate mass flow
+      flow = get_stable_state_b(remaining_mass + next_grid[idx_bot].mass) -
+             next_grid[idx_bot].mass;
+      flow *= flow > min_flow ? 0.5 : 1; // smoothen flow
+      flow = FCLAMP(flow, 0, fmin(max_speed, remaining_mass));
+
+      remaining_mass -= flow;
+      next_grid[idx].mass -= flow;
+      next_grid[idx_bot].mass += flow;
+    }
+
+    if (remaining_mass <= 0) {
+      next_grid[idx].type = AIR_TYPE;
+      next_grid[idx].mass = AIR_MASS;
+      next_grid[idx].updated = false;
+      grid[idx].updated = true;
+      return;
+    }
+
+    {
+      // equalize water with right block.
+      if (IS_FLUID(grid[idx_right]) && right_valid) {
+        next_grid[idx_right].type = WATER_TYPE;
+        next_grid[idx_right].updated = false;
+        grid[idx].updated = true;
+        next_grid[idx].updated = false; // other cells updated by this cell
+
+        flow = (grid[idx].mass - grid[idx_right].mass) / 4;
+        flow *= flow > min_flow ? 0.5 : 1; // smoothen flow
+        flow = FCLAMP(flow, 0, remaining_mass);
+
+        next_grid[idx].mass -= flow;
+        next_grid[idx_right].mass += flow;
+        remaining_mass -= flow;
+      }
+
+      if (remaining_mass <= 0) {
+        next_grid[idx].type = AIR_TYPE;
+        next_grid[idx].mass = AIR_MASS;
+        next_grid[idx].updated = false;
+        grid[idx].updated = true;
+        return;
+      }
+
+      // equalize water with left block.
+      if (IS_FLUID(grid[idx_left]) && left_valid) {
+        next_grid[idx_left].type = WATER_TYPE;
+        next_grid[idx_left].updated = false;
+        grid[idx].updated = true;
+        next_grid[idx].updated = false; // other cells updated by this cell
+
+        flow = (grid[idx].mass - grid[idx_left].mass) / 4;
+        flow *= flow > min_flow ? 0.5 : 1; // smoothen flow
+        flow = FCLAMP(flow, 0, remaining_mass);
+
+        remaining_mass -= flow;
+        next_grid[idx].mass -= flow;
+        next_grid[idx_left].mass += flow;
+      }
+    }
+
+    // {
+    //   int base = row * width;
+    //   float mean_mass = 0.0f;
+
+    //   int left = col;
+    //   for (; left >= max((int)col - horizontal_reach, 0); left -= 1) {
+    //     break;
+
+    //     mean_mass += next_grid[base + left].mass;
+    //   }
+
+    //   int right = col;
+    //   for (; right <= min((int)col + horizontal_reach, (int)width);
+    //        right += 1) {
+    //     if (!IS_FLUID(grid[base + right]))
+    //       break;
+
+    //     mean_mass += next_grid[base + right].mass;
+    //   }
+    //   mean_mass /= (right - left - 1);
+
+    //   for (int j = left; j <= right; j += 1) {
+    //     if (IS_FLUID(grid[base + j])) {
+    //       next_grid[base + j].type = WATER_TYPE;
+    //       next_grid[base + j].mass += mean_mass;
+    //       next_grid[base + j].mass /= 2;
+    //       next_grid[base + j].updated = false;
+    //     }
+    //   }
+
+    //   remaining_mass = next_grid[idx].mass;
+    // }
+
+    if (remaining_mass <= 0) {
+      next_grid[idx].type = AIR_TYPE;
+      next_grid[idx].updated = false;
+      grid[idx].updated = true;
+      return;
+    }
+
+    // if compressed, flow up
+    if (IS_FLUID(grid[idx_top]) && top_valid) {
+      next_grid[idx].type = WATER_TYPE;
+      next_grid[idx].updated = false;
+      grid[idx].updated = true;
+      next_grid[idx_top].updated = false; // other cells updated by this cell
+
+      flow = remaining_mass -
+             get_stable_state_b(remaining_mass + next_grid[idx_top].mass);
+      flow *= flow > min_flow ? 0.5 : 1;
+      flow = FCLAMP(flow, 0, fmin(max_speed, remaining_mass));
+
+      remaining_mass -= flow;
+      next_grid[idx].mass -= flow;
+      next_grid[idx_top].mass -= flow;
     }
   }
 }
@@ -240,8 +390,12 @@ __kernel void spawn_cells(__global grid_t *grid, __global grid_t *next_grid,
       sqrt(pow(col - (mouse_norm[0]), 2) + pow(row - mouse_norm[1], 2));
 
   if (d <= paint_radius && (VACANT(grid[idx]) || (target == AIR_TYPE))) {
-    SET_CELL(next_grid[idx], target);
-    SET_CELL(grid[idx], target);
+    next_grid[idx].type = target;
+    grid[idx].type = target;
+
+    const float mass = get_mass(target);
+    next_grid[idx].mass = mass;
+    grid[idx].mass = mass;
 
     next_grid[idx].updated = false;
     grid[idx].updated = false;

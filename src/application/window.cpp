@@ -37,7 +37,8 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
   }
 }
 
-std::tuple<std::uint32_t, std::uint32_t> Window::get_window_size() const noexcept {
+std::tuple<std::uint32_t, std::uint32_t>
+Window::get_window_size() const noexcept {
   int width, height;
   glfwGetFramebufferSize(_window.get(), &width, &height);
   return std::make_tuple(static_cast<uint32_t>(width),
