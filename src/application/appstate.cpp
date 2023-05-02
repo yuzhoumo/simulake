@@ -23,7 +23,8 @@ void AppState::set_spawn_radius(const std::uint32_t num_cells) noexcept {
 
   if (!state.paused) {
     Renderer::uniform_opts_t uniforms_to_update = {
-      {Renderer::UniformId::SPAWN_RADIUS, static_cast<int>(state.spawn_radius)}};
+        {Renderer::UniformId::SPAWN_RADIUS,
+         static_cast<int>(state.spawn_radius)}};
 
     state.renderer->submit_shader_uniforms(uniforms_to_update);
   }
@@ -34,7 +35,7 @@ void AppState::set_cell_size(const std::uint32_t cell_size) noexcept {
   state.cell_size = cell_size;
 
   Renderer::uniform_opts_t uniforms_to_update = {
-    {Renderer::UniformId::CELL_SIZE, static_cast<int>(cell_size)}};
+      {Renderer::UniformId::CELL_SIZE, static_cast<int>(cell_size)}};
 
   state.renderer->submit_shader_uniforms(uniforms_to_update);
 }
@@ -60,8 +61,8 @@ void AppState::set_window_size(const std::uint32_t width,
   state.window_height = height;
 
   Renderer::uniform_opts_t uniforms_to_update = {
-    {Renderer::UniformId::RESOLUTION, glm::ivec2{static_cast<int>(width),
-                                                 static_cast<int>(height)}}};
+      {Renderer::UniformId::RESOLUTION,
+       glm::ivec2{static_cast<int>(width), static_cast<int>(height)}}};
 
   state.renderer->submit_shader_uniforms(uniforms_to_update);
   state.renderer->set_viewport_size(width, height);
@@ -74,7 +75,7 @@ void AppState::set_mouse_pos(const float xpos, const float ypos) noexcept {
 
   if (!state.paused) {
     Renderer::uniform_opts_t uniforms_to_update = {
-      {Renderer::UniformId::MOUSE_POS, glm::vec2{xpos, ypos}}};
+        {Renderer::UniformId::MOUSE_POS, glm::vec2{xpos, ypos}}};
 
     state.renderer->submit_shader_uniforms(uniforms_to_update);
   }
@@ -95,8 +96,8 @@ void AppState::set_paused(const bool paused) noexcept {
 
     /* make sure mouse pos is updated on pause/unpause */
     Renderer::uniform_opts_t uniforms_to_update = {
-      {Renderer::UniformId::MOUSE_POS, glm::vec2{state.prev_mouse_x,
-                                                 state.prev_mouse_y}}};
+        {Renderer::UniformId::MOUSE_POS,
+         glm::vec2{state.prev_mouse_x, state.prev_mouse_y}}};
     state.renderer->submit_shader_uniforms(uniforms_to_update);
 
     state.paused = paused;

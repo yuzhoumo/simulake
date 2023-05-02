@@ -38,10 +38,10 @@ void Renderer::initialize_graphics() noexcept {
 
   /* fullscreen quad vertices and tex coords */
   constexpr float FS_QUAD[] = {
-    -1.0f,  1.0f, 0.0f, 1.0f, // top-left corner
-     1.0f,  1.0f, 1.0f, 1.0f, // top-right corner
-    -1.0f, -1.0f, 0.0f, 0.0f, // lower-left corner
-     1.0f, -1.0f, 1.0f, 0.0f, // lower-right corner
+      -1.0f, 1.0f,  0.0f, 1.0f, // top-left corner
+      1.0f,  1.0f,  1.0f, 1.0f, // top-right corner
+      -1.0f, -1.0f, 0.0f, 0.0f, // lower-left corner
+      1.0f,  -1.0f, 1.0f, 0.0f, // lower-right corner
   };
 
   /* compile and bind shaders */
@@ -79,13 +79,14 @@ void Renderer::initialize_graphics() noexcept {
   glBufferData(GL_ARRAY_BUFFER, sizeof(FS_QUAD), FS_QUAD, GL_STATIC_DRAW);
 }
 
-void Renderer::set_viewport_size(std::uint32_t width,
-                                 std::uint32_t height) noexcept {
+void Renderer::set_viewport_size(const std::uint32_t width,
+                                 const std::uint32_t height) const noexcept {
   glViewport(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height));
 }
 
-void Renderer::submit_shader_uniforms(uniform_opts_t &uniform_updates) noexcept {
-  for (const auto& [uniform, value] : uniform_updates) {
+void Renderer::submit_shader_uniforms(
+    const uniform_opts_t &uniform_updates) const noexcept {
+  for (const auto &[uniform, value] : uniform_updates) {
     switch (uniform) {
     case Renderer::UniformId::CELL_SIZE:
       shader.set_int("u_cell_size", std::get<int>(value));
@@ -138,13 +139,13 @@ void Renderer::submit_grid(DeviceGrid &grid) noexcept {
   }
 }
 
-void Renderer::render() noexcept {
+void Renderer::render() const noexcept {
   /* clear framebuffer and draw */
   // glClear(GL_COLOR_BUFFER_BIT);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
-void Renderer::update_grid_data_texture(const Grid &grid) noexcept {
+void Renderer::update_grid_data_texture(const Grid &grid) const noexcept {
   /* make sure we are already resized to this grid size */
   assert(grid_size.x == grid.get_width());
   assert(grid_size.y == grid.get_height());

@@ -50,9 +50,7 @@ float Window::get_time() const noexcept {
   return static_cast<float>(time);
 }
 
-void Window::poll_events() noexcept {
-  glfwPollEvents();
-}
+void Window::poll_events() noexcept { glfwPollEvents(); }
 
 bool Window::should_close() const noexcept {
   return glfwWindowShouldClose(_window.get());

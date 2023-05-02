@@ -2,15 +2,14 @@
 #define SIMULAKE_RENDERER_HPP
 
 #include <glm/glm.hpp>
-#include <variant>
 #include <unordered_map>
+#include <variant>
 
 #include "device_grid.hpp"
 #include "grid.hpp"
 #include "shader.hpp"
 
 namespace simulake {
-
 
 class Renderer {
 public:
@@ -40,24 +39,25 @@ public:
 
   /* submit updated uniforms to shader, use enum + unordered mapping to
    * update only the specified shader uniforms */
-  void submit_shader_uniforms(uniform_opts_t &uniform_updates) noexcept;
+  void submit_shader_uniforms(const uniform_opts_t &) const noexcept;
 
   /* render frame based on dataptr */
-  void render() noexcept;
+  void render() const noexcept;
 
   /* set the viewport dimensions */
-  void set_viewport_size(std::uint32_t width, std::uint32_t height) noexcept;
+  void set_viewport_size(const std::uint32_t,
+                         const std::uint32_t) const noexcept;
 
 private:
   /* update grid texture based on new simulation state */
-  void update_grid_data_texture(const Grid &) noexcept;
+  void update_grid_data_texture(const Grid &) const noexcept;
 
   /* initialize opengl and shaders */
   void initialize_graphics() noexcept;
 
-  glm::ivec2 grid_size;     /* grid width, height in cells */
-  std::uint32_t num_cells;  /* number of cells to render */
-  std::uint32_t cell_size;  /* each cell pixels = (cell_size * cell_size) */
+  glm::ivec2 grid_size;    /* grid width, height in cells */
+  std::uint32_t num_cells; /* number of cells to render */
+  std::uint32_t cell_size; /* each cell pixels = (cell_size * cell_size) */
 
   Shader shader;
   GLuint _VAO, _VBO, _GRID_DATA_TEXTURE;
