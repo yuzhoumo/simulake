@@ -2,6 +2,16 @@
 
 namespace simulake {
 
+void AppState::set_renderer(Renderer *renderer) noexcept {
+  AppState &state = AppState::get_instance();
+  state.renderer = renderer;
+}
+
+void AppState::set_window(Window *window) noexcept {
+  AppState &state = AppState::get_instance();
+  state.window = window;
+}
+
 void AppState::set_selected_cell_type(const simulake::CellType type) noexcept {
   AppState &state = AppState::get_instance();
   state.selected_cell_type = type;
@@ -32,10 +42,6 @@ void AppState::set_cell_size(const std::uint32_t cell_size) noexcept {
 void AppState::set_mouse_pressed(const bool pressed) noexcept {
   AppState &state = AppState::get_instance();
   if (state.paused and pressed) {
-    Renderer::uniform_opts_t uniforms_to_update = {
-      {Renderer::UniformId::MOUSE_POS, glm::vec2{state.prev_mouse_x,
-                                                 state.prev_mouse_y}}};
-    state.renderer->submit_shader_uniforms(uniforms_to_update);
     state.set_paused(false);
   }
 
@@ -86,20 +92,95 @@ void AppState::set_paused(const bool paused) noexcept {
   if (state.paused != paused) {
     /* make sure time is updated on pause/unpause */
     state.set_time(state.window->get_time());
+
+    /* make sure mouse pos is updated on pause/unpause */
+    Renderer::uniform_opts_t uniforms_to_update = {
+      {Renderer::UniformId::MOUSE_POS, glm::vec2{state.prev_mouse_x,
+                                                 state.prev_mouse_y}}};
+    state.renderer->submit_shader_uniforms(uniforms_to_update);
+
     state.paused = paused;
   }
 }
 
-bool AppState::get_paused() const noexcept {
-  return paused;
+CellType AppState::get_target_type() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.erase_mode ? CellType::AIR : state.selected_cell_type;
 }
 
-CellType AppState::get_selected_cell_type() const noexcept {
-  return selected_cell_type;
+Renderer *AppState::get_renderer() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.renderer;
 }
 
-CellType AppState::get_target_type() const noexcept {
-  return erase_mode ? CellType::AIR : selected_cell_type;
+Window *AppState::get_window() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.window;
+}
+
+simulake::CellType AppState::get_selected_cell_type() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.selected_cell_type;
+}
+
+std::uint32_t AppState::get_spawn_radius() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.spawn_radius;
+}
+
+std::uint32_t AppState::get_cell_size() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.cell_size;
+}
+
+bool AppState::is_mouse_pressed() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.mouse_pressed;
+}
+
+bool AppState::is_erase_mode() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.erase_mode;
+}
+
+bool AppState::is_paused() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.paused;
+}
+
+std::uint32_t AppState::get_window_width() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.window_width;
+}
+
+std::uint32_t AppState::get_window_height() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.window_height;
+}
+
+float AppState::get_prev_mouse_x() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.prev_mouse_x;
+}
+
+float AppState::get_prev_mouse_y() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.prev_mouse_y;
+}
+
+float AppState::get_time() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.time;
+}
+
+float AppState::get_prev_time() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.prev_time;
+}
+
+float AppState::get_delta_time() noexcept {
+  AppState &state = AppState::get_instance();
+  return state.delta_time;
 }
 
 } /* namespace simulake */

@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include "GLFW/glfw3.h"
 #include "callbacks.hpp"
 
 #include "../simulake/cell.hpp"
@@ -9,9 +10,9 @@ namespace simulake {
 
 void toggle_pause(GLFWwindow *window) {
   AppState &state = AppState::get_instance();
-  state.set_paused(!state.get_paused());
+  state.set_paused(!state.is_paused());
   glfwSetInputMode(window, GLFW_CURSOR,
-                 state.get_paused() ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
+                 state.is_paused() ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
 }
 
 namespace callbacks {
@@ -56,10 +57,12 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
 
 void cursor_enter(GLFWwindow *window, int entered) {
   AppState &state = AppState::get_instance();
-  if (entered and !state.get_paused()) {
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-  } else {
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+  if (entered) {
+    if (!state.is_paused()) {
+      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    } else {
+      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
   }
 }
 
@@ -70,30 +73,35 @@ void cursor_pos(GLFWwindow *window, double xpos, double ypos) {
 
 void mouse_button(GLFWwindow *window, int button, int action, int mods) {
   AppState &state = AppState::get_instance();
+  bool left_mouse = button == GLFW_MOUSE_BUTTON_LEFT;
 
-  if (button == GLFW_MOUSE_BUTTON_LEFT and !(mods & GLFW_MOD_SHIFT)) {
+  if (left_mouse && state.is_paused()) toggle_pause(window);
+
+  if (left_mouse and !(mods & GLFW_MOD_SHIFT)) {
     if (action == GLFW_PRESS) {
+      state.set_erase_mode(false);
       state.set_mouse_pressed(true);
     } else if (action == GLFW_RELEASE) {
+      state.set_erase_mode(false);
       state.set_mouse_pressed(false);
     }
   }
 
-  else if (button == GLFW_MOUSE_BUTTON_LEFT and (mods & GLFW_MOD_SHIFT)) {
+  else if (left_mouse and (mods & GLFW_MOD_SHIFT)) {
     if (action == GLFW_PRESS) {
-      state.set_mouse_pressed(true);
       state.set_erase_mode(true);
+      state.set_mouse_pressed(true);
     } else if (action == GLFW_RELEASE) {
-      state.set_mouse_pressed(false);
       state.set_erase_mode(false);
+      state.set_mouse_pressed(false);
     }
   }
 }
 
 void scroll(GLFWwindow *window, double xoffset, double yoffset) {
   AppState &state = AppState::get_instance();
-  int offset = state.spawn_radius + static_cast<int>(yoffset);
-  int min_dim = std::min(state.window_width, state.window_height) / 4;
+  int offset = state.get_spawn_radius() + static_cast<int>(yoffset);
+  int min_dim = std::min(state.get_window_width(), state.get_window_height()) / 4;
   offset = std::clamp(offset, 1, min_dim + 1);
   state.set_spawn_radius(static_cast<std::uint32_t>(offset));
 }
