@@ -23,7 +23,7 @@
 #define IS_FLAMMABLE(x)                                                        \
   (x.type >= AIR_TYPE && (x.type == OIL_TYPE || x.type == SAND_TYPE))
 
-#define FCLAMP(x, l, h) (fmax(l, fmin(x, h)))
+#define FCLAMP(x, l, h) (fmax((float)l, fmin((float)x, (float)h)))
 
 // #define ROW_MAJOR(row, col, width, height) (((row) * (width)) + (col))
 
