@@ -86,7 +86,7 @@ private:
   Window *window;
 
   simulake::CellType selected_cell_type = simulake::CellType::NONE;
-  std::uint32_t spawn_radius = 50;
+  std::uint32_t spawn_radius = 10;
   std::uint32_t cell_size = 1;
 
   /* track height and width of the window */
