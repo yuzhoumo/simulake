@@ -29,9 +29,10 @@ GridBase::serialized_grid_t Loader::load_grid(const std::string_view path) {
   input_file.read(reinterpret_cast<char*>(&grid.height), sizeof(grid.height));
   input_file.read(reinterpret_cast<char*>(&grid.stride), sizeof(grid.stride));
 
-  std::size_t buffer_size = grid.stride * grid.height;
+  std::size_t buffer_size = grid.width * grid.height * grid.stride;
   grid.buffer.resize(buffer_size);
-  input_file.read(reinterpret_cast<char*>(grid.buffer.data()), buffer_size * sizeof(float));
+  input_file.read(reinterpret_cast<char*>(grid.buffer.data()),
+                                          buffer_size * sizeof(float));
 
   if (!input_file) {
     throw std::runtime_error("Failed to read data from file.");
@@ -84,9 +85,8 @@ void Loader::store_grid(const GridBase::serialized_grid_t &data,
   output_file.write(reinterpret_cast<const char*>(&data.height), sizeof(data.height));
   output_file.write(reinterpret_cast<const char*>(&data.stride), sizeof(data.stride));
 
-  std::size_t buffer_size = data.stride * data.height;
   output_file.write(reinterpret_cast<const char*>(data.buffer.data()),
-                                                  buffer_size * sizeof(float));
+                       data.width * data.height * data.stride * sizeof(float));
 
   if (!output_file) {
     throw std::runtime_error("Failed to write data to file.");
