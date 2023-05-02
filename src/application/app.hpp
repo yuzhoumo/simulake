@@ -19,6 +19,9 @@ public:
   /* run main render loop */
   void run(const bool) noexcept;
 
+  GridBase::serialized_grid_t load_grid(const std::string_view);
+  void store_grid(GridBase::serialized_grid_t, const std::string_view = "");
+
 private:
   void step_sim(bool, GridBase *) noexcept;
 
