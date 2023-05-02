@@ -5,8 +5,7 @@
 #include <unordered_map>
 #include <variant>
 
-#include "device_grid.hpp"
-#include "grid.hpp"
+#include "grid_base.hpp"
 #include "shader.hpp"
 
 namespace simulake {
@@ -30,8 +29,7 @@ public:
   ~Renderer();
 
   /* submit new grid data to renderer */
-  void submit_grid(const Grid &) noexcept;
-  void submit_grid(DeviceGrid &) noexcept;
+  void submit_grid(GridBase *) noexcept;
 
   enum class UniformId { CELL_SIZE, SPAWN_RADIUS, MOUSE_POS, RESOLUTION };
   typedef std::variant<glm::ivec2, glm::vec2, int> shader_uniform_t;

@@ -68,7 +68,7 @@ void test_renderer() {
   std::chrono::time_point start = std::chrono::high_resolution_clock::now();
 
   // initial load
-  renderer.submit_grid(test_grid);
+  renderer.submit_grid(static_cast<GridBase *>(&test_grid));
 
   // application loop
   while (!glfwWindowShouldClose(window.get_window_ptr())) {
@@ -86,7 +86,7 @@ void test_renderer() {
     {
       // PROFILE_SCOPE("sim_pass");
       test_grid.simulate();
-      renderer.submit_grid(test_grid);
+      renderer.submit_grid(static_cast<GridBase *>(&test_grid));
     }
 
     glfwPollEvents();
@@ -158,7 +158,7 @@ void test_device_grid() {
 
   // initialize
   grid.initialize_random();
-  renderer.submit_grid(grid);
+  renderer.submit_grid(static_cast<GridBase *>(&grid));
 
   // stats
   std::uint64_t frame_count = 0;
@@ -181,7 +181,7 @@ void test_device_grid() {
     {
       // PROFILE_SCOPE("sim_pass");
       grid.simulate();
-      renderer.submit_grid(grid);
+      renderer.submit_grid(static_cast<GridBase *>(&grid));
     }
 
     glfwPollEvents();

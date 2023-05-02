@@ -2,6 +2,9 @@
 #define APP_HPP
 
 #include "../simulake/renderer.hpp"
+#include "../simulake/grid_base.hpp"
+#include "../simulake/device_grid.hpp"
+#include "../simulake/grid.hpp"
 #include "appstate.hpp"
 #include "window.hpp"
 
@@ -17,8 +20,7 @@ public:
   void run(const bool) noexcept;
 
 private:
-  void step_gpu_sim(bool paused) noexcept;
-  void step_cpu_sim(bool paused) noexcept;
+  void step_sim(bool, GridBase *) noexcept;
 
   AppState *state;
   Window window;

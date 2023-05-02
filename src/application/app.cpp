@@ -23,7 +23,7 @@ App::App(std::uint32_t width, std::uint32_t height, std::uint32_t cell_size,
   state->set_window_size(std::get<0>(size), std::get<1>(size));
 }
 
-void App::step_gpu_sim(bool paused) noexcept {
+void App::step_sim(bool paused, GridBase *sim_grid) noexcept {
   const auto target_type = state->get_target_type();
 
   if (state->is_mouse_pressed() and target_type != CellType::NONE) {
@@ -32,40 +32,19 @@ void App::step_gpu_sim(bool paused) noexcept {
     std::uint32_t y = static_cast<std::uint32_t>(grid.get_height() *
         (state->get_prev_mouse_y() / state->get_window_height()));
 
-    device_grid.spawn_cells({x, y}, state->get_spawn_radius(), target_type);
+    sim_grid->spawn_cells({x, y}, state->get_spawn_radius(), target_type);
   }
 
-  if (!paused) device_grid.simulate();
-}
-
-void App::step_cpu_sim(bool paused) noexcept {
-  const auto target_type = state->get_target_type();
-
-  if (state->is_mouse_pressed() and target_type != CellType::NONE) {
-    std::uint32_t x = static_cast<std::uint32_t>(grid.get_width() *
-        (state->get_prev_mouse_x() / state->get_window_width()));
-    std::uint32_t y = static_cast<std::uint32_t>(grid.get_height() *
-        (state->get_prev_mouse_y() / state->get_window_height()));
-
-    grid.spawn_cells({x, y}, state->get_spawn_radius(), target_type);
-  }
-
-  if (!paused) grid.simulate();
-  renderer.submit_grid(grid);
+  if (!paused) sim_grid->simulate();
 }
 
 void App::run(const bool gpu_mode) noexcept {
 
   /* init grid and simulation update function */
-  const auto step_sim_func = [this, &gpu_mode]() {
-    if (gpu_mode) {
-      renderer.submit_grid(device_grid);
-      return std::bind(&App::step_gpu_sim, this, std::placeholders::_1);
-    } else {
-      renderer.submit_grid(grid);
-      return std::bind(&App::step_cpu_sim, this, std::placeholders::_1);
-    }
-  }();
+  GridBase *sim_grid = gpu_mode ? static_cast<GridBase *>(&device_grid) :
+                                  static_cast<GridBase *>(&grid);
+
+  renderer.submit_grid(sim_grid);
 
   if (gpu_mode) {
     renderer.submit_grid(device_grid);
@@ -88,7 +67,8 @@ void App::run(const bool gpu_mode) noexcept {
     window.poll_events();
 
     /* step the simulation */
-    step_sim_func(state->is_paused());
+    step_sim(state->is_paused(), sim_grid);
+    if (!gpu_mode) renderer.submit_grid(sim_grid);
 
     /* push frame */
     renderer.render();

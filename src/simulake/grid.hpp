@@ -5,10 +5,11 @@
 #include <vector>
 
 #include "cell.hpp"
+#include "grid_base.hpp"
 
 namespace simulake {
 /* represents the CA-Grid */
-class Grid {
+class Grid : public GridBase {
 public:
   /* default: initialize empty grid */
   explicit Grid(const std::uint32_t, const std::uint32_t);
@@ -25,19 +26,23 @@ public:
   ~Grid();
 
   /* simulate the next step, update grid */
-  void simulate() noexcept;
+  void simulate() noexcept override;
 
   /* reset to empty grid */
-  void reset() noexcept;
+  void reset() noexcept override;
 
   /* mouse input api */
   void spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &,
                    const std::uint32_t,
-                   const CellType) noexcept;
+                   const CellType) noexcept override;
 
-  inline std::uint32_t get_width() const noexcept { return width; }
-  inline std::uint32_t get_height() const noexcept { return height; }
-  inline std::uint32_t get_stride() const noexcept { return stride; }
+  inline std::uint32_t get_width() const noexcept override { return width; }
+  inline std::uint32_t get_height() const noexcept override { return height; }
+  inline std::uint32_t get_stride() const noexcept override { return stride; }
+
+  constexpr bool is_device_grid() const noexcept override {
+    return false;
+  }
 
   /* get cell type at given position */
   [[nodiscard]] CellType type_at(std::uint32_t, std::uint32_t) const noexcept;

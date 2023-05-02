@@ -104,25 +104,11 @@ void Renderer::submit_shader_uniforms(
   }
 }
 
-void Renderer::submit_grid(const Grid &grid) noexcept {
-  const auto grid_width = grid.get_width();
-  const auto grid_height = grid.get_height();
+void Renderer::submit_grid(GridBase *grid) noexcept {
+  const auto grid_width = grid->get_width();
+  const auto grid_height = grid->get_height();
   const auto new_num_cells = grid_width * grid_height;
-
-  /* update dimensions and regenerate grid */
-  if (new_num_cells != num_cells) [[unlikely]] {
-    num_cells = new_num_cells;
-    grid_size[0] = grid_width;
-    grid_size[1] = grid_height;
-  }
-
-  update_grid_data_texture(grid);
-}
-
-void Renderer::submit_grid(DeviceGrid &grid) noexcept {
-  const auto grid_width = grid.get_width();
-  const auto grid_height = grid.get_height();
-  const auto new_num_cells = grid_width * grid_height;
+  const auto is_device_grid = grid->is_device_grid();
 
   /* update dimensions and regenerate grid */
   if (new_num_cells != num_cells) [[unlikely]] {
@@ -130,47 +116,43 @@ void Renderer::submit_grid(DeviceGrid &grid) noexcept {
     grid_size[0] = grid_width;
     grid_size[1] = grid_height;
 
-    /* resize texture, fill with 0.f */
-    std::vector<DeviceGrid::device_cell_t> texture_data(num_cells);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,
-                 GL_FLOAT, texture_data.data());
+    if (is_device_grid) {
+      /* resize texture, fill with 0.f */
+      std::vector<DeviceGrid::device_cell_t> texture_data(num_cells);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0,
+                   GL_RG, GL_FLOAT, texture_data.data());
 
-    grid.set_texture_target(_GRID_DATA_TEXTURE);
+      static_cast<DeviceGrid *>(grid)->set_texture_target(_GRID_DATA_TEXTURE);
+    }
   }
-}
 
-void Renderer::render() const noexcept {
-  /* clear framebuffer and draw */
-  // glClear(GL_COLOR_BUFFER_BIT);
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
+  if (is_device_grid) return;
 
-void Renderer::update_grid_data_texture(const Grid &grid) const noexcept {
-  /* make sure we are already resized to this grid size */
-  assert(grid_size.x == grid.get_width());
-  assert(grid_size.y == grid.get_height());
-
-  const auto grid_width = grid_size.x;
-  const auto grid_height = grid_size.y;
-
-  /* number of cell attributes */
-  const auto stride = grid.get_stride();
+  /* update cpu grid texture */
+  const auto stride = grid->get_stride();
+  const Grid* g = static_cast<Grid *>(grid);
 
   std::vector<float> texture_data(num_cells * stride);
   for (std::uint32_t row = 0; row < grid_height; row += 1) {
     for (std::uint32_t col = 0; col < grid_width; col += 1) {
       const std::uint64_t base_index = (row * grid_width + col) * stride;
 
-      // TODO(vir): add support for mass / other properties
-      // clang-format off
-      texture_data[base_index] = static_cast<float>(grid.type_at(grid_height - row - 1, col));
-      texture_data[base_index + 1] = static_cast<float>(grid.mass_at(grid_height - row - 1, col));
-      // clang-format on
+      texture_data[base_index] =
+        static_cast<float>(g->type_at(grid_height - row - 1, col));
+
+      texture_data[base_index + 1] =
+        static_cast<float>(g->mass_at(grid_height - row - 1, col));
     }
   }
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,
                GL_FLOAT, texture_data.data());
+}
+
+void Renderer::render() const noexcept {
+  /* clear framebuffer and draw */
+  // glClear(GL_COLOR_BUFFER_BIT);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 } /* namespace simulake */

@@ -7,6 +7,7 @@
 #include "simulake.hpp"
 
 #include "cell.hpp"
+#include "grid_base.hpp"
 
 namespace simulake {
 
@@ -22,7 +23,7 @@ namespace simulake {
   }
 #endif
 
-class DeviceGrid {
+class DeviceGrid : public GridBase {
 public:
   /* cell and its attributes in memory */
   struct __attribute__((packed, aligned(8))) device_cell_t {
@@ -47,20 +48,24 @@ public:
   ~DeviceGrid();
 
   /* run simulation step on device and render texture */
-  void simulate() noexcept;
+  void simulate() noexcept override;
 
   /* reset grid to empty (AIR) cells */
-  void reset() const noexcept;
+  void reset() noexcept override;
 
   /* mouse input api */
   void spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &,
                    const std::uint32_t,
-                   const CellType) const noexcept;
+                   const CellType) noexcept override;
 
-  inline std::uint32_t get_width() const noexcept { return width; }
-  inline std::uint32_t get_height() const noexcept { return height; }
-  constexpr std::uint32_t get_stride() const noexcept {
+  inline std::uint32_t get_width() const noexcept override { return width; }
+  inline std::uint32_t get_height() const noexcept override { return height; }
+  constexpr std::uint32_t get_stride() const noexcept override {
     return sizeof(device_cell_t);
+  }
+
+  constexpr bool is_device_grid() const noexcept override {
+    return true;
   }
 
   /* set gl texture target */

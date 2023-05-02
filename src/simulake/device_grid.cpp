@@ -31,7 +31,7 @@ DeviceGrid::~DeviceGrid() {
   CL_CALL(clReleaseContext(sim_context.context));
 }
 
-void DeviceGrid::reset() const noexcept {
+void DeviceGrid::reset() noexcept {
   // max work group size is 256 = 16 * 16
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
@@ -130,7 +130,7 @@ void DeviceGrid::set_texture_target(const GLuint target) noexcept {
 void DeviceGrid::spawn_cells(
     const std::tuple<std::uint32_t, std::uint32_t> &center,
     const std::uint32_t paint_radius,
-    const CellType paint_target) const noexcept {
+    const CellType paint_target) noexcept {
 
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
