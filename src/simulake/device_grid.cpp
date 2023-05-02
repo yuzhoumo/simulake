@@ -365,7 +365,20 @@ void DeviceGrid::initialize_kernels() noexcept {
   // create and compile program
   sim_context.program = clCreateProgramWithSource(sim_context.context, 1, &kernel_source_cstr, &kernel_source_size, &error);
   CL_CALL(error);
-  CL_CALL(clBuildProgram(sim_context.program, 0, nullptr, nullptr, nullptr, nullptr));
+
+  if (clBuildProgram(sim_context.program, 0, nullptr, nullptr, nullptr, nullptr) != CL_SUCCESS) {
+    // get the build log from the device
+    cl_device_id deviceId;
+    size_t buildLogSize;
+    CL_CALL(clGetContextInfo(sim_context.context, CL_CONTEXT_DEVICES, sizeof(cl_device_id), &deviceId, nullptr));
+    CL_CALL(clGetProgramBuildInfo(sim_context.program, deviceId, CL_PROGRAM_BUILD_LOG, 0, nullptr, &buildLogSize));
+
+    std::vector<char> buildLog(buildLogSize);
+    CL_CALL(clGetProgramBuildInfo(sim_context.program, deviceId, CL_PROGRAM_BUILD_LOG, buildLogSize, buildLog.data(), nullptr));
+
+    // print the build log to std::cout
+    std::cout << "OpenCL build log:\n" << buildLog.data() << std::endl;
+  }
 
   // simulation kernel
   sim_context.sim_kernel = clCreateKernel(sim_context.program, SIM_KERNEL_NAME, &error);
