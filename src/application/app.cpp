@@ -1,5 +1,4 @@
 #include "app.hpp"
-#include <functional>
 
 namespace simulake {
 
@@ -24,7 +23,7 @@ App::App(std::uint32_t width, std::uint32_t height, std::uint32_t cell_size,
   state->set_window_size(std::get<0>(size), std::get<1>(size));
 }
 
-void App::step_gpu_sim() noexcept {
+void App::step_gpu_sim(bool paused) noexcept {
   const auto target_type = state->get_target_type();
 
   if (state->is_mouse_pressed() and target_type != CellType::NONE) {
@@ -33,10 +32,10 @@ void App::step_gpu_sim() noexcept {
         static_cast<float>(state->get_spawn_radius()), target_type);
   }
 
-  device_grid.simulate();
+  if (!paused) device_grid.simulate();
 }
 
-void App::step_cpu_sim() noexcept {
+void App::step_cpu_sim(bool paused) noexcept {
   const auto target_type = state->get_target_type();
 
   if (state->is_mouse_pressed() and target_type != CellType::NONE) {
@@ -50,7 +49,7 @@ void App::step_cpu_sim() noexcept {
     grid.spawn_cells(x, y, state->get_spawn_radius(), target_type);
   }
 
-  grid.simulate();
+  if (!paused) grid.simulate();
   renderer.submit_grid(grid);
 }
 
@@ -60,10 +59,10 @@ void App::run(const bool gpu_mode) noexcept {
   const auto step_sim_func = [this, &gpu_mode]() {
     if (gpu_mode) {
       renderer.submit_grid(device_grid);
-      return std::bind(&App::step_gpu_sim, this);
+      return std::bind(&App::step_gpu_sim, this, std::placeholders::_1);
     } else {
       renderer.submit_grid(grid);
-      return std::bind(&App::step_cpu_sim, this);
+      return std::bind(&App::step_cpu_sim, this, std::placeholders::_1);
     }
   }();
 
@@ -88,8 +87,7 @@ void App::run(const bool gpu_mode) noexcept {
     window.poll_events();
 
     /* step the simulation */
-    if (!state->is_paused())
-      step_sim_func();
+    step_sim_func(state->is_paused());
 
     /* push frame */
     renderer.render();

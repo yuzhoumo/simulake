@@ -7,14 +7,6 @@
 #include "../utils.hpp"
 
 namespace simulake {
-
-void toggle_pause(GLFWwindow *window) {
-  AppState &state = AppState::get_instance();
-  state.set_paused(!state.is_paused());
-  glfwSetInputMode(window, GLFW_CURSOR,
-                   state.is_paused() ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
-}
-
 namespace callbacks {
 
 void error(int errorcode, const char *description) {
@@ -30,7 +22,7 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
 
   /* pause/unpause simulation with spacebar */
   if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-    toggle_pause(window);
+    state.set_paused(!state.is_paused());
 
   /* select a cell type */
   if (key == GLFW_KEY_0 && action == GLFW_PRESS)
@@ -74,9 +66,6 @@ void cursor_pos(GLFWwindow *window, double xpos, double ypos) {
 void mouse_button(GLFWwindow *window, int button, int action, int mods) {
   AppState &state = AppState::get_instance();
   bool left_mouse = button == GLFW_MOUSE_BUTTON_LEFT;
-
-  if (left_mouse && state.is_paused())
-    toggle_pause(window);
 
   if (left_mouse and !(mods & GLFW_MOD_SHIFT)) {
     if (action == GLFW_PRESS) {

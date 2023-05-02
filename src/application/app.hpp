@@ -17,8 +17,8 @@ public:
   void run(const bool) noexcept;
 
 private:
-  void step_gpu_sim() noexcept;
-  void step_cpu_sim() noexcept;
+  void step_gpu_sim(bool paused) noexcept;
+  void step_cpu_sim(bool paused) noexcept;
 
   AppState *state;
   Window window;
