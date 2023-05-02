@@ -25,8 +25,6 @@
 
 #define FCLAMP(x, l, h) (fmax((float)l, fmin((float)x, (float)h)))
 
-// #define ROW_MAJOR(row, col, width, height) (((row) * (width)) + (col))
-
 #if USE_ROWMAJOR
 #define GET_INDEX(row, col, width, height) (((col) * (height)) + (row))
 #else
@@ -87,8 +85,8 @@ typedef struct __attribute__((packed, aligned(8))) {
   bool updated;
 } grid_t;
 
-float get_stable_state_b(const float total_mass) {
-  const float max_mass = 0.8f;
+float water_get_stable_state(const float total_mass) {
+  const float max_mass = 1.0f;
   const float max_compress = 0.02f;
 
   if (total_mass <= 1) {
@@ -180,11 +178,11 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
   if (type == SAND_TYPE && bot_valid) { // cant fall below ground
     // printf("%d-%d-%d\n", grid > next_grid ? 0 : 1, idx, idx_bot);
 
-    if (VACANT(grid[idx_bot]) && !grid[idx_bot].updated) {
-      next_grid[idx].type = grid[idx_bot].type;
+    if (IS_FLUID(grid[idx_bot]) && !grid[idx_bot].updated) {
+      next_grid[idx].type = AIR_TYPE;
       next_grid[idx_bot].type = SAND_TYPE;
 
-      next_grid[idx].mass = grid[idx_bot].mass;
+      next_grid[idx].mass = AIR_MASS;
       next_grid[idx_bot].mass = SAND_MASS;
 
       next_grid[idx].updated = false;
@@ -195,12 +193,12 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       grid[idx_bot].updated = true;
     }
 
-    else if (left_valid && VACANT(grid[idx_bot_left]) &&
+    else if (left_valid && IS_FLUID(grid[idx_bot_left]) &&
              !grid[idx_bot_left].updated) {
-      next_grid[idx].type = grid[idx_bot_left].type;
+      next_grid[idx].type = AIR_TYPE;
       next_grid[idx_bot_left].type = SAND_TYPE;
 
-      next_grid[idx].mass = grid[idx_bot_left].mass;
+      next_grid[idx].mass = AIR_MASS;
       next_grid[idx_bot_left].mass = SAND_MASS;
 
       next_grid[idx].updated = false;
@@ -211,12 +209,12 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       grid[idx_bot_left].updated = true;
     }
 
-    else if (right_valid && VACANT(grid[idx_bot_right]) &&
+    else if (right_valid && IS_FLUID(grid[idx_bot_right]) &&
              !grid[idx_bot_right].updated) {
-      next_grid[idx].type = grid[idx_bot_right].type;
+      next_grid[idx].type = AIR_TYPE;
       next_grid[idx_bot_right].type = SAND_TYPE;
 
-      next_grid[idx].mass = grid[idx_bot_right].mass;
+      next_grid[idx].mass = AIR_MASS;
       next_grid[idx_bot_right].mass = SAND_MASS;
 
       next_grid[idx].updated = false;
@@ -231,35 +229,35 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
   }
 
   // water step
-  // else if (type == WATER_TYPE && !grid[idx].updated) {
   else if (type == WATER_TYPE) {
     // printf("row: %d, col: %d\n", row, col);
 
     const float min_mass = 0.001f;
     const float max_speed = 0.7f;
-    const float min_flow = 0.01f;
-    const int horizontal_reach = 4;
+    const float min_flow = 0.05f;
+    const int horizontal_reach = 5;
+    const int bot_reach = 2;
 
     float flow = 0;
     float remaining_mass = next_grid[idx].mass;
 
-    if (remaining_mass <= min_mass) {
-      next_grid[idx].type = AIR_TYPE;
-      next_grid[idx].mass = AIR_MASS;
-      next_grid[idx].updated = false;
-      grid[idx].updated = true;
-      return;
-    }
+    // if (remaining_mass <= min_mass) {
+    //   next_grid[idx].type = AIR_TYPE;
+    //   next_grid[idx].mass = AIR_MASS;
+    //   next_grid[idx].updated = false;
+    //   grid[idx].updated = true;
+    //   return;
+    // }
 
-    // try to flow down
-    if (IS_FLUID(grid[idx_bot]) && bot_valid) {
+    // downward flow
+    if (bot_valid && IS_FLUID(grid[idx_bot])) {
       next_grid[idx_bot].type = WATER_TYPE;
       next_grid[idx_bot].updated = false;
       grid[idx].updated = true;
       next_grid[idx].updated = false; // other cells updated by this call
 
       // calculate mass flow
-      flow = get_stable_state_b(remaining_mass + next_grid[idx_bot].mass) -
+      flow = water_get_stable_state(remaining_mass + next_grid[idx_bot].mass) -
              next_grid[idx_bot].mass;
       flow *= flow > min_flow ? 0.5f : 1; // smoothen flow
       flow = FCLAMP(flow, 0, fmin(max_speed, remaining_mass));
@@ -277,24 +275,33 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       return;
     }
 
+    // downward horizontal flow
     {
-      // bot right
-      if (IS_FLUID(grid[idx_bot_right]) && bot_valid && right_valid) {
-        next_grid[idx_bot_right].type = WATER_TYPE;
-        next_grid[idx_bot_right].updated = false;
+      int left = (int)col - 1;
+      int right = (int)col + 1;
+
+      for (int down = 1;
+           left >= ((int)col - bot_reach) && left >= 0 && (row + down) < height;
+           down += 1, left -= 1) {
+        const uint next_idx = GET_INDEX(row + down, left, width, height);
+        if (!IS_FLUID(grid[next_idx]))
+          break;
+
+        next_grid[next_idx].type = WATER_TYPE;
+        next_grid[next_idx].updated = false;
         grid[idx].updated = true;
         next_grid[idx].updated = false; // other cells updated by this cell
 
-        flow = (grid[idx].mass - grid[idx_bot_right].mass) / 4;
-        flow *= flow > min_flow ? 0.5f : 1; // smoothen flow
+        flow = (grid[idx].mass - grid[next_idx].mass) / 2;
+        // flow *= flow > min_flow ? 0.5f : 1; // smoothen flow
         flow = FCLAMP(flow, 0, remaining_mass);
 
         remaining_mass -= flow;
         next_grid[idx].mass -= flow;
-        next_grid[idx_bot_right].mass += flow;
+        next_grid[next_idx].mass += flow;
       }
 
-      if (remaining_mass <= 0) {
+      if (remaining_mass <= min_mass) {
         next_grid[idx].type = AIR_TYPE;
         next_grid[idx].mass = AIR_MASS;
         next_grid[idx].updated = false;
@@ -302,20 +309,25 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
         return;
       }
 
-      // bot left
-      if (IS_FLUID(grid[idx_bot_left]) && bot_valid && left_valid) {
-        next_grid[idx_bot_left].type = WATER_TYPE;
-        next_grid[idx_bot_left].updated = false;
+      for (int down = 1; right <= ((int)col + bot_reach) && right < width &&
+                         (row + down) < height;
+           down += 1, right += 1) {
+        const uint next_idx = GET_INDEX(row + down, right, width, height);
+        if (!IS_FLUID(grid[next_idx]))
+          break;
+
+        next_grid[next_idx].type = WATER_TYPE;
+        next_grid[next_idx].updated = false;
         grid[idx].updated = true;
         next_grid[idx].updated = false; // other cells updated by this cell
 
-        flow = (grid[idx].mass - grid[idx_bot_left].mass) / 4;
-        flow *= flow > min_flow ? 0.5f : 1; // smoothen flow
+        flow = (grid[idx].mass - grid[next_idx].mass) / 2;
+        // flow *= flow > min_flow ? 0.5f : 1; // smoothen flow
         flow = FCLAMP(flow, 0, remaining_mass);
 
         remaining_mass -= flow;
         next_grid[idx].mass -= flow;
-        next_grid[idx_bot_left].mass += flow;
+        next_grid[next_idx].mass += flow;
       }
     }
 
@@ -327,6 +339,7 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       return;
     }
 
+    // horizontal flow
     {
       int left = (int)col - 1;
       int right = col + 1;
@@ -356,7 +369,6 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       // mass_left /= (col - left + 1);
       // mass_right /= (right - col + 1);
 
-      // Find mean mass.
       float mean_mass = 0.0f;
       for (int j = left; j <= right; j += 1)
         mean_mass += next_grid[GET_INDEX(row, j, width, height)].mass;
@@ -366,7 +378,6 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
         for (int j = col - 1; j >= left; j -= 1) {
           uint idx = GET_INDEX(row, j, width, height);
           next_grid[idx].type = WATER_TYPE;
-          // grid._next_mass[x][j] = mean_mass;
           next_grid[idx].mass += mean_mass;
           next_grid[idx].mass /= 2;
           next_grid[idx].updated = true;
@@ -374,7 +385,6 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
         for (int j = col + 1; j <= right; j += 1) {
           uint idx = GET_INDEX(row, j, width, height);
           next_grid[idx].type = WATER_TYPE;
-          // grid._next_mass[x][j] = mean_mass;
           next_grid[idx].mass += mean_mass;
           next_grid[idx].mass /= 2;
           next_grid[idx].updated = true;
@@ -383,7 +393,6 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
         for (int j = col + 1; j <= right; j += 1) {
           uint idx = GET_INDEX(row, j, width, height);
           next_grid[idx].type = WATER_TYPE;
-          // grid._next_mass[x][j] = mean_mass;
           next_grid[idx].mass += mean_mass;
           next_grid[idx].mass /= 2;
           next_grid[idx].updated = true;
@@ -391,7 +400,6 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
         for (int j = col - 1; j >= left; j -= 1) {
           uint idx = GET_INDEX(row, j, width, height);
           next_grid[idx].type = WATER_TYPE;
-          // grid._next_mass[x][j] = mean_mass;
           next_grid[idx].mass += mean_mass;
           next_grid[idx].mass /= 2;
           next_grid[idx].updated = true;
@@ -399,28 +407,27 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       }
 
       next_grid[idx].type = WATER_TYPE;
-      next_grid[idx].mass += mean_mass;
-      next_grid[idx].mass /= 2;
+      next_grid[idx].mass = remaining_mass = mean_mass;
       next_grid[idx].updated = true;
-      remaining_mass = next_grid[idx].mass;
     }
 
     if (remaining_mass <= min_mass) {
       next_grid[idx].type = AIR_TYPE;
+      next_grid[idx].mass = AIR_MASS;
       next_grid[idx].updated = false;
       grid[idx].updated = true;
       return;
     }
 
-    // if compressed, flow up
-    if (IS_FLUID(grid[idx_top]) && top_valid) {
+    // upward flow
+    if (top_valid && IS_FLUID(grid[idx_top])) {
       next_grid[idx].type = WATER_TYPE;
       next_grid[idx].updated = false;
       grid[idx].updated = true;
-      next_grid[idx_top].updated = false; // other cells updated by this cell
+      next_grid[idx_top].updated = false; // other cells updated by this
 
       flow = remaining_mass -
-             get_stable_state_b(remaining_mass + next_grid[idx_top].mass);
+             water_get_stable_state(remaining_mass + next_grid[idx_top].mass);
       flow *= flow > min_flow ? 0.5f : 1;
       flow = FCLAMP(flow, 0, fmin(max_speed, remaining_mass));
 
@@ -429,6 +436,15 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
       next_grid[idx_top].mass += flow;
     }
 
+    if (remaining_mass <= min_mass) {
+      next_grid[idx].type = AIR_TYPE;
+      next_grid[idx].mass = AIR_MASS;
+      next_grid[idx].updated = false;
+      grid[idx].updated = true;
+      return;
+    }
+
+    // set remaining mass to current cell
     next_grid[idx].updated = false;
     grid[idx].updated = true;
     next_grid[idx].mass = remaining_mass;
