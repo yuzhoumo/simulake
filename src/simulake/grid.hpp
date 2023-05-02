@@ -44,9 +44,8 @@ public:
   inline std::uint32_t get_height() const noexcept override { return height; }
   inline std::uint32_t get_stride() const noexcept override { return stride; }
 
-  std::vector<float> serialize() const noexcept override;
-  void deserialize(std::uint32_t width, std::uint32_t height,
-            std::uint32_t stride, std::vector<float> buffer) noexcept override;
+  serialized_grid_t serialize() const noexcept override;
+  void deserialize(serialized_grid_t) noexcept override;
 
   /* get cell type at given position */
   [[nodiscard]] CellType type_at(std::uint32_t, std::uint32_t) const noexcept;

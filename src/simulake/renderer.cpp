@@ -128,9 +128,9 @@ void Renderer::submit_grid(GridBase *grid) noexcept {
 
   /* update cpu grid texture */
   if (!is_device_grid) {
-    const auto texture_data = grid->serialize();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, grid_width, grid_height, 0, GL_RG,
-                 GL_FLOAT, texture_data.data());
+    const auto data = grid->serialize();
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, data.width, data.height, 0, GL_RG,
+                 GL_FLOAT, data.buffer.data());
   }
 }
 

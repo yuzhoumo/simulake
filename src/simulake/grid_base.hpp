@@ -10,6 +10,13 @@ namespace simulake {
 
 class GridBase {
 public:
+  struct serialized_grid_t {
+    std::uint32_t width;
+    std::uint32_t height;
+    std::uint32_t stride;
+    std::vector<float> buffer;
+  };
+
   virtual ~GridBase() = default;
 
   /* iterate the simulation by one step */
@@ -35,11 +42,10 @@ public:
   virtual std::uint32_t get_stride() const noexcept = 0;
 
   /* saves grid to float buffer */
-  virtual std::vector<float> serialize() const noexcept = 0;
+  virtual serialized_grid_t serialize() const noexcept = 0;
 
   /* loads grid from float buffer */
-  virtual void deserialize(std::uint32_t width, std::uint32_t height,
-                 std::uint32_t stride, std::vector<float> buffer) noexcept = 0;
+  virtual void deserialize(serialized_grid_t) noexcept = 0;
 };
 
 } /* namespace simulake */

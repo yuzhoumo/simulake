@@ -86,14 +86,12 @@ void DeviceGrid::simulate() noexcept {
   flip_flag = !flip_flag;
 }
 
-std::vector<float> DeviceGrid::serialize() const noexcept {
+GridBase::serialized_grid_t DeviceGrid::serialize() const noexcept {
   std::cerr << "NOT_IMPLEMENTED::DEVICE_GRID::SERIALIZE" << std::endl;
-  return std::vector<float>{};
+  return { 0, 0, 0, std::vector<float>{} };
 }
 
-
-void DeviceGrid::deserialize(std::uint32_t width, std::uint32_t height,
-            std::uint32_t stride, std::vector<float> buffer) noexcept {
+void DeviceGrid::deserialize(GridBase::serialized_grid_t data) noexcept {
   std::cerr << "NOT_IMPLEMENTED::DEVICE_GRID::DESERIALIZE" << std::endl;
 }
 
