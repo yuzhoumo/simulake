@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include "GLFW/glfw3.h"
+#include "graphics.hpp"
 #include "callbacks.hpp"
 
 #include "../simulake/cell.hpp"
