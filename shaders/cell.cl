@@ -3,6 +3,12 @@
 // base macros and definitions
 #include "base.cl"
 
+STEP_IMPL(smoke_step) {}
+STEP_IMPL(fire_step) {}
+STEP_IMPL(oil_step) {}
+STEP_IMPL(jello_step) {}
+STEP_IMPL(stone_step) {}
+
 float water_get_stable_state(const float total_mass) {
   const float max_mass = 1.0f;
   const float max_compress = 0.01f;
@@ -17,85 +23,16 @@ float water_get_stable_state(const float total_mass) {
   }
 }
 
-// {{{ sand
-STEP_IMPL(sand_step) {
-#define __move_sand__(idx_next)                                                \
-  {                                                                            \
-    next_grid[idx].type = AIR_TYPE;                                            \
-    next_grid[idx_next].type = SAND_TYPE;                                      \
-    next_grid[idx].mass = AIR_MASS;                                            \
-    next_grid[idx_next].mass = SAND_MASS;                                      \
-    next_grid[idx].updated = false;                                            \
-    next_grid[idx_next].updated = false;                                       \
-    grid[idx].updated = true;                                                  \
-    grid[idx_next].updated = true;                                             \
-  }
-
-  const uint row = loc[0];
-  const uint col = loc[1];
-  const uint width = dims[0];
-  const uint height = dims[1];
-
-  GEN_BOUNDS_VALID(row, col, width, height);
-  GEN_NEIGHBOUR_INDICES(row, col, width, height);
-
-  // cannot fall below bottom
-  if (!bot_valid)
-    return;
-
-  // move down if possible
-  if (IS_FLUID(grid[idx_bot]) && !grid[idx_bot].updated) {
-    __move_sand__(idx_bot);
-  }
-
-  // move down left/right if possible with uniform probability
-  else if (get_rand(row, col) % 2 == 0) {
-
-    // prefer left
-    if (left_valid && IS_FLUID(grid[idx_bot_left]) &&
-        !grid[idx_bot_left].updated) {
-      __move_sand__(idx_bot_left);
-    }
-
-    else if (right_valid && IS_FLUID(grid[idx_bot_right]) &&
-             !grid[idx_bot_right].updated) {
-      __move_sand__(idx_bot_right);
-    }
-
-  } else {
-
-    // prefer right
-    if (right_valid && IS_FLUID(grid[idx_bot_right]) &&
-        !grid[idx_bot_right].updated) {
-      __move_sand__(idx_bot_right);
-    }
-
-    else if (left_valid && IS_FLUID(grid[idx_bot_left]) &&
-             !grid[idx_bot_left].updated) {
-      __move_sand__(idx_bot_left);
-    }
-  }
-
-  return;
-}
-// }}}
-
 // {{{ water
 STEP_IMPL(water_step) {
+  GEN_STEP_IMPL_HEADER();
+
   const float min_mass = 0.000f;
   const float max_speed = 1.00f;
   const float min_flow = 0.005f;
   const float dampen = 0.75f;
   const int horizontal_reach = 2;
   const int bot_reach = 2;
-
-  const uint row = loc[0];
-  const uint col = loc[1];
-  const uint width = dims[0];
-  const uint height = dims[1];
-
-  GEN_BOUNDS_VALID(row, col, width, height);
-  GEN_NEIGHBOUR_INDICES(row, col, width, height);
 
   if (next_grid[idx].updated)
     next_grid[idx].mass = grid[idx].mass;
@@ -290,8 +227,59 @@ STEP_IMPL(water_step) {
 }
 // }}}
 
-STEP_IMPL(smoke_step) {}
-STEP_IMPL(fire_step) {}
-STEP_IMPL(oil_step) {}
-STEP_IMPL(jello_step) {}
-STEP_IMPL(stone_step) {}
+// {{{ sand
+STEP_IMPL(sand_step) {
+#define __move_sand__(idx_next)                                                \
+  {                                                                            \
+    next_grid[idx].type = AIR_TYPE;                                            \
+    next_grid[idx_next].type = SAND_TYPE;                                      \
+    next_grid[idx].mass = AIR_MASS;                                            \
+    next_grid[idx_next].mass = SAND_MASS;                                      \
+    next_grid[idx].updated = false;                                            \
+    next_grid[idx_next].updated = false;                                       \
+    grid[idx].updated = true;                                                  \
+    grid[idx_next].updated = true;                                             \
+  }
+
+  GEN_STEP_IMPL_HEADER();
+
+  // cannot fall below bottom
+  if (!bot_valid)
+    return;
+
+  // move down if possible
+  if (IS_FLUID(grid[idx_bot]) && !grid[idx_bot].updated) {
+    __move_sand__(idx_bot);
+  }
+
+  // move down left/right if possible with uniform probability
+  else if (get_rand(row, col) % 2 == 0) {
+
+    // prefer left
+    if (left_valid && IS_FLUID(grid[idx_bot_left]) &&
+        !grid[idx_bot_left].updated) {
+      __move_sand__(idx_bot_left);
+    }
+
+    else if (right_valid && IS_FLUID(grid[idx_bot_right]) &&
+             !grid[idx_bot_right].updated) {
+      __move_sand__(idx_bot_right);
+    }
+
+  } else {
+
+    // prefer right
+    if (right_valid && IS_FLUID(grid[idx_bot_right]) &&
+        !grid[idx_bot_right].updated) {
+      __move_sand__(idx_bot_right);
+    }
+
+    else if (left_valid && IS_FLUID(grid[idx_bot_left]) &&
+             !grid[idx_bot_left].updated) {
+      __move_sand__(idx_bot_left);
+    }
+  }
+
+  return;
+}
+// }}}

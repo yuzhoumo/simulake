@@ -130,4 +130,15 @@ typedef struct __attribute__((packed, aligned(8))) {
   void name(const uint2 loc, const uint2 dims, __global grid_t *grid,          \
             __global grid_t *next_grid)
 
+#define GEN_STEP_LOC()                                                         \
+  const uint row = loc[0];                                                     \
+  const uint col = loc[1];                                                     \
+  const uint width = dims[0];                                                  \
+  const uint height = dims[1];
+
+#define GEN_STEP_IMPL_HEADER()                                                 \
+  GEN_STEP_LOC();                                                              \
+  GEN_BOUNDS_VALID(row, col, width, height);                                   \
+  GEN_NEIGHBOUR_INDICES(row, col, width, height);
+
 #endif
