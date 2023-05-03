@@ -47,6 +47,7 @@ void App::run(const bool gpu_mode, GridBase::serialized_grid_t *data) noexcept {
   state->set_grid(sim_grid);
   if (data != nullptr) {
     state->get_grid()->deserialize(*data);
+    state->set_paused(true);
   }
 
   renderer.submit_grid(sim_grid);

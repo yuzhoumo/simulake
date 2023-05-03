@@ -56,11 +56,9 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
 void cursor_enter(GLFWwindow *window, int entered) {
   AppState &state = AppState::get_instance();
   if (entered) {
-    if (!state.is_paused()) {
-      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    } else {
-      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    }
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+  } else {
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   }
 }
 
