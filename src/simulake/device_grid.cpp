@@ -56,7 +56,8 @@ void DeviceGrid::initialize_random() const noexcept {
   CL_CALL(clFinish(sim_context.queue));
 }
 
-void DeviceGrid::simulate() noexcept {
+void DeviceGrid::simulate(float delta_time) noexcept {
+  //NOTE(joe): ignore delta time for now if not needed
   // max work group size is 256 = 16 * 16
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};

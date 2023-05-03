@@ -20,7 +20,7 @@ public:
   virtual ~GridBase() = default;
 
   /* iterate the simulation by one step */
-  virtual void simulate() noexcept = 0;
+  virtual void simulate(float delta_time) noexcept = 0;
 
   /* reset the grid to air cells (empty) */
   virtual void reset() noexcept = 0;
@@ -45,7 +45,7 @@ public:
   virtual serialized_grid_t serialize() const noexcept = 0;
 
   /* loads grid from float buffer */
-  virtual void deserialize(const serialized_grid_t &) noexcept = 0;
+  virtual void deserialize(const serialized_grid_t &data) noexcept = 0;
 };
 
 } /* namespace simulake */

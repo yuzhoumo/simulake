@@ -1,6 +1,7 @@
 #ifndef SIMULAKE_CELL_HPP
 #define SIMULAKE_CELL_HPP
 
+#include <cstdlib>
 #include <algorithm>
 #include <memory>
 #include <utility>
@@ -24,6 +25,7 @@ enum class CellType : std::uint8_t {
 struct cell_data_t {
   CellType type = CellType::NONE;
   float mass = 0.0f;
+  glm::vec2 velocity{0.0f};
   bool updated = false;
 };
 
@@ -66,6 +68,15 @@ public:
 
   // needed for any base class
   virtual ~BaseCell() = default;
+
+  static constexpr float gravity = 10.f;
+
+  static inline int random_int(int lower, int upper) {
+    if (upper < lower) {
+      std::swap(lower, upper);
+    }
+    return (std::rand() % (upper - lower + 1) + lower);
+  }
 
 private:
   // make this an abstract class

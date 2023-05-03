@@ -22,10 +22,10 @@ Grid::Grid(const std::uint32_t _width, const std::uint32_t _height)
 }
 
 void Grid::reset() noexcept {
-  // construct in place
-  _grid.resize(height, {width, { CellType::AIR, 0.0f, false } });
+  /* construct in place */
+  _grid.resize(height, {width, cell_data_t{ .type = CellType::AIR } });
 
-  // deep copy construct (same dimensions and contents)
+  /* deep copy construct (same dimensions and contents) */
   _next_grid = _grid;
 }
 
@@ -75,8 +75,8 @@ void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
   }
 }
 
-void Grid::simulate() noexcept {
-  // copy old grid into new
+void Grid::simulate(float delta_time) noexcept {
+  this->delta_time = delta_time;
   _next_grid = _grid;
 
 #pragma omp parallel for

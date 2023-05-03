@@ -37,7 +37,7 @@ void App::step_sim(bool paused, GridBase *sim_grid) noexcept {
     sim_grid->spawn_cells({x, y}, state.get_spawn_radius(), target_type);
   }
 
-  if (!paused) sim_grid->simulate();
+  if (!paused) sim_grid->simulate(state.get_delta_time());
 }
 
 void App::run(const bool gpu_mode, GridBase::serialized_grid_t *data) noexcept {

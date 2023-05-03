@@ -50,7 +50,7 @@ public:
   ~DeviceGrid();
 
   /* run simulation step on device and render texture */
-  void simulate() noexcept override;
+  void simulate(float) noexcept override;
 
   /* reset grid to empty (AIR) cells */
   void reset() noexcept override;
