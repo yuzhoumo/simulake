@@ -521,7 +521,7 @@ __kernel void render_texture(__write_only image2d_t texture,
   // write texture
   // attributes go here
   const float4 out_color = {type, grid[idx].mass, 0.f, 0.f};
-  const int2 out_coord = {width - col, height - row};
+  const int2 out_coord = {width - col - 1, height - row - 1};
   write_imagef(texture, out_coord, out_color);
 }
 // }}}
