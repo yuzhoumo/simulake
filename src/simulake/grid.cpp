@@ -55,27 +55,49 @@ void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
           dist <= paint_radius and
           (paint_target == CellType::AIR or cell_at(x, y).type == CellType::AIR);
 
-      cell_data_t cell = {
-        .type = paint_target,
-        .mass = 0.0f,
-        .velocity = glm::vec2{0.0f},
-        .updated = false
+      /* skip if should_paint is false */
+      if (!should_paint) continue;
+
+      cell_data_t spawn_cell;
+
+      switch (paint_target) {
+      case CellType::AIR:
+        spawn_cell = AirCell::spawn({x, y}, *this);
+        break;
+
+      case CellType::SMOKE:
+        spawn_cell = SmokeCell::spawn({x, y}, *this);
+        break;
+
+      case CellType::FIRE:
+        spawn_cell = FireCell::spawn({x, y}, *this);
+        break;
+
+      case CellType::WATER:
+        //spawn_cell = WaterCell::spawn({x, y}, *this);
+        break;
+
+      case CellType::OIL:
+        //spawn_cell = OilCell::spawn({x, y}, *this);
+        break;
+
+      case CellType::SAND:
+        spawn_cell = SandCell::spawn({x, y}, *this);
+        break;
+
+      case CellType::JELLO:
+        //spawn_cell = JelloCell::spawn({x, y}, *this);
+        break;
+
+      case CellType::STONE:
+        spawn_cell = StoneCell::spawn({x, y}, *this);
+        break;
+
+      default:
+        break; // CellType::NONE
       };
 
-      if (should_paint) {
-        if (paint_target == CellType::WATER) {
-          cell.mass = WaterCell::max_mass;
-          set_curr(x, y, cell);
-        } else if (paint_target == CellType::FIRE) {
-          std::mt19937 gen(std::random_device{}());
-          std::uniform_real_distribution<float> dis(0.6f, 1.0f);
-          cell.mass = dis(gen);
-          set_curr(x, y, cell);
-          //TODO(joe): save generator in a common location
-        } else {
-          set_curr(x, y, cell);
-        }
-      }
+      set_curr(x, y, spawn_cell);
     }
   }
 }
@@ -125,16 +147,13 @@ void Grid::simulate(float delta_time) noexcept {
     }
   }
 
+  /* reset updated */
   for (int x = 0; x < width; x += 1) {
     for (int y = 0; y < height; y += 1) {
       _grid[y][x].updated = false;
     }
   }
 
-  // TODO(vir): add effects (smoke, fillins, etc)
-  // second pass?
-
-  // swap around
   std::swap(_grid, _next_grid);
 }
 

@@ -1,6 +1,5 @@
 #include <iostream>
 #include <utility>
-#include <random>
 
 #include "utils.hpp"
 
@@ -8,6 +7,9 @@
 #include "grid.hpp"
 
 namespace simulake {
+
+std::random_device BaseCell::rd;
+std::mt19937 BaseCell::gen(BaseCell::rd());
 
 bool BaseCell::is_liquid(CellType type) {
   return type == CellType::WATER or
@@ -54,14 +56,37 @@ BaseCell::context_t BaseCell::get_cell_context(const BaseCell::position_t &pos,
   };
 }
 
+float BaseCell::random_float(float lower, float upper) {
+  std::uniform_real_distribution<float> dist(lower, upper);
+  return dist(gen);
+}
+
 int BaseCell::random_int(int lower, int upper) {
-  if (upper < lower) std::swap(lower, upper);
-  return (std::rand() % (upper - lower + 1) + lower);
+  std::uniform_int_distribution<int> dist(lower, upper);
+  return dist(gen);
+}
+
+
+/* <<<<<<<< AIR >>>>>>>>> */
+
+cell_data_t AirCell::spawn(const position_t &pos, Grid &grid) noexcept {
+  return {
+    .type = CellType::AIR,
+  };
 }
 
 void AirCell::step(const position_t &pos, Grid &grid) noexcept {
   const auto [x, y] = pos;
   const auto context = BaseCell::get_cell_context(pos, grid);
+}
+
+
+/* <<<<<<<< SMOKE >>>>>>>>> */
+
+cell_data_t SmokeCell::spawn(const position_t &pos, Grid &grid) noexcept {
+  return {
+    .type = CellType::SMOKE,
+  };
 }
 
 void SmokeCell::step(const position_t &pos, Grid &grid) noexcept {
@@ -101,15 +126,22 @@ void SmokeCell::step(const position_t &pos, Grid &grid) noexcept {
     }
   }
 }
+
+/* <<<<<<<< FIRE >>>>>>>> */
+
+cell_data_t FireCell::spawn(const position_t &pos, Grid &grid) noexcept {
+  return {
+    .type = CellType::FIRE,
+    .mass = random_float(0.6f, 1.0f),
+  };
+}
+
 void FireCell::helper(CellType curr, Grid &grid, int x, int y, float remaining_mass) {
   if (flammability(curr) > 0) {
     grid.set_next(x, y, { .type = CellType::FIRE, .mass = remaining_mass });
   } else if (curr == CellType::AIR) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0, 1);
     float p = 0.4;
-    double rand_num = dis(gen);
+    float rand_num = random_float(0.0f, 1.0f);
     if (rand_num < p) {
       grid.set_next(x, y, { .type = CellType::SMOKE, .mass = remaining_mass - mass_decay });
     }
@@ -142,7 +174,24 @@ void FireCell::step(const position_t &pos, Grid &grid) noexcept {
   grid.set_next(x, y, { .type = CellType::FIRE, .mass = std::max(0.0f, remaining_mass)});
 }
 
+/* <<<<<<<< WATER >>>>>>>> */
+
+cell_data_t WaterCell::spawn(const position_t &pos, Grid &grid) noexcept {
+  return {
+    .type = CellType::WATER,
+    .mass = max_mass,
+  };
+}
+
 void WaterCell::step(const position_t &pos, Grid &grid) noexcept {
+}
+
+/* <<<<<<<< SAND >>>>>>>> */
+
+cell_data_t SandCell::spawn(const position_t &pos, Grid &grid) noexcept {
+  return {
+    .type = CellType::SAND,
+  };
 }
 
 void SandCell::step(const position_t &pos, Grid &grid) noexcept {
@@ -151,10 +200,11 @@ void SandCell::step(const position_t &pos, Grid &grid) noexcept {
 
   cell_data_t new_cell = grid.cell_at(x, y);
 
+  // gravity is effectively 50 for sand, mult by 3 to fix flying horizontally
   new_cell.velocity.y =
-      std::clamp(new_cell.velocity.y + (100.0f * dt), -10.f, 10.f);
+      std::clamp(new_cell.velocity.y + (gravity * 5.f * dt), -10.f, 10.f);
 
-  /* reset velocity if not able to move directly below */ 
+  // reset velocity if not able to move directly below
   if (grid.in_bounds(x, y + 1) and
       !grid.is_empty(x, y + 1) and
       !is_liquid(grid.cell_at(x, y + 1).type)) {
@@ -165,21 +215,21 @@ void SandCell::step(const position_t &pos, Grid &grid) noexcept {
       static_cast<int>(x) + static_cast<int>(new_cell.velocity.x),
       static_cast<int>(y) + static_cast<int>(new_cell.velocity.y)};
 
-  // Check to see if you can swap first with other element below you
-  glm::ivec2 bottom{x, y + 1}; // TODO make sure this doesn't fuck up uint32
+  // check if can swap with element below
+  glm::ivec2 bottom{x, y + 1};
   glm::ivec2 bottom_right{x + 1, y + 1};
   glm::ivec2 bottom_left{x - 1, y + 1};
 
   cell_data_t tmp_a = grid.cell_at(x, y);
 
-  // Physics (using velocity)
+  // physics (using velocity)
   if (grid.in_bounds(vi.x, vi.y) and ((grid.is_empty(vi.x, vi.y) ||
         (((grid.cell_at(vi.x, vi.y).type == CellType::WATER) and
           !grid.cell_at(vi.x, vi.y).updated && glm::length(grid.cell_at(vi.x, vi.y).velocity) - glm::length(tmp_a.velocity) > 10.f))))) {
 
     cell_data_t tmp_b = grid.cell_at(vi.x, vi.y);
 
-    // Try to throw water out
+    // try to throw water out
     if (tmp_b.type == CellType::WATER) {
 
       int rx = random_int(-2, 2);
@@ -196,7 +246,7 @@ void SandCell::step(const position_t &pos, Grid &grid) noexcept {
         }
       }
 
-      // Couldn't write there, so, uh, destroy it.
+      // couldn't write here, destroy it
       grid.set_next(x, y, cell_data_t{ .type = CellType::AIR });
     }
     else if (grid.is_empty(vi.x, vi.y)) {
@@ -204,7 +254,7 @@ void SandCell::step(const position_t &pos, Grid &grid) noexcept {
       grid.set_next(x, y, tmp_b);
     }
   }
-  // Simple falling, changing the velocity here ruins everything. I need to redo this entire simulation.
+  // simple falling
   else if (grid.in_bounds(x, y + 1) && ((grid.is_empty(x, y + 1) || (grid.cell_at(bottom.x, bottom.y).type == CellType::WATER)))) {
     new_cell.velocity.y += (gravity * dt);
     cell_data_t tmp_b = grid.cell_at(x, y + 1);
@@ -212,14 +262,14 @@ void SandCell::step(const position_t &pos, Grid &grid) noexcept {
     grid.set_next(x, y, tmp_b);
   }
   else if (grid.in_bounds(x - 1, y + 1) and ((grid.is_empty(x - 1, y + 1) || grid.cell_at(bottom_right.x, bottom_right.y).type == CellType::WATER))) {
-    new_cell.velocity.x = grid.is_in_liquid(x, y)[0] == 1 ? 0.f : random_int(0, 1) == 0 ? -1.f : 1.f;
+    new_cell.velocity.x = grid.is_in_liquid(x, y)[0] == 1 ? 0.f : random_float(-2, 2);
     new_cell.velocity.y += (gravity * dt);
     cell_data_t tmp_b = grid.cell_at(x - 1, y + 1);
     grid.set_next(bottom_left.x, bottom_left.y, new_cell);
     grid.set_next(x, y, tmp_b);
   }
   else if (grid.in_bounds(x + 1, y + 1) && ((grid.is_empty(x + 1, y + 1) || grid.cell_at(bottom_right.x, bottom_right.y).type == CellType::WATER))) {
-    new_cell.velocity.x = grid.is_in_liquid(x, y)[0] == 1 ? 0.f : random_int(0, 1) == 0 ? -1.f : 1.f;
+    new_cell.velocity.x = grid.is_in_liquid(x, y)[0] == 1 ? 0.f : random_float(-2, 2);
     new_cell.velocity.y += (gravity * dt);
     cell_data_t tmp_b = grid.cell_at(x + 1, y + 1);
     grid.set_next(bottom_right.x, bottom_right.y, new_cell);
@@ -233,6 +283,14 @@ void SandCell::step(const position_t &pos, Grid &grid) noexcept {
       grid.set_next(x, y, tmp_b);
     }
   }
+}
+
+/* <<<<<<<< STONE >>>>>>>> */
+
+cell_data_t StoneCell::spawn(const position_t &pos, Grid &grid) noexcept {
+  return {
+    .type = CellType::STONE,
+  };
 }
 
 void StoneCell::step(const position_t &pos, Grid &grid) noexcept {

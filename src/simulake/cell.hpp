@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <memory>
 #include <utility>
+#include <random>
 
 namespace simulake {
 class Grid;
@@ -60,35 +61,46 @@ public:
   static inline context_t get_cell_context(const position_t &,
         const Grid &) noexcept;
 
+  static inline float random_float(float lower, float upper);
   static inline int random_int(int lower, int upper);
 
 private:
   BaseCell() = delete;
+
+  static std::random_device rd;
+  static std::mt19937 gen;
 };
 
 /* air cell rules */
 struct AirCell final : public BaseCell {
+  static cell_data_t spawn(const position_t &, Grid &) noexcept;
   static void step(const position_t &, Grid &) noexcept;
 };
 
 /* smoke cell rules */
 struct SmokeCell final : public BaseCell {
+  static cell_data_t spawn(const position_t &, Grid &) noexcept;
+  static void step(const position_t &, Grid &) noexcept;
+
   static constexpr float mass_decay = 0.001;
   static std::vector<position_t> getEmptyTopNeighbors(const position_t &, Grid &) noexcept;
   static std::vector<BaseCell::position_t> getEmptyBottomNeighbors(const position_t &, Grid &) noexcept;
-  static void step(const position_t &, Grid &) noexcept;
 };
 
 /* fire cell rules */
 struct FireCell final : public BaseCell {
+  static cell_data_t spawn(const position_t &, Grid &) noexcept;
+  static void step(const position_t &, Grid &) noexcept;
+
   static constexpr float mass_decay = 0.05;
   static void helper(CellType curr, Grid &grid, int x, int y, float remaining_mass);
-  static void step(const position_t &, Grid &) noexcept;
 };
 
 /* water cell rules */
 struct WaterCell final : public BaseCell {
+  static cell_data_t spawn(const position_t &, Grid &) noexcept;
   static void step(const position_t &, Grid &) noexcept;
+
   static constexpr float max_mass = 1.0f;
   static constexpr float max_compress = 0.02f;
   static constexpr float min_mass = 0.0001f;
@@ -110,22 +122,27 @@ struct WaterCell final : public BaseCell {
 
 /* oil cell rules */
 struct OilCell final : public BaseCell {
+  static cell_data_t spawn(const position_t &, Grid &) noexcept;
   static void step(const position_t &, Grid &) noexcept;
 };
 
 /* sand cell rules */
 struct SandCell final : public BaseCell {
+  static cell_data_t spawn(const position_t &, Grid &) noexcept;
   static void step(const position_t &, Grid &) noexcept;
+
   static constexpr bool isFlammable = true;
 };
 
 /* jello cell rules */
 struct JelloCell final : public BaseCell {
+  static cell_data_t spawn(const position_t &, Grid &) noexcept;
   static void step(const position_t &, Grid &) noexcept;
 };
 
 /* stone cell rules */
 struct StoneCell final : public BaseCell {
+  static cell_data_t spawn(const position_t &, Grid &) noexcept;
   static void step(const position_t &, Grid &) noexcept;
 };
 
