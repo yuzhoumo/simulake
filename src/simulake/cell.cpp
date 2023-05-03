@@ -26,7 +26,7 @@ bool BaseCell::is_fluid(CellType type) {
 
 float BaseCell::flammability(CellType type) {
   switch(type) {
-  case CellType::AIR:    return 1.0f;
+  case CellType::AIR:    return 0.0f;
   case CellType::WATER:  return 0.0f;
   case CellType::OIL:    return 1.0f;
   case CellType::SAND:   return 0.5f;
@@ -81,7 +81,7 @@ void SmokeCell::step(const position_t &pos, Grid &grid) noexcept {
   if (is_fluid(context.top)) {
     if (rand_num < p) {
       grid.set_next(x, y, { .type = CellType::AIR });
-      grid.set_next(x - 1, y, { .type = CellType::SMOKE });
+      grid.set_next(x, y - 1, { .type = CellType::SMOKE });
     }
   }
 
@@ -97,7 +97,7 @@ void SmokeCell::step(const position_t &pos, Grid &grid) noexcept {
   else if (is_fluid(context.top_right)) {
     if (rand_num < p) {
       grid.set_next(x, y, { .type = CellType::AIR });
-      grid.set_next(x - 1, y + 1, { .type = CellType::SMOKE });
+      grid.set_next(x + 1, y - 1, { .type = CellType::SMOKE });
     }
   }
 }
@@ -128,16 +128,16 @@ void FireCell::step(const position_t &pos, Grid &grid) noexcept {
     return;
   }
 
-  FireCell::helper(context.top, grid, x - 1, y, remaining_mass);
+  FireCell::helper(context.top, grid, x, y - 1, remaining_mass);
   FireCell::helper(context.top_left, grid, x - 1, y - 1, remaining_mass);
-  FireCell::helper(context.top_right, grid, x - 1, y + 1, remaining_mass);
+  FireCell::helper(context.top_right, grid, x + 1, y - 1, remaining_mass);
 
-  FireCell::helper(context.bottom, grid, x + 1, y, remaining_mass);
-  FireCell::helper(context.bottom_left, grid, x + 1, y - 1, remaining_mass);
+  FireCell::helper(context.bottom, grid, x, y + 1, remaining_mass);
+  FireCell::helper(context.bottom_left, grid, x - 1, y + 1, remaining_mass);
   FireCell::helper(context.bottom_right, grid, x + 1, y + 1, remaining_mass);
 
-  FireCell::helper(context.left, grid, x, y - 1, remaining_mass);
-  FireCell::helper(context.right, grid, x, y + 1, remaining_mass);
+  FireCell::helper(context.left, grid, x - 1, y, remaining_mass);
+  FireCell::helper(context.right, grid, x + 1, y, remaining_mass);
 
   grid.set_next(x, y, { .type = CellType::FIRE, .mass = std::max(0.0f, remaining_mass)});
 }
