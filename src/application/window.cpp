@@ -37,7 +37,8 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
   }
 }
 
-std::tuple<std::uint32_t, std::uint32_t> Window::get_window_size() const noexcept {
+std::tuple<std::uint32_t, std::uint32_t>
+Window::get_window_size() const noexcept {
   int width, height;
   glfwGetFramebufferSize(_window.get(), &width, &height);
   return std::make_tuple(static_cast<uint32_t>(width),
@@ -49,9 +50,7 @@ float Window::get_time() const noexcept {
   return static_cast<float>(time);
 }
 
-void Window::poll_events() noexcept {
-  glfwPollEvents();
-}
+void Window::poll_events() noexcept { glfwPollEvents(); }
 
 bool Window::should_close() const noexcept {
   return glfwWindowShouldClose(_window.get());

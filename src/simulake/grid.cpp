@@ -1,7 +1,10 @@
 #include <cassert>
 #include <iostream>
 #include <optional>
+#include <thread>
 #include <vector>
+
+#include <omp.h>
 
 #include "grid.hpp"
 #include "utils.hpp"
@@ -12,6 +15,9 @@ Grid::Grid(const std::uint32_t _width, const std::uint32_t _height)
     : width(_width), height(_height) {
   stride = 2; // (type, mass)
   reset();
+
+  const auto NUM_THREADS = std::thread::hardware_concurrency();
+  omp_set_num_threads(std::max(1, static_cast<int>(NUM_THREADS - 2)));
 }
 
 // reset empty grid (full of AIR cells)
@@ -25,7 +31,7 @@ void Grid::reset() noexcept {
   // Temp support for mass.
   _mass.resize(height, {});
   for (auto &row : _mass)
-      row.resize(width, .0f);
+    row.resize(width, .0f);
 
   _next_mass = _mass;
 }
@@ -40,20 +46,21 @@ void Grid::spawn_cells(const uint32_t x_center, const uint32_t y_center,
 
   const int y_start = std::max(static_cast<int>(y_center - paint_radius), 0);
   const int y_end = std::min(static_cast<int>(y_center + paint_radius),
-                       static_cast<int>(height));
+                             static_cast<int>(height));
 
   const int x_start = std::max(static_cast<int>(x_center - paint_radius), 0);
   const int x_end = std::min(static_cast<int>(x_center + paint_radius),
-                       static_cast<int>(width));
+                             static_cast<int>(width));
 
   for (int y = y_start; y < y_end; ++y) {
     for (int x = x_start; x < x_end; ++x) {
-      uint32_t dist = static_cast<uint32_t>(
-                    sqrt(pow(static_cast<int>(x_center) - x, 2) +
-                         pow(static_cast<int>(y_center) - y, 2)));
+      uint32_t dist =
+          static_cast<uint32_t>(sqrt(pow(static_cast<int>(x_center) - x, 2) +
+                                     pow(static_cast<int>(y_center) - y, 2)));
 
-      bool should_paint = dist <= paint_radius and
-        (paint_target == CellType::AIR or type_at(y, x) == CellType::AIR);
+      bool should_paint =
+          dist <= paint_radius and
+          (paint_target == CellType::AIR or type_at(y, x) == CellType::AIR);
 
       if (should_paint) {
         set_state(y, x, paint_target);
@@ -68,7 +75,6 @@ void Grid::simulate() noexcept {
   // copy old grid into new
   _next_grid = _grid;
   _next_mass = _mass;
-
 
 #pragma omp parallel for
 #if 1

@@ -12,10 +12,10 @@ int main(int argc, char *argv[]) {
 
   // clang-format off
   options.add_options()
-    ("x,width",      "width",                   cxxopts::value<std::uint32_t>()->default_value("800"))
-    ("y,height",     "height",                  cxxopts::value<std::uint32_t>()->default_value("600"))
-    ("c,cellsize",   "cell size",               cxxopts::value<std::uint32_t>()->default_value("1"))
-    ("g,gpu",        "enable GPU acceleration", cxxopts::value<bool>()->default_value("false"))
+    ("x,width",      "width",                   cxxopts::value<std::uint32_t>()->default_value("1920"))
+    ("y,height",     "height",                  cxxopts::value<std::uint32_t>()->default_value("1080"))
+    ("c,cellsize",   "cell size",               cxxopts::value<std::uint32_t>()->default_value("4"))
+    ("g,gpu",        "enable GPU acceleration", cxxopts::value<bool>()->default_value("true"))
     ("h,help",       "print help");
   // clang-format on
 
@@ -31,6 +31,7 @@ int main(int argc, char *argv[]) {
     height = result["height"].as<std::uint32_t>();
     width = result["width"].as<std::uint32_t>();
     gpu_mode = result["gpu"].as<bool>();
+    std::cout << "gpu_mode: " << gpu_mode << std::endl; /*__DEBUG_PRINT__*/
   } catch (const cxxopts::exceptions::exception &e) {
     std::cerr << "error: " << e.what() << std::endl;
     exit(EXIT_FAILURE);

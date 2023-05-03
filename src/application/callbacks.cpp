@@ -1,7 +1,7 @@
 #include <algorithm>
 
-#include "graphics.hpp"
 #include "callbacks.hpp"
+#include "graphics.hpp"
 
 #include "../simulake/cell.hpp"
 #include "../utils.hpp"
@@ -12,7 +12,7 @@ void toggle_pause(GLFWwindow *window) {
   AppState &state = AppState::get_instance();
   state.set_paused(!state.is_paused());
   glfwSetInputMode(window, GLFW_CURSOR,
-                 state.is_paused() ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
+                   state.is_paused() ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
 }
 
 namespace callbacks {
@@ -75,7 +75,8 @@ void mouse_button(GLFWwindow *window, int button, int action, int mods) {
   AppState &state = AppState::get_instance();
   bool left_mouse = button == GLFW_MOUSE_BUTTON_LEFT;
 
-  if (left_mouse && state.is_paused()) toggle_pause(window);
+  if (left_mouse && state.is_paused())
+    toggle_pause(window);
 
   if (left_mouse and !(mods & GLFW_MOD_SHIFT)) {
     if (action == GLFW_PRESS) {
@@ -101,7 +102,8 @@ void mouse_button(GLFWwindow *window, int button, int action, int mods) {
 void scroll(GLFWwindow *window, double xoffset, double yoffset) {
   AppState &state = AppState::get_instance();
   int offset = state.get_spawn_radius() + static_cast<int>(yoffset);
-  int min_dim = std::min(state.get_window_width(), state.get_window_height()) / 4;
+  int min_dim =
+      std::min(state.get_window_width(), state.get_window_height()) / 4;
   offset = std::clamp(offset, 1, min_dim + 1);
   state.set_spawn_radius(static_cast<std::uint32_t>(offset));
 }
