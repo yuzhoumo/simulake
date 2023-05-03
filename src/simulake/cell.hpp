@@ -82,7 +82,7 @@ struct SmokeCell final : public BaseCell {
   static cell_data_t spawn(const position_t &, Grid &) noexcept;
   static void step(const position_t &, Grid &) noexcept;
 
-  static constexpr float mass_decay = 0.001;
+  static constexpr float mass_decay = 0.005;
   static std::vector<position_t> getEmptyTopNeighbors(const position_t &, Grid &) noexcept;
   static std::vector<BaseCell::position_t> getEmptyBottomNeighbors(const position_t &, Grid &) noexcept;
 };
@@ -92,7 +92,7 @@ struct FireCell final : public BaseCell {
   static cell_data_t spawn(const position_t &, Grid &) noexcept;
   static void step(const position_t &, Grid &) noexcept;
 
-  static constexpr float mass_decay = 0.05;
+  static constexpr float mass_decay = 0.05f;
   static void helper(CellType curr, Grid &grid, int x, int y, float remaining_mass);
 };
 

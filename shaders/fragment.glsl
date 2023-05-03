@@ -63,9 +63,11 @@ vec4 shade_air() {
   return vec4(0.5, 0.5, 0.5, 1.0); // gray
 }
 
-vec4 shade_smoke() {
+vec4 shade_smoke(float mass) {
   float noise = fbm(gl_FragCoord.xy / u_resolution * u_grid_dim, 4);
-  return vec4(vec3(0.5, 0.5, 0.5) * (0.5 + 0.5 * noise), 1.0);
+  float gray_value = mix(0.5, 1.0, mass);
+  vec3 gray_color = vec3(gray_value, gray_value, gray_value);
+  return vec4(gray_color * (0.5 + 0.5 * noise), 1.0);
 }
 
 vec4 shade_fire() {
@@ -127,7 +129,7 @@ void main() {
     color = shade_air();
     break;
   case SMOKE_TYPE:
-    color = shade_smoke();
+    color = shade_smoke(mass);
     break;
   case FIRE_TYPE:
     color = shade_fire();

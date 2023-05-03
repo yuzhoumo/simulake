@@ -97,7 +97,9 @@ void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
         break; // CellType::NONE
       };
 
-      set_curr(x, y, spawn_cell);
+      /* check if cell type is valid */
+      if (spawn_cell.type != CellType::NONE)
+        set_curr(x, y, spawn_cell);
     }
   }
 }
