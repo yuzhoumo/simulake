@@ -26,10 +26,11 @@ namespace simulake {
 class DeviceGrid : public GridBase {
 public:
   /* cell and its attributes in memory */
-  constexpr static inline size_t NUM_FLOATS = 2;
+  constexpr static inline size_t NUM_FLOATS = 4;
   struct __attribute__((packed, aligned(8))) device_cell_t {
     CellType type = CellType::NONE;
     float mass = 0.0f;
+    cl_float2 velocity = {0.0f, 0.0f};
     bool updated = false;
   };
 
@@ -56,8 +57,7 @@ public:
 
   /* mouse input api */
   void spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &,
-                   const std::uint32_t,
-                   const CellType) noexcept override;
+                   const std::uint32_t, const CellType) noexcept override;
 
   inline std::uint32_t get_width() const noexcept override { return width; }
   inline std::uint32_t get_height() const noexcept override { return height; }
@@ -68,9 +68,7 @@ public:
   serialized_grid_t serialize() const noexcept override;
   void deserialize(const serialized_grid_t &) noexcept override;
 
-  constexpr bool is_device_grid() const noexcept override {
-    return true;
-  }
+  constexpr bool is_device_grid() const noexcept override { return true; }
 
   /* set gl texture target */
   void set_texture_target(const GLuint) noexcept;
