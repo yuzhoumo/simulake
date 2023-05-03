@@ -31,8 +31,11 @@ public:
   /* submit new grid data to renderer */
   void submit_grid(GridBase *) noexcept;
 
-  enum class UniformId { CELL_SIZE, SPAWN_RADIUS, MOUSE_POS, RESOLUTION };
-  typedef std::variant<glm::ivec2, glm::vec2, int> shader_uniform_t;
+  enum class UniformId {
+    CELL_SIZE, SPAWN_RADIUS, MOUSE_POS, RESOLUTION, GRID_DIM
+  };
+
+  typedef std::variant<glm::vec2, float> shader_uniform_t;
   typedef std::unordered_map<UniformId, shader_uniform_t> uniform_opts_t;
 
   /* submit updated uniforms to shader, use enum + unordered mapping to

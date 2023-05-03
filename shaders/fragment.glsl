@@ -11,27 +11,31 @@
 
 uniform sampler2D u_grid_data_texture;
 
-uniform ivec2 u_resolution;
+uniform vec2 u_resolution;
+uniform vec2 u_grid_dim;
 uniform vec2 u_mouse_pos;
 
-uniform int u_spawn_radius;
-uniform int u_cell_size;
+uniform float u_spawn_radius;
+uniform float u_cell_size;
 
 in vec2 tex_coord;
 out vec4 frag_color;
 
 vec4 shade_mouse_ring() {
-  vec2 st = gl_FragCoord.xy / vec2(u_resolution);
-  vec2 mouse_pos = vec2(u_mouse_pos.x, u_resolution.y - u_mouse_pos.y) /
-                                                           vec2(u_resolution);
-  float rad = float(u_spawn_radius * u_cell_size);
-  float thickness = float(u_cell_size);
-  vec2 aspect_ratio = vec2(1.0, u_resolution.x / u_resolution.y);
-  vec2 diff = (st - mouse_pos) * aspect_ratio;
-  float dist = length(diff * vec2(u_resolution));
+  vec2 st = gl_FragCoord.xy / u_resolution; // Normalize screen space coordinates
+  vec2 grid_coords = st * u_grid_dim; // Convert to grid coordinates
 
-  float inner_radius = rad - thickness / 2.0;
-  float outer_radius = rad + thickness / 2.0;
+  vec2 mouse_grid_pos = vec2(u_mouse_pos.x, u_resolution.y - u_mouse_pos.y) / u_resolution * u_grid_dim; // Convert mouse position to grid coordinates
+
+  float radius = u_spawn_radius; // No need to multiply with u_cell_size as we're working in grid coordinates now
+  float thickness = 1.0; // Thickness in grid coordinates
+
+  vec2 diff = (grid_coords - mouse_grid_pos);
+
+  float dist = length(diff);
+
+  float inner_radius = radius - thickness / 2.0;
+  float outer_radius = radius + thickness / 2.0;
   float ring_alpha = step(inner_radius, dist) *
                     (1.0 - step(outer_radius, dist));
 

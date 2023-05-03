@@ -89,16 +89,19 @@ void Renderer::submit_shader_uniforms(
   for (const auto &[uniform, value] : uniform_updates) {
     switch (uniform) {
     case Renderer::UniformId::CELL_SIZE:
-      shader.set_int("u_cell_size", std::get<int>(value));
+      shader.set_float("u_cell_size", std::get<float>(value));
       break;
     case Renderer::UniformId::SPAWN_RADIUS:
-      shader.set_int("u_spawn_radius", std::get<int>(value));
+      shader.set_float("u_spawn_radius", std::get<float>(value));
       break;
     case Renderer::UniformId::MOUSE_POS:
       shader.set_float2("u_mouse_pos", std::get<glm::vec2>(value));
       break;
     case Renderer::UniformId::RESOLUTION:
-      shader.set_int2("u_resolution", std::get<glm::ivec2>(value));
+      shader.set_float2("u_resolution", std::get<glm::vec2>(value));
+      break;
+    case Renderer::UniformId::GRID_DIM:
+      shader.set_float2("u_grid_dim", std::get<glm::vec2>(value));
       break;
     }
   }

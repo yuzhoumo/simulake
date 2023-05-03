@@ -15,6 +15,13 @@ void AppState::set_window(Window *window) noexcept {
 void AppState::set_grid(GridBase *grid) noexcept {
   AppState &state = AppState::get_instance();
   state.grid = grid;
+
+  Renderer::uniform_opts_t uniforms_to_update = {
+    {Renderer::UniformId::GRID_DIM,
+        glm::vec2{static_cast<float>(grid->get_width()),
+                  static_cast<float>(grid->get_height())}}};
+
+  state.renderer->submit_shader_uniforms(uniforms_to_update);
 }
 
 void AppState::set_selected_cell_type(const simulake::CellType type) noexcept {
@@ -27,7 +34,7 @@ void AppState::set_spawn_radius(const std::uint32_t num_cells) noexcept {
   state.spawn_radius = num_cells;
 
   Renderer::uniform_opts_t uniforms_to_update = {
-    {Renderer::UniformId::SPAWN_RADIUS, static_cast<int>(state.spawn_radius)}};
+    {Renderer::UniformId::SPAWN_RADIUS, static_cast<float>(state.spawn_radius)}};
 
   state.renderer->submit_shader_uniforms(uniforms_to_update);
 }
@@ -37,7 +44,7 @@ void AppState::set_cell_size(const std::uint32_t cell_size) noexcept {
   state.cell_size = cell_size;
 
   Renderer::uniform_opts_t uniforms_to_update = {
-      {Renderer::UniformId::CELL_SIZE, static_cast<int>(cell_size)}};
+      {Renderer::UniformId::CELL_SIZE, static_cast<float>(cell_size)}};
 
   state.renderer->submit_shader_uniforms(uniforms_to_update);
 }
@@ -60,7 +67,7 @@ void AppState::set_window_size(const std::uint32_t width,
 
   Renderer::uniform_opts_t uniforms_to_update = {
       {Renderer::UniformId::RESOLUTION,
-       glm::ivec2{static_cast<int>(width), static_cast<int>(height)}}};
+       glm::vec2{static_cast<float>(width), static_cast<float>(height)}}};
 
   state.renderer->submit_shader_uniforms(uniforms_to_update);
   state.renderer->set_viewport_size(width, height);
