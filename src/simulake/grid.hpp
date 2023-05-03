@@ -65,33 +65,33 @@ public:
   inline float get_delta_time() { return delta_time; }
 
   /* check if row, col is inside the grid */
-  inline bool in_bounds(std::uint32_t row, std::uint32_t col) {
-    return row >= 0 and col >= 0 and row < get_height() and col < get_width();
+  inline bool in_bounds(std::uint32_t x, std::uint32_t y) {
+    return x >= 0 and y >= 0 and x < get_width() and y < get_height();
   }
 
   /* check if row, col is inside the grid */
-  inline bool is_empty(std::uint32_t row, std::uint32_t col) {
-    return in_bounds(row, col) and _grid[row][col].type == CellType::AIR;
+  inline bool is_empty(std::uint32_t x, std::uint32_t y) {
+    return in_bounds(x, y) and _grid[y][x].type == CellType::AIR;
   }
 
   /* check if any of 8 neightboring cells are liquid, return
    * ivec3 with 1 in first pos denoting if liquid was found, and
    * the x, y coord of the liquid or all zeros if not. */
-  inline glm::ivec3 is_in_liquid(std::uint32_t row, std::uint32_t col) {
+  inline glm::ivec3 is_in_liquid(std::uint32_t x, std::uint32_t y) {
     for (int dx = -1; dx <= 1; ++dx) {
       for (int dy = -1; dy <= 1; ++dy) {
-        int nr = row + dy;
-        int nc = col + dx;
+        int ny = y + dy;
+        int nx = x + dx;
 
         // Skip the original cell
-        if (dx == 0 && dy == 0 || !in_bounds(nr, nc)) {
+        if (dx == 0 && dy == 0 || !in_bounds(nx, ny)) {
           continue;
         }
 
-        CellType type = cell_at(nr, nc).type;
+        CellType type = cell_at(nx, ny).type;
 
         if (type == CellType::WATER || type == CellType::OIL) {
-          return glm::ivec3(1, nr, nc);
+          return glm::ivec3(1, nx, ny);
         }
       }
     }

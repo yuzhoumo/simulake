@@ -16,12 +16,12 @@ namespace simulake {
   const auto [x, y] = pos;
   return {
     grid.cell_at(x - 1, y - 1).type, // top left
-    grid.cell_at(x - 1, y).type,     // top
-    grid.cell_at(x - 1, y + 1).type, // top right
-    grid.cell_at(x, y - 1).type,     // left
-    grid.cell_at(x, y + 1).type,     // right
-    grid.cell_at(x + 1, y - 1).type, // bottom left
-    grid.cell_at(x + 1, y).type,     // bottom
+    grid.cell_at(x, y - 1).type,     // top
+    grid.cell_at(x + 1, y - 1).type, // top right
+    grid.cell_at(x - 1, y).type,     // left
+    grid.cell_at(x + 1, y).type,     // right
+    grid.cell_at(x - 1, y + 1).type, // bottom left
+    grid.cell_at(x, y + 1).type,     // bottom
     grid.cell_at(x + 1, y + 1).type  // bottom right
   };
 }
@@ -38,7 +38,6 @@ void StoneCell::step(const position_t &pos, Grid &grid) noexcept {
 
 void SandCell::step(const position_t &pos, Grid &grid) noexcept {
   const auto dt = grid.get_delta_time();
-  const auto context = BaseCell::get_cell_context(pos, grid);
   const auto [x, y] = pos;
 
   cell_data_t new_cell = grid.cell_at(x, y);
@@ -102,14 +101,14 @@ void SandCell::step(const position_t &pos, Grid &grid) noexcept {
     grid.set_next(x, y, tmp_b);
   }
   else if (grid.in_bounds(x - 1, y + 1) and ((grid.is_empty(x - 1, y + 1) || grid.cell_at(bottom_right.x, bottom_right.y).type == CellType::WATER))) {
-    new_cell.velocity.x = grid.is_in_liquid(x, y)[0] == 1 ? 0.f : random_int(0, 1) == 0 ? -1.f : 1.f;
+    new_cell.velocity.x = grid.is_in_liquid(x, y)[0] == 1 ? 0.f : random_int(0, 1) == 0 ? -.5f : .5f;
     new_cell.velocity.y += (gravity * dt);
     cell_data_t tmp_b = grid.cell_at(x - 1, y + 1);
     grid.set_next(bottom_left.x, bottom_left.y, new_cell);
     grid.set_next(x, y, tmp_b);
   }
   else if (grid.in_bounds(x + 1, y + 1) && ((grid.is_empty(x + 1, y + 1) || grid.cell_at(bottom_right.x, bottom_right.y).type == CellType::WATER))) {
-    new_cell.velocity.x = grid.is_in_liquid(x, y)[0] == 1 ? 0.f : random_int(0, 1) == 0 ? -1.f : 1.f;
+    new_cell.velocity.x = grid.is_in_liquid(x, y)[0] == 1 ? 0.f : random_int(0, 1) == 0 ? -.5f : .5f;
     new_cell.velocity.y += (gravity * dt);
     cell_data_t tmp_b = grid.cell_at(x + 1, y + 1);
     grid.set_next(bottom_right.x, bottom_right.y, new_cell);
