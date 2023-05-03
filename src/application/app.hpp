@@ -22,7 +22,8 @@ public:
 private:
   void step_sim(bool, GridBase *) noexcept;
 
-  AppState *state;
+  const AppState &state;
+
   Window window;
   Renderer renderer;
 

@@ -11,10 +11,10 @@ namespace simulake {
 class GridBase {
 public:
   struct serialized_grid_t {
-    std::uint32_t width;
-    std::uint32_t height;
-    std::uint32_t stride;
-    std::vector<float> buffer;
+    std::uint32_t width;        /* number of grid columns */
+    std::uint32_t height;       /* number of grid rows */
+    std::uint32_t stride;       /* number of floats per cell */
+    std::vector<float> buffer;  /* 1D buffer of grid data */
   };
 
   virtual ~GridBase() = default;

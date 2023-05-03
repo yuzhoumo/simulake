@@ -7,7 +7,7 @@
 #include "test.hpp"
 
 int main(int argc, char *argv[]) {
-  std::uint32_t width, height, cell_size;
+  std::uint32_t grid_width, grid_height, cell_size;
   std::string grid_file = "";
   bool gpu_mode;
 
@@ -15,9 +15,9 @@ int main(int argc, char *argv[]) {
 
   // clang-format off
   options.add_options()
-    ("x,width",      "width",                   cxxopts::value<std::uint32_t>()->default_value("800"))
-    ("y,height",     "height",                  cxxopts::value<std::uint32_t>()->default_value("600"))
-    ("c,cellsize",   "cell size",               cxxopts::value<std::uint32_t>()->default_value("4"))
+    ("x,width",      "grid width in cells",     cxxopts::value<std::uint32_t>()->default_value("400"))
+    ("y,height",     "grid height in cells",    cxxopts::value<std::uint32_t>()->default_value("200"))
+    ("c,cellsize",   "cell size in pixels",     cxxopts::value<std::uint32_t>()->default_value("4"))
     ("g,gpu",        "enable GPU acceleration", cxxopts::value<bool>()->default_value("false"))
     ("l,load",       "load scene from disk",    cxxopts::value<std::string>())
     ("h,help",       "print help");
@@ -36,8 +36,8 @@ int main(int argc, char *argv[]) {
 
     /* set args */
     cell_size = result["cellsize"].as<std::uint32_t>();
-    height = result["height"].as<std::uint32_t>();
-    width = result["width"].as<std::uint32_t>();
+    grid_width = result["width"].as<std::uint32_t>();
+    grid_height = result["height"].as<std::uint32_t>();
     gpu_mode = result["gpu"].as<bool>();
   } catch (const cxxopts::exceptions::exception &e) {
     std::cerr << "error: " << e.what() << std::endl;
@@ -53,11 +53,12 @@ int main(int argc, char *argv[]) {
 
   if (load_grid) {
     data = simulake::Loader::load_grid(grid_file);
-    width = data.width * cell_size;
-    height = data.height * cell_size;
+    grid_width = data.width;
+    grid_height = data.height;
   }
 
-  simulake::App app = simulake::App{width, height, cell_size, "simulake"};
+  simulake::App app =
+      simulake::App{grid_width, grid_height, cell_size, "simulake"};
 
   {
     PROFILE_SCOPE("total run time");
