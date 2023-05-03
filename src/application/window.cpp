@@ -15,6 +15,7 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GL_FALSE);
 
   _window.reset(
       glfwCreateWindow(width, height, title.data(), nullptr, nullptr));
@@ -40,9 +41,10 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
 std::tuple<std::uint32_t, std::uint32_t>
 Window::get_window_size() const noexcept {
   int width, height;
-  glfwGetFramebufferSize(_window.get(), &width, &height);
-  return std::make_tuple(static_cast<uint32_t>(width),
-                         static_cast<uint32_t>(height));
+  // glfwGetFramebufferSize(_window.get(), &width, &height);
+  glfwGetWindowSize(_window.get(), &width, &height);
+  return std::make_tuple(static_cast<std::uint32_t>(width),
+                         static_cast<std::uint32_t>(height));
 }
 
 float Window::get_time() const noexcept {
