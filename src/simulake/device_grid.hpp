@@ -65,7 +65,7 @@ public:
   }
 
   serialized_grid_t serialize() const noexcept override;
-  void deserialize(serialized_grid_t) noexcept override;
+  void deserialize(const serialized_grid_t &) noexcept override;
 
   constexpr bool is_device_grid() const noexcept override {
     return true;

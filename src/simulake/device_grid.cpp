@@ -91,7 +91,7 @@ GridBase::serialized_grid_t DeviceGrid::serialize() const noexcept {
   return { 0, 0, 0, std::vector<float>{} };
 }
 
-void DeviceGrid::deserialize(GridBase::serialized_grid_t data) noexcept {
+void DeviceGrid::deserialize(const GridBase::serialized_grid_t &data) noexcept {
   std::cerr << "NOT_IMPLEMENTED::DEVICE_GRID::DESERIALIZE" << std::endl;
 }
 

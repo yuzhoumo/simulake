@@ -45,7 +45,7 @@ public:
   inline std::uint32_t get_stride() const noexcept override { return stride; }
 
   serialized_grid_t serialize() const noexcept override;
-  void deserialize(serialized_grid_t) noexcept override;
+  void deserialize(const serialized_grid_t &) noexcept override;
 
   /* get cell type at given position */
   [[nodiscard]] CellType type_at(std::uint32_t, std::uint32_t) const noexcept;

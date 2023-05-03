@@ -45,7 +45,7 @@ public:
   virtual serialized_grid_t serialize() const noexcept = 0;
 
   /* loads grid from float buffer */
-  virtual void deserialize(serialized_grid_t) noexcept = 0;
+  virtual void deserialize(const serialized_grid_t &) noexcept = 0;
 };
 
 } /* namespace simulake */
