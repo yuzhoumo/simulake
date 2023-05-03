@@ -46,11 +46,22 @@ int main(int argc, char *argv[]) {
 
   /* init and run application */
   simulake::init_window_context();
+
+  /* load grid from disk if path not empty */
+  bool load_grid = !grid_file.empty();
+  simulake::GridBase::serialized_grid_t data;
+
+  if (load_grid) {
+    data = simulake::Loader::load_grid(grid_file);
+    width = data.width * cell_size;
+    height = data.height * cell_size;
+  }
+
   simulake::App app = simulake::App{width, height, cell_size, "simulake"};
 
   {
     PROFILE_SCOPE("total run time");
-    app.run(gpu_mode, grid_file);
+    app.run(gpu_mode, load_grid ? &data : nullptr);
   }
 
   // simulake::test::test_renderer();

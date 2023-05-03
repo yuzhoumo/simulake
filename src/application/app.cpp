@@ -39,15 +39,14 @@ void App::step_sim(bool paused, GridBase *sim_grid) noexcept {
   if (!paused) sim_grid->simulate();
 }
 
-void App::run(const bool gpu_mode, const std::string_view grid_file) noexcept {
+void App::run(const bool gpu_mode, GridBase::serialized_grid_t *data) noexcept {
 
   /* init grid and simulation update function */
   GridBase *sim_grid = gpu_mode ? static_cast<GridBase *>(&device_grid) :
                                   static_cast<GridBase *>(&grid);
   state->set_grid(sim_grid);
-  if (!grid_file.empty()) {
-    GridBase::serialized_grid_t data = Loader::load_grid(grid_file);
-    state->get_grid()->deserialize(data);
+  if (data != nullptr) {
+    state->get_grid()->deserialize(*data);
   }
 
   renderer.submit_grid(sim_grid);
