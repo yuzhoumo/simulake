@@ -149,11 +149,6 @@ GridBase::serialized_grid_t Grid::serialize() const noexcept {
 }
 
 void Grid::deserialize(const GridBase::serialized_grid_t &data) noexcept {
-  if (data.buffer.size() != data.width * data.height * data.stride) {
-    std::cerr << "ERROR::GRID::DESERIALIZE: Incorrect buffer size" << std::endl;
-    return;
-  }
-
   if (width != data.width or height != data.height or stride != data.stride) {
     //TODO(joe): implement grid resize
     std::cerr << "NOT_IMPLEMENTED::GRID::DESERIALIZE: buffer resize" << std::endl;

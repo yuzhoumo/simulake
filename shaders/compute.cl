@@ -1,5 +1,6 @@
 // vim: ft=cpp : foldmarker={{{,}}} :
 
+// TODO(vir): benchmark?
 #define USE_ROWMAJOR true
 
 // clang-format off
@@ -90,7 +91,7 @@ inline float get_mass(const uint type) {
 }
 
 // cell attributes
-// TODO(vir): benchmark
+// TODO(vir): benchmark?
 typedef struct __attribute__((packed, aligned(8))) {
   char type;
   float mass;
@@ -216,84 +217,46 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
     // printf("%d-%d-%d\n", grid > next_grid ? 0 : 1, idx, idx_bot);
     const uint rand = get_rand(row, col);
 
+#define __move_sand__(idx_next)                                                \
+  {                                                                            \
+    next_grid[idx].type = AIR_TYPE;                                            \
+    next_grid[idx_next].type = SAND_TYPE;                                      \
+    next_grid[idx].mass = AIR_MASS;                                            \
+    next_grid[idx_next].mass = SAND_MASS;                                      \
+    next_grid[idx].updated = false;                                            \
+    next_grid[idx_next].updated = false;                                       \
+    grid[idx].updated = true;                                                  \
+    grid[idx_next].updated = true;                                             \
+  }
+
     if (IS_FLUID(grid[idx_bot]) && !grid[idx_bot].updated) {
-      next_grid[idx].type = AIR_TYPE;
-      next_grid[idx_bot].type = SAND_TYPE;
-
-      next_grid[idx].mass = AIR_MASS;
-      next_grid[idx_bot].mass = SAND_MASS;
-
-      next_grid[idx].updated = false;
-      next_grid[idx_bot].updated = false;
-
-      // mark this cell updated
-      grid[idx].updated = true;
-      grid[idx_bot].updated = true;
+      __move_sand__(idx_bot);
     }
 
     else if (rand % 2 == 0) {
+
+      // prefer left
       if (left_valid && IS_FLUID(grid[idx_bot_left]) &&
           !grid[idx_bot_left].updated) {
-        next_grid[idx].type = AIR_TYPE;
-        next_grid[idx_bot_left].type = SAND_TYPE;
-
-        next_grid[idx].mass = AIR_MASS;
-        next_grid[idx_bot_left].mass = SAND_MASS;
-
-        next_grid[idx].updated = false;
-        next_grid[idx_bot_left].updated = false;
-
-        // mark this cell updated
-        grid[idx].updated = true;
-        grid[idx_bot_left].updated = true;
+        __move_sand__(idx_bot_left);
       }
 
       else if (right_valid && IS_FLUID(grid[idx_bot_right]) &&
                !grid[idx_bot_right].updated) {
-        next_grid[idx].type = AIR_TYPE;
-        next_grid[idx_bot_right].type = SAND_TYPE;
-
-        next_grid[idx].mass = AIR_MASS;
-        next_grid[idx_bot_right].mass = SAND_MASS;
-
-        next_grid[idx].updated = false;
-        next_grid[idx_bot_right].updated = false;
-
-        // mark this cell updated
-        grid[idx_bot_right].updated = true;
-        grid[idx_bot_right].updated = true;
+        __move_sand__(idx_bot_right);
       }
+
     } else {
+
+      // prefer right
       if (right_valid && IS_FLUID(grid[idx_bot_right]) &&
           !grid[idx_bot_right].updated) {
-        next_grid[idx].type = AIR_TYPE;
-        next_grid[idx_bot_right].type = SAND_TYPE;
-
-        next_grid[idx].mass = AIR_MASS;
-        next_grid[idx_bot_right].mass = SAND_MASS;
-
-        next_grid[idx].updated = false;
-        next_grid[idx_bot_right].updated = false;
-
-        // mark this cell updated
-        grid[idx_bot_right].updated = true;
-        grid[idx_bot_right].updated = true;
+        __move_sand__(idx_bot_right);
       }
 
       else if (left_valid && IS_FLUID(grid[idx_bot_left]) &&
                !grid[idx_bot_left].updated) {
-        next_grid[idx].type = AIR_TYPE;
-        next_grid[idx_bot_left].type = SAND_TYPE;
-
-        next_grid[idx].mass = AIR_MASS;
-        next_grid[idx_bot_left].mass = SAND_MASS;
-
-        next_grid[idx].updated = false;
-        next_grid[idx_bot_left].updated = false;
-
-        // mark this cell updated
-        grid[idx].updated = true;
-        grid[idx_bot_left].updated = true;
+        __move_sand__(idx_bot_left);
       }
     }
 
@@ -426,7 +389,7 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
         mass_right += next_grid[idx].mass;
       }
 
-      // correct
+      // correct endpoints
       left++;
       right--;
 
