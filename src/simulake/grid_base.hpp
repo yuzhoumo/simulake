@@ -25,7 +25,7 @@ public:
   /* reset the grid to air cells (empty) */
   virtual void reset() noexcept = 0;
 
-  /* spawn cells, given grid coords, radius in cells, and cell type */
+  /* spawn cells, given grid coords (x,y), radius in cells, and cell type */
   virtual void spawn_cells(const std::tuple<std::uint32_t,
                            std::uint32_t> &center,
                            const std::uint32_t paint_radius,

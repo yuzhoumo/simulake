@@ -9,9 +9,8 @@
 namespace simulake {
 class Grid;
 
-/* types a grid cell can have */
 enum class CellType : std::uint8_t {
-  NONE = 0, // out of bounds
+  NONE = 0, /* out of bounds */
   AIR,
   SMOKE,
   FIRE,
@@ -23,27 +22,24 @@ enum class CellType : std::uint8_t {
 };
 
 struct cell_data_t {
-  CellType type = CellType::NONE;
-  float mass = 0.0f;
-  glm::vec2 velocity{0.0f};
-  bool updated = false;
+  CellType type = CellType::NONE;  /* type (NONE means out of bounds) */
+  float mass = 0.0f;               /* current mass of the cell */
+  glm::vec2 velocity{0.0f};        /* current velocity */
+  bool updated = false;            /* updated this frame */
 };
 
-#define FALLS_DOWN(x) (x > simulake::CellType::WATER))
-#define IS_FLUID(x) (static_cast<std::uint8_t>(x) > 0 \
-                        && static_cast<std::uint8_t>(x) <= 5)
-
-#define IS_AIR(x) (static_cast<std::uint8_t>(x) == 1)
-
-#define IS_FLAMMABLE(x) (static_cast<std::uint8_t>(x) > 0 \
-                            && (static_cast<std::uint8_t>(x) == 5 \
-                            || static_cast<std::uint8_t>(x) == 6))
-
-/* represents an individual grid cell */
 class BaseCell {
 public:
+  virtual ~BaseCell() = default;
 
-  typedef std::tuple<std::uint32_t, std::uint32_t> position_t;
+  /* cell constants */
+  static constexpr float gravity = 10.f;
+
+  /* get cell type properties */
+  static inline bool is_liquid(CellType);
+  static inline bool is_gas(CellType);
+  static inline bool is_fluid(CellType);
+  static inline float flammability(CellType);
 
   /* convenient packed representation of neighbors */
   struct __attribute__((packed)) context_t {
@@ -59,36 +55,38 @@ public:
     // clang-format on
   };
 
-  // not pure virtual becase we want want to use static functions
-  /* step forward simulation by 1 step, return new state of cell */
-  // static CellType step(const position_t &pos, Grid &grid) noexcept = 0;
+  typedef std::tuple<std::uint32_t, std::uint32_t> position_t;
 
-  [[nodiscard]] static inline context_t get_cell_context(const position_t &,
+  static inline context_t get_cell_context(const position_t &,
         const Grid &) noexcept;
 
-  // needed for any base class
-  virtual ~BaseCell() = default;
-
-  static constexpr float gravity = 10.f;
-
-  static inline int random_int(int lower, int upper) {
-    if (upper < lower) {
-      std::swap(lower, upper);
-    }
-    return (std::rand() % (upper - lower + 1) + lower);
-  }
+  static inline int random_int(int lower, int upper);
 
 private:
-  // make this an abstract class
   BaseCell() = delete;
 };
 
-/* individual datatypes / behaviors */
-
+/* air cell rules */
 struct AirCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
 
+/* smoke cell rules */
+struct SmokeCell final : public BaseCell {
+  static constexpr float mass_decay = 0.001;
+  static std::vector<position_t> getEmptyTopNeighbors(const position_t &, Grid &) noexcept;
+  static std::vector<BaseCell::position_t> getEmptyBottomNeighbors(const position_t &, Grid &) noexcept;
+  static void step(const position_t &, Grid &) noexcept;
+};
+
+/* fire cell rules */
+struct FireCell final : public BaseCell {
+  static constexpr float mass_decay = 0.05;
+  static void helper(CellType curr, Grid &grid, int x, int y, float remaining_mass);
+  static void step(const position_t &, Grid &) noexcept;
+};
+
+/* water cell rules */
 struct WaterCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
   static constexpr float max_mass = 1.0f;
@@ -110,32 +108,23 @@ struct WaterCell final : public BaseCell {
   }
 };
 
+/* oil cell rules */
 struct OilCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
 
+/* sand cell rules */
 struct SandCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
   static constexpr bool isFlammable = true;
 };
 
-struct FireCell final : public BaseCell {
-  static constexpr float mass_decay = 0.05;
-  static void helper(CellType curr, Grid &grid, int x, int y, float remaining_mass);
-  static void step(const position_t &, Grid &) noexcept;
-};
-
+/* jello cell rules */
 struct JelloCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
 
-struct SmokeCell final : public BaseCell {
-  static constexpr float mass_decay = 0.001;
-  static std::vector<position_t> getEmptyTopNeighbors(const position_t &, Grid &) noexcept;
-  static std::vector<BaseCell::position_t> getEmptyBottomNeighbors(const position_t &, Grid &) noexcept;
-  static void step(const position_t &, Grid &) noexcept;
-};
-
+/* stone cell rules */
 struct StoneCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 };
