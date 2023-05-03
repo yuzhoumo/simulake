@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     ("x,width",      "grid width in cells",     cxxopts::value<std::uint32_t>()->default_value("400"))
     ("y,height",     "grid height in cells",    cxxopts::value<std::uint32_t>()->default_value("200"))
     ("c,cellsize",   "cell size in pixels",     cxxopts::value<std::uint32_t>()->default_value("4"))
-    ("g,gpu",        "enable GPU acceleration", cxxopts::value<bool>()->default_value("false"))
+    ("g,gpu",        "enable GPU acceleration", cxxopts::value<bool>()->default_value("true"))
     ("l,load",       "load scene from disk",    cxxopts::value<std::string>())
     ("h,help",       "print help");
   // clang-format on
@@ -39,6 +39,7 @@ int main(int argc, char *argv[]) {
     grid_width = result["width"].as<std::uint32_t>();
     grid_height = result["height"].as<std::uint32_t>();
     gpu_mode = result["gpu"].as<bool>();
+    std::cout << "gpu_mode: " << gpu_mode << std::endl; /*__DEBUG_PRINT__*/
   } catch (const cxxopts::exceptions::exception &e) {
     std::cerr << "error: " << e.what() << std::endl;
     exit(EXIT_FAILURE);
@@ -51,10 +52,9 @@ int main(int argc, char *argv[]) {
   bool load_grid = !grid_file.empty();
   simulake::GridBase::serialized_grid_t data;
 
+  // TODO(vir): width height should not be in file, because they should not be
   if (load_grid) {
     data = simulake::Loader::load_grid(grid_file);
-    grid_width = data.width;
-    grid_height = data.height;
   }
 
   simulake::App app =

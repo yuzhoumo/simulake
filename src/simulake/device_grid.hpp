@@ -26,6 +26,7 @@ namespace simulake {
 class DeviceGrid : public GridBase {
 public:
   /* cell and its attributes in memory */
+  constexpr static inline size_t NUM_FLOATS = 2;
   struct __attribute__((packed, aligned(8))) device_cell_t {
     CellType type = CellType::NONE;
     float mass = 0.0f;

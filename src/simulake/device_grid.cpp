@@ -9,7 +9,6 @@ namespace simulake {
 DeviceGrid::DeviceGrid(const std::uint32_t _width, const std::uint32_t _height,
                        const std::uint32_t _cell_size)
     : flip_flag(true), width(_width), height(_height), cell_size(_cell_size) {
-  flip_flag = true;
   num_cells = width * height;
   memory_size = num_cells * sizeof(device_cell_t);
 
@@ -87,12 +86,52 @@ void DeviceGrid::simulate() noexcept {
 }
 
 GridBase::serialized_grid_t DeviceGrid::serialize() const noexcept {
-  std::cerr << "NOT_IMPLEMENTED::DEVICE_GRID::SERIALIZE" << std::endl;
-  return { 0, 0, 0, std::vector<float>{} };
+  std::vector<device_cell_t> grid(num_cells);
+
+  CL_CALL(clEnqueueReadBuffer(
+      sim_context.queue, flip_flag ? sim_context.grid : sim_context.next_grid,
+      CL_TRUE, 0, memory_size, grid.data(), 0, nullptr, nullptr));
+  CL_CALL(clFinish(sim_context.queue));
+
+  // convert in array of floats
+  std::vector<float> out_buf(num_cells * NUM_FLOATS, 0.0f);
+  for (int i = 0; i < num_cells; i += 1) {
+    const auto out_idx = i * NUM_FLOATS;
+    out_buf[out_idx + 0] = static_cast<float>(grid[i].type);
+    out_buf[out_idx + 1] = static_cast<float>(grid[i].mass);
+  }
+
+  return {get_width(), get_height(), NUM_FLOATS, std::move(out_buf)};
 }
 
 void DeviceGrid::deserialize(const GridBase::serialized_grid_t &data) noexcept {
-  std::cerr << "NOT_IMPLEMENTED::DEVICE_GRID::DESERIALIZE" << std::endl;
+  if (data.width != get_width() || data.height != get_height() ||
+      data.stride != NUM_FLOATS) {
+    std::cerr << "NOT_IMPLEMENTED::DEVICE_GRID::DESERIALIZE: buffer resize"
+              << std::endl;
+    std::exit(-1);
+    return;
+  }
+
+  std::vector<device_cell_t> grid(num_cells);
+  const auto height = get_height();
+  const auto width = get_width();
+
+  for (int idx = 0, cell = 0; idx < data.buffer.size(); idx += NUM_FLOATS) {
+    const auto in_idx = idx / NUM_FLOATS;
+    grid[in_idx].type = static_cast<CellType>(data.buffer[idx + 0]);
+    grid[in_idx].mass = static_cast<float>(data.buffer[idx + 1]);
+    if (grid[in_idx].type == CellType::SAND) {
+    }
+  }
+
+  CL_CALL(clEnqueueWriteBuffer(sim_context.queue, sim_context.grid, CL_TRUE, 0,
+                               memory_size, grid.data(), 0, nullptr, nullptr));
+  CL_CALL(clEnqueueCopyBuffer(sim_context.queue, sim_context.grid,
+                              sim_context.next_grid, 0, 0, memory_size, 0,
+                              nullptr, nullptr));
+
+  CL_CALL(clFinish(sim_context.queue));
 }
 
 void DeviceGrid::render_texture() const noexcept {
@@ -138,16 +177,14 @@ void DeviceGrid::set_texture_target(const GLuint target) noexcept {
 
 void DeviceGrid::spawn_cells(
     const std::tuple<std::uint32_t, std::uint32_t> &center,
-    const std::uint32_t paint_radius,
-    const CellType paint_target) noexcept {
+    const std::uint32_t paint_radius, const CellType paint_target) noexcept {
 
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
   const auto radius = static_cast<unsigned int>(paint_radius);
   const auto target = static_cast<unsigned int>(paint_target);
-  const cl_uint2 grid_xy = {
-    static_cast<unsigned int>(std::get<0>(center)),
-    static_cast<unsigned int>(std::get<1>(center))};
+  const cl_uint2 grid_xy = {static_cast<unsigned int>(std::get<0>(center)),
+                            static_cast<unsigned int>(std::get<1>(center))};
 
   // update the last rendered grid, do not overwrite existing non-vacant cells
   // clang-format off
@@ -368,8 +405,8 @@ void DeviceGrid::initialize_kernels() noexcept {
 
   // allocate opencl buffers
   {
-    // double buffering
-    sim_context.grid = clCreateBuffer(sim_context.context, CL_MEM_HOST_READ_ONLY, memory_size, nullptr, &error);
+    // double buffering, need this to be read/write for loader
+    sim_context.grid = clCreateBuffer(sim_context.context, CL_MEM_READ_WRITE, memory_size, nullptr, &error);
     CL_CALL(error);
 
     sim_context.next_grid = clCreateBuffer(sim_context.context, CL_MEM_HOST_READ_ONLY, memory_size, nullptr, &error);
