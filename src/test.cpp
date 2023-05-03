@@ -41,7 +41,7 @@ void test_renderer() {
   // generate grid
   for (int x = 0; x < HEIGHT / CELL_SIZE; x += 1) {
     for (int y = 0; y < WIDTH / CELL_SIZE; y += 1) {
-      test_grid.set_state(x, y, simulake::CellType::AIR);
+      test_grid.set_curr(x, y, { .type = simulake::CellType::AIR });
 
       // Stone.
       int first_col = (int) HEIGHT / CELL_SIZE / 3;
@@ -53,12 +53,12 @@ void test_renderer() {
           || (x == second_col && first_row < y && y < second_row) 
           || (y == first_row && first_col < x && x < second_col)
           || (y == second_row && first_col < x && x < second_col)) {
-        test_grid.set_state(x, y, simulake::CellType::STONE);
+        test_grid.set_curr(x, y, { .type = simulake::CellType::STONE });
 
       // Water.
       } else if (std::rand() % 2 == 0) {
-        test_grid.set_state(x, y, simulake::CellType::WATER);
-        test_grid._mass[x][y] = simulake::WaterCell::max_mass;
+        test_grid.set_curr(x, y, { .type = simulake::CellType::WATER,
+                                   .mass = simulake::WaterCell::max_mass });
       }
     }
   }
@@ -123,8 +123,8 @@ void test_simulation() {
 
     for (int i = 0; i < SIM_STEPS; i += 1) {
       // spawn new particles in
-      grid.set_state(0, (width * 2 / 3) + 1, simulake::CellType::SAND);
-      grid.set_state(0, (width * 1 / 3) - 1, simulake::CellType::SAND);
+      grid.set_curr(0, (width * 2 / 3) + 1, { .type = simulake::CellType::SAND });
+      grid.set_curr(0, (width * 1 / 3) - 1, { .type = simulake::CellType::SAND });
 
       if constexpr (DEBUG_PRINT) {
         std::cout << grid << std::endl;

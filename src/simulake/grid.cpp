@@ -13,6 +13,7 @@ namespace simulake {
 
 Grid::Grid(const std::uint32_t _width, const std::uint32_t _height)
     : width(_width), height(_height) {
+
   stride = 2; // (type, mass)
   reset();
 
@@ -20,24 +21,12 @@ Grid::Grid(const std::uint32_t _width, const std::uint32_t _height)
   omp_set_num_threads(std::max(1, static_cast<int>(NUM_THREADS - 2)));
 }
 
-// reset empty grid (full of AIR cells)
 void Grid::reset() noexcept {
   // construct in place
-  _grid.resize(height, {width, CellType::AIR});
+  _grid.resize(height, {width, { CellType::AIR, 0.0f, false } });
 
   // deep copy construct (same dimensions and contents)
   _next_grid = _grid;
-
-  // Temp support for mass.
-  _mass.resize(height, {});
-  for (auto &row : _mass)
-    row.resize(width, .0f);
-
-  _next_mass = _mass;
-}
-
-Grid::~Grid() {
-  // empty
 }
 
 void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
@@ -63,17 +52,23 @@ void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
 
       bool should_paint =
           dist <= paint_radius and
-          (paint_target == CellType::AIR or type_at(y, x) == CellType::AIR);
+          (paint_target == CellType::AIR or cell_at(y, x).type == CellType::AIR);
+
+      cell_data_t cell = {
+        .type = paint_target, .mass = 0.0f, .updated = true };
 
       if (should_paint) {
-        set_state(y, x, paint_target);
-        if (paint_target == CellType::WATER)
-          _mass[y][x] = WaterCell::max_mass;
-        if (paint_target == CellType::FIRE) {
+        if (paint_target == CellType::WATER) {
+          cell.mass = WaterCell::max_mass;
+          set_curr(y, x, cell);
+        } else if (paint_target == CellType::FIRE) {
           std::mt19937 gen(std::random_device{}());
           std::uniform_real_distribution<float> dis(0.6f, 1.0f);
-          _mass[y][x] = dis(gen);
+          cell.mass = dis(gen);
+          set_curr(y, x, cell);
           //TODO(joe): save generator in a common location
+        } else {
+          set_curr(y, x, cell);
         }
       }
     }
@@ -83,7 +78,6 @@ void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
 void Grid::simulate() noexcept {
   // copy old grid into new
   _next_grid = _grid;
-  _next_mass = _mass;
 
 #pragma omp parallel for
 #if 1
@@ -94,7 +88,7 @@ void Grid::simulate() noexcept {
   for (int i = 0; i < height; i += 1) {
     for (int j = 0; j < width; j += 1) {
 #endif
-      switch (_grid[i][j]) {
+      switch (_grid[i][j].type) {
       case CellType::AIR:
         AirCell::step({i, j}, *this);
         break;
@@ -137,7 +131,6 @@ void Grid::simulate() noexcept {
 
   // swap around
   std::swap(_grid, _next_grid);
-  std::swap(_mass, _next_mass);
 }
 
 GridBase::serialized_grid_t Grid::serialize() const noexcept {
@@ -146,13 +139,14 @@ GridBase::serialized_grid_t Grid::serialize() const noexcept {
   for (std::uint32_t row = 0; row < height; row += 1) {
     for (std::uint32_t col = 0; col < width; col += 1) {
       const std::uint64_t base_index = (row * width + col) * stride;
+      const cell_data_t cell = cell_at(height - row - 1, col);
 
-      buf[base_index] = static_cast<float>(type_at(height - row - 1, col));
-      buf[base_index + 1] = static_cast<float>(mass_at(height - row - 1, col));
+      buf[base_index] = static_cast<float>(cell.type);
+      buf[base_index + 1] = static_cast<float>(cell.mass);
     }
   }
 
-  return { width, height, stride, buf };
+  return { .width = width, .height = height, .stride = stride, .buffer = buf };
 }
 
 void Grid::deserialize(const GridBase::serialized_grid_t &data) noexcept {
@@ -170,59 +164,41 @@ void Grid::deserialize(const GridBase::serialized_grid_t &data) noexcept {
             static_cast<std::uint32_t>(data.buffer[base_index]));
       float mass = data.buffer[base_index + 1];
 
-      _grid[height - row - 1][col] = type;
-      _mass[height - row - 1][col] = mass;
+      _grid[height - row - 1][col] = {
+          .type = type, .mass = mass, .updated = false };
     }
   }
 }
 
-// reads current grid
-[[nodiscard]] CellType Grid::type_at(std::uint32_t row,
-                                     std::uint32_t col) const noexcept {
+cell_data_t Grid::cell_at(std::uint32_t row, std::uint32_t col) const noexcept {
   if (row >= height || col >= width) [[unlikely]]
-    return CellType::NONE;
+    return cell_data_t{};
 
   return _grid[row][col];
 }
 
-// renders next grid
-bool Grid::set_at(std::uint32_t row, std::uint32_t col,
-                  const CellType type) noexcept {
-  // soft error when out of bounds
+bool Grid::set_next(std::uint32_t row, std::uint32_t col,
+                    const cell_data_t cell) noexcept {
   if (row >= height || col >= width) [[unlikely]] {
-    std::cerr << "ERROR::grid pos out of bounds: " << row << ' ' << col
-              << std::endl;
+    std::cerr << "ERROR::GRID: out of bound: " << row << ' ' << col
+        << std::endl;
     return false;
-  }
-
-  else {
-    _next_grid[row][col] = type;
+  } else {
+    _next_grid[row][col] = cell;
     return true;
   }
 }
 
-// set current grid
-bool Grid::set_state(std::uint32_t row, std::uint32_t col,
-                     const CellType type) noexcept {
-  // soft error when out of bounds
+bool Grid::set_curr(std::uint32_t row, std::uint32_t col,
+                    const cell_data_t cell) noexcept {
   if (row >= height || col >= width) [[unlikely]] {
-    std::cerr << "ERROR::grid pos out of bounds: " << row << ' ' << col
-              << std::endl;
+    std::cerr << "ERROR::GRID: out of bound: " << row << ' ' << col
+        << std::endl;
     return false;
-  }
-
-  else {
-    _grid[row][col] = type;
+  } else {
+    _grid[row][col] = cell;
     return true;
   }
-}
-
-// reads current mass grid
-float Grid::mass_at(std::uint32_t row, std::uint32_t col) const noexcept {
-  if (row >= height || col >= width)
-    return 0;
-
-  return _mass[row][col];
 }
 
 } // namespace simulake

@@ -21,6 +21,12 @@ enum class CellType : std::uint8_t {
   STONE,
 };
 
+struct cell_data_t {
+  CellType type = CellType::NONE;
+  float mass = 0.0f;
+  bool updated = false;
+};
+
 #define FALLS_DOWN(x) (x > simulake::CellType::WATER))
 #define IS_FLUID(x) (static_cast<std::uint8_t>(x) > 0 \
                         && static_cast<std::uint8_t>(x) <= 5)

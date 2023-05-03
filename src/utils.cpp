@@ -71,7 +71,7 @@ std::ostream &operator<<(std::ostream &stream,
 std::ostream &operator<<(std::ostream &stream, const simulake::Grid &grid) {
   for (int i = 0; i < grid.get_height(); i += 1) {
     for (int j = 0; j < grid.get_width(); j += 1)
-      stream << grid.type_at(i, j) << ' ';
+      stream << grid.cell_at(i, j).type << ' ';
 
     stream << '\n';
   }
