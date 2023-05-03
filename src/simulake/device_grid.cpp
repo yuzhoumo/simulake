@@ -418,7 +418,8 @@ void DeviceGrid::initialize_kernels() noexcept {
   sim_context.program = clCreateProgramWithSource(sim_context.context, 1, &kernel_source_cstr, &kernel_source_size, &error);
   CL_CALL(error);
 
-  if (clBuildProgram(sim_context.program, 0, nullptr, nullptr, nullptr, nullptr) != CL_SUCCESS) {
+  // TODO(vir): add optimization flags
+  if (clBuildProgram(sim_context.program, 0, nullptr, "-Ishaders/" , nullptr, nullptr) != CL_SUCCESS) {
     // get the build log from the device
     cl_device_id deviceId;
     size_t buildLogSize;
