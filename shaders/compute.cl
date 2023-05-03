@@ -18,6 +18,8 @@
 #define FALLS_DOWN(x) (x.type > WATER_TYPE)
 #define VACANT(x) (x.type == AIR_TYPE)
 
+#define V_STATIONARY ((float2){0.0f, 0.0f})
+
 #define IS_FLUID(x) (x.type >= AIR_TYPE && x.type <= OIL_TYPE)
 #define IS_LIQUID(x) (x.type >= WATER_TYPE && x.type <= OIL_TYPE)
 #define IS_AIR(x) (x.type == AIR_TYPE)
@@ -95,6 +97,7 @@ inline float get_mass(const uint type) {
 typedef struct __attribute__((packed, aligned(8))) {
   char type;
   float mass;
+  float2 velocity;
 
   bool updated;
 } grid_t;
@@ -130,6 +133,9 @@ __kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
 
   grid[idx].mass = AIR_MASS;
   next_grid[idx].mass = AIR_MASS;
+
+  grid[idx].velocity = V_STATIONARY;
+  next_grid[idx].velocity = V_STATIONARY;
 
   grid[idx].updated = false;
   next_grid[idx].updated = false;
@@ -483,7 +489,13 @@ __kernel void render_texture(__write_only image2d_t texture,
 
   // write texture
   // attributes go here
-  const float4 out_color = {type, grid[idx].mass, 0.f, 0.f};
+  const float4 out_color = {
+      type,
+      grid[idx].mass,
+      grid[idx].velocity.x,
+      grid[idx].velocity.y,
+  };
+
   const int2 out_coord = {width - col - 1, height - row - 1};
   write_imagef(texture, out_coord, out_color);
 }
@@ -512,6 +524,9 @@ __kernel void spawn_cells(__global grid_t *grid, __global grid_t *next_grid,
     const float mass = get_mass(target);
     next_grid[idx].mass = mass;
     grid[idx].mass = mass;
+
+    next_grid[idx].velocity = V_STATIONARY;
+    grid[idx].velocity = V_STATIONARY;
 
     next_grid[idx].updated = false;
     grid[idx].updated = false;

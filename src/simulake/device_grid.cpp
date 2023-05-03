@@ -99,6 +99,8 @@ GridBase::serialized_grid_t DeviceGrid::serialize() const noexcept {
     const auto out_idx = i * NUM_FLOATS;
     out_buf[out_idx + 0] = static_cast<float>(grid[i].type);
     out_buf[out_idx + 1] = static_cast<float>(grid[i].mass);
+    out_buf[out_idx + 2] = static_cast<float>(grid[i].velocity.s[0]);
+    out_buf[out_idx + 3] = static_cast<float>(grid[i].velocity.s[1]);
   }
 
   return {get_width(), get_height(), NUM_FLOATS, std::move(out_buf)};
@@ -121,8 +123,8 @@ void DeviceGrid::deserialize(const GridBase::serialized_grid_t &data) noexcept {
     const auto in_idx = idx / NUM_FLOATS;
     grid[in_idx].type = static_cast<CellType>(data.buffer[idx + 0]);
     grid[in_idx].mass = static_cast<float>(data.buffer[idx + 1]);
-    if (grid[in_idx].type == CellType::SAND) {
-    }
+    grid[in_idx].velocity.s[0] = static_cast<cl_float>(data.buffer[idx + 2]);
+    grid[in_idx].velocity.s[1] = static_cast<cl_float>(data.buffer[idx + 3]);
   }
 
   CL_CALL(clEnqueueWriteBuffer(sim_context.queue, sim_context.grid, CL_TRUE, 0,
@@ -130,8 +132,6 @@ void DeviceGrid::deserialize(const GridBase::serialized_grid_t &data) noexcept {
   CL_CALL(clEnqueueCopyBuffer(sim_context.queue, sim_context.grid,
                               sim_context.next_grid, 0, 0, memory_size, 0,
                               nullptr, nullptr));
-
-  CL_CALL(clFinish(sim_context.queue));
 }
 
 void DeviceGrid::render_texture() const noexcept {
