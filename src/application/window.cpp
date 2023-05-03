@@ -23,6 +23,7 @@ Window::Window(const std::uint32_t _width, const std::uint32_t _height,
     failure_exit();
   }
 
+  glfwSetWindowAspectRatio(_window.get(), width, height);
   glfwMakeContextCurrent(_window.get());
 
   /* register window event callbacks */
