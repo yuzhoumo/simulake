@@ -26,27 +26,29 @@ For debug build, use the `-DCMAKE_BUILD_TYPE=Debug` flag.
 ```
 ./simulake [OPTION...]
 
--x, --width arg     width (default: 800)
--y, --height arg    height (default: 600)
--c, --cellsize arg  cell size (default: 1)
+-x, --width arg     grid width in cells (default: 400)
+-y, --height arg    grid height in cells (default: 200)
+-c, --cellsize arg  cell size in pixels (default: 4)
 -g, --gpu           enable GPU acceleration
+-l, --load arg      load scene from disk
 -h, --help          print help
 ```
 
-| Command                 | Key            |
-| ----------------------- | -------------- |
-| Exit the program        | `ESC`          |
-| Select AIR cell type    | `0`            |
-| Select SMOKE cell type  | `1`            |
-| Select FIRE cell type   | `2`            |
-| Select WATER cell type  | `3`            |
-| Select OIL cell type    | `4`            |
-| Select SAND cell type   | `5`            |
-| Select JELLO cell type  | `6`            |
-| Select STONE cell type  | `7`            |
-| Print app state (debug) | `P`            |
-| Pause the simulation    | `SPACEBAR`     |
-| Change "brush" size     | (Scroll wheel) |
+| Command                    | Key            |
+| -------------------------- | -------------- |
+| Exit the program           | `ESC`          |
+| Select AIR cell type       | `0`            |
+| Select SMOKE cell type     | `1`            |
+| Select FIRE cell type      | `2`            |
+| Select WATER cell type     | `3`            |
+| Select OIL cell type       | `4`            |
+| Select SAND cell type      | `5`            |
+| Select JELLO cell type     | `6`            |
+| Select STONE cell type     | `7`            |
+| Print app state to console | `P`            |
+| Save grid to disk          | `S`            |
+| Enter edit mode (pause)    | `SPACEBAR`     |
+| Change "brush" size        | (Scroll wheel) |
 
 ## Dependencies
 
