@@ -22,22 +22,21 @@ in vec2 tex_coord;
 out vec4 frag_color;
 
 vec4 shade_mouse_ring() {
-  vec2 st = gl_FragCoord.xy / u_resolution; // Normalize screen space coordinates
-  vec2 grid_coords = st * u_grid_dim; // Convert to grid coordinates
+  // normalize screen space coords and convert to grid coords
+  vec2 st = gl_FragCoord.xy / u_resolution;
+  vec2 grid_coords = st * u_grid_dim;
 
-  vec2 mouse_grid_pos = vec2(u_mouse_pos.x, u_resolution.y - u_mouse_pos.y) / u_resolution * u_grid_dim; // Convert mouse position to grid coordinates
+  // convert mouse position to grid coordinates (invert y for opengl coord)
+  vec2 mouse_grid_pos =
+    vec2(u_mouse_pos.x, u_resolution.y - u_mouse_pos.y) / u_resolution * u_grid_dim;
 
-  float radius = u_spawn_radius; // No need to multiply with u_cell_size as we're working in grid coordinates now
-  float thickness = 1.0; // Thickness in grid coordinates
+  // thickness of ring in grid cells
+  float thickness = 1.0;
+  float inner_radius = u_spawn_radius - thickness / 2.0;
+  float outer_radius = u_spawn_radius + thickness / 2.0;
 
-  vec2 diff = (grid_coords - mouse_grid_pos);
-
-  float dist = length(diff);
-
-  float inner_radius = radius - thickness / 2.0;
-  float outer_radius = radius + thickness / 2.0;
-  float ring_alpha = step(inner_radius, dist) *
-                    (1.0 - step(outer_radius, dist));
+  float dist = length(grid_coords - mouse_grid_pos);
+  float ring_alpha = step(inner_radius, dist) * (1.0 - step(outer_radius, dist));
 
   return vec4(1.0, 1.0, 1.0, ring_alpha);
 }
