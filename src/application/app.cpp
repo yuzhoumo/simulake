@@ -55,7 +55,7 @@ void App::run(const bool gpu_mode, GridBase::serialized_grid_t *data) noexcept {
   renderer.submit_grid(sim_grid);
 
   if (gpu_mode) {
-    renderer.submit_grid(device_grid);
+    renderer.submit_grid(sim_grid);
   }
 
 #if DEBUG
