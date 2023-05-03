@@ -2,6 +2,7 @@
 #include <iostream>
 #include <optional>
 #include <thread>
+#include <random>
 
 #include <omp.h>
 
@@ -68,6 +69,12 @@ void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
         set_state(y, x, paint_target);
         if (paint_target == CellType::WATER)
           _mass[y][x] = WaterCell::max_mass;
+        if (paint_target == CellType::FIRE) {
+          std::mt19937 gen(std::random_device{}());
+          std::uniform_real_distribution<float> dis(0.6f, 1.0f);
+          _mass[y][x] = dis(gen);
+          //TODO(joe): save generator in a common location
+        }
       }
     }
   }

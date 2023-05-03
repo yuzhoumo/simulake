@@ -58,10 +58,10 @@ void SandCell::step(const position_t &pos, Grid &grid) noexcept {
     grid.set_at(x + 1, y + 1, CellType::SAND);
   }
 }
-
-void FireCell::helper(CellType curr, Grid &grid, int x, int y) {
+void FireCell::helper(CellType curr, Grid &grid, int x, int y, float remaining_mass) {
   if (IS_FLAMMABLE(curr)) {
     grid.set_at(x, y, CellType::FIRE);
+    grid._next_mass[x][y] = remaining_mass;
   } else if (curr == CellType::AIR) {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -70,34 +70,36 @@ void FireCell::helper(CellType curr, Grid &grid, int x, int y) {
     double rand_num = dis(gen);
     if (rand_num < p) {
       grid.set_at(x, y, CellType::SMOKE);
+      grid._next_mass[x][y] = remaining_mass - mass_decay;
     }
   }
 }
+
 void FireCell::step(const position_t &pos, Grid &grid) noexcept {
   const auto [x, y] = pos;
   const auto context = BaseCell::get_cell_context(pos, grid);
 
-  FireCell::helper(context.top, grid, x - 1, y);
-  FireCell::helper(context.top_left, grid, x - 1, y - 1);
-  FireCell::helper(context.top_right, grid, x - 1, y + 1);
+  float fire_mass = grid.mass_at(x, y);
+  float remaining_mass = fire_mass - mass_decay;
 
-  FireCell::helper(context.bottom, grid, x + 1, y);
-  FireCell::helper(context.bottom_left, grid, x + 1, y - 1);
-  FireCell::helper(context.bottom_right, grid, x + 1, y + 1);
-
-  FireCell::helper(context.left, grid, x, y - 1);
-  FireCell::helper(context.right, grid, x, y + 1);
-
-
-  // With a low probability, the fire will die down and become air
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_real_distribution<> dis(0, 1);
-  float p = 0.01;
-  double rand_num = dis(gen);
-  if (rand_num < p) {
-    grid.set_at(x, y, CellType::AIR);
+  if (remaining_mass <= 0.0f) {
+    grid.set_at(x, y, CellType::SMOKE);
+    grid._next_mass[x][y] = 0.0f;
+    return;
   }
+
+  FireCell::helper(context.top, grid, x - 1, y, remaining_mass);
+  FireCell::helper(context.top_left, grid, x - 1, y - 1, remaining_mass);
+  FireCell::helper(context.top_right, grid, x - 1, y + 1, remaining_mass);
+
+  FireCell::helper(context.bottom, grid, x + 1, y, remaining_mass);
+  FireCell::helper(context.bottom_left, grid, x + 1, y - 1, remaining_mass);
+  FireCell::helper(context.bottom_right, grid, x + 1, y + 1, remaining_mass);
+
+  FireCell::helper(context.left, grid, x, y - 1, remaining_mass);
+  FireCell::helper(context.right, grid, x, y + 1, remaining_mass);
+
+  grid._next_mass[x][y] = std::max(0.0f, remaining_mass);
 }
 
 void SmokeCell::step(const position_t &pos, Grid &grid) noexcept {

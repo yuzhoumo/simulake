@@ -103,7 +103,8 @@ struct SandCell final : public BaseCell {
 };
 
 struct FireCell final : public BaseCell {
-  static void helper(CellType curr, Grid &grid, int x, int y);
+  static constexpr float mass_decay = 0.05;
+  static void helper(CellType curr, Grid &grid, int x, int y, float remaining_mass);
   static void step(const position_t &, Grid &) noexcept;
 };
 
@@ -112,6 +113,7 @@ struct JelloCell final : public BaseCell {
 };
 
 struct SmokeCell final : public BaseCell {
+  static constexpr float mass_decay = 0.001;
   static std::vector<position_t> getEmptyTopNeighbors(const position_t &, Grid &) noexcept;
   static std::vector<BaseCell::position_t> getEmptyBottomNeighbors(const position_t &, Grid &) noexcept;
   static void step(const position_t &, Grid &) noexcept;

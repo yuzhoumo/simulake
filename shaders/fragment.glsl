@@ -21,6 +21,24 @@ uniform float u_cell_size;
 in vec2 tex_coord;
 out vec4 frag_color;
 
+float rand(vec2 co) {
+  // pseudo-random generator
+  return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float fbm(vec2 st, int octaves) {
+  // fractal brownian motion noise function
+  float value = 0.0;
+  float amplitude = 0.5;
+  float frequency = 1.0;
+  for (int i = 0; i < octaves; ++i) {
+    value += amplitude * rand(st * frequency);
+    amplitude *= 0.5;
+    frequency *= 2.0;
+  }
+  return value;
+}
+
 vec4 shade_mouse_ring() {
   // normalize screen space coords and convert to grid coords
   vec2 st = gl_FragCoord.xy / u_resolution;
@@ -46,11 +64,26 @@ vec4 shade_air() {
 }
 
 vec4 shade_smoke() {
-  return vec4(0.0, 1.0, 0.0, 1.0); // green
+  float noise = fbm(gl_FragCoord.xy / u_resolution * u_grid_dim, 4);
+  return vec4(vec3(0.5, 0.5, 0.5) * (0.5 + 0.5 * noise), 1.0);
 }
 
 vec4 shade_fire() {
-  return vec4(1.0, 0.0, 0.0, 1.0); // red
+  vec2 st = gl_FragCoord.xy / u_resolution * u_grid_dim;
+  float noise = fbm(st, 4);
+  float mass = texture(u_grid_data_texture, tex_coord).g;
+
+  // remap the mass value to a range of 0.0 to 1.0
+  float normalized_mass = clamp(mass / 0.6, 0.0, 1.0);
+
+  // create a gradient of colors from red to yellow based on mass and noise
+  vec3 fire_color = mix(vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), normalized_mass);
+  fire_color *= 0.8 + 0.2 * noise;
+
+  // make the fire appear more yellowish higher up in the flame
+  fire_color *= mix(1.0, 1.4, smoothstep(0.0, 1.0, st.y / u_grid_dim.y));
+
+  return vec4(fire_color, 1.0);
 }
 
 vec4 shade_water(float mass) {
@@ -65,7 +98,8 @@ vec4 shade_oil() {
 }
 
 vec4 shade_sand() {
-  return vec4(1.0, 1.0, 0.0, 1.0); // yellow
+  float noise = fbm(gl_FragCoord.xy / u_resolution * u_grid_dim, 4);
+  return vec4(vec3(0.9, 0.85, 0.4) * (0.5 + 0.5 * noise), 1.0);
 }
 
 vec4 shade_jello() {
