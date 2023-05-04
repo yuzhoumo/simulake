@@ -40,8 +40,8 @@
 
 // clang-format off
 #define   AIR_MASS     0.0f
-#define   SMOKE_MASS   0.2f
-#define   FIRE_MASS    0.3f
+#define   SMOKE_MASS   1.0f
+#define   FIRE_MASS    1.0f
 #define   WATER_MASS   1.0f
 #define   OIL_MASS     0.8f
 #define   SAND_MASS    1.5f
@@ -62,35 +62,38 @@
   }
 
 // get a random number (0, UINT_MAX) using xor shift
-inline uint get_rand(const uint seed_, const uint row, const uint col) {
+inline uint get_rand(const uint seed_, const uint row, const uint col,
+                     const float mass) {
   // xorshift
   // const uint seed = seed + row;
   // const uint t = seed ^ (seed << 11);
   // return (col) ^ ((col) >> 19) ^ (t ^ (t >> 8));
 
   // java random
-  ulong seed = seed_ + row * col;
+  ulong seed = seed_ + (row * col) * mass * get_local_id(0) - get_local_id(1);
   seed = (seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
   return seed >> 16;
 }
 
-inline float get_rand_float(const uint seed_, const uint row, const uint col) {
-  const uint rand = get_rand(seed_, row, col);
-  return ((float)get_rand(seed_, row, col)) / ((float)UINT_MAX);
+inline float get_rand_float(const uint seed_, const uint row, const uint col,
+                            const float mass) {
+  return ((float)get_rand(seed_, row, col, mass)) / ((float)UINT_MAX);
 }
 
 #define SCALE_FLOAT(f, low, high) ((f - 1.0f) / (1.0f)) * (high - low) + low
 
-inline float get_mass(const uint type) {
+inline float get_mass(const uint type, const uint random_seed, const uint row,
+                      const uint col) {
   switch (type) {
   case SMOKE_TYPE:
-    return SMOKE_MASS;
+    return get_rand_float(random_seed, row, col, SMOKE_MASS);
     break;
   case FIRE_TYPE:
-    return FIRE_MASS;
+    return SCALE_FLOAT(get_rand_float(random_seed, row, col, FIRE_MASS), 0.7f,
+                       FIRE_MASS);
     break;
   case WATER_TYPE:
-    return WATER_MASS;
+    return get_rand_float(random_seed, row, col, WATER_MASS);
     break;
   case OIL_TYPE:
     return OIL_MASS;
@@ -141,7 +144,7 @@ typedef struct __attribute__((packed, aligned(8))) {
 
 #define STEP_IMPL(name)                                                        \
   inline void name(const uint2 loc, const uint2 dims, __global grid_t *grid,   \
-                   __global grid_t *next_grid, const uint rand_seed)
+                   __global grid_t *next_grid, uint rand_seed)
 
 #define INVOKE_IMPL(name) name(loc, dims, grid, next_grid, rand_seed)
 

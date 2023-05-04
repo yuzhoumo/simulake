@@ -1,10 +1,9 @@
 // vim: ft=cpp :
 
-// base macros and definitions
+// NOTE(vir): DO NOT REMOVE --- x0
 #include "base.cl"
 
-// NOTE(vir): DO NOT REMOVE THIS NEWLINE
-
+// NOTE(vir): DO NOT REMOVE --- x0
 #include "cell.cl"
 
 // {{{ initialize kernel
@@ -71,7 +70,7 @@ __kernel void random_init(__global grid_t *grid,
   const uint height = dims[1];
 
   const uint idx = GET_INDEX(row, col, width, height);
-  const uint rand = get_rand(rand_seed, row, col);
+  const uint rand = get_rand(rand_seed, row, col, grid[idx].mass);
 
   if (rand % 20) {
     grid[idx].type = SAND_TYPE;
@@ -149,10 +148,9 @@ __kernel void render_texture(__write_only image2d_t texture,
   // write texture
   // attributes go here
   const float4 out_color = {
-      type,
-      grid[idx].mass,
-      grid[idx].velocity.x,
-      grid[idx].velocity.y,
+      type, next_grid[idx].mass,
+      0, // grid[idx].velocity.x,
+      0, // grid[idx].velocity.y,
   };
 
   const int2 out_coord = {width - col - 1, height - row - 1};
@@ -179,7 +177,7 @@ __kernel void spawn_cells(__global grid_t *grid, __global grid_t *next_grid,
     next_grid[idx].type = target;
     grid[idx].type = target;
 
-    const float mass = get_mass(target);
+    const float mass = get_mass(target, rand_seed, row, col);
     next_grid[idx].mass = mass;
     grid[idx].mass = mass;
 
