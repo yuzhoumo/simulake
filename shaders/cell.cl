@@ -21,6 +21,7 @@ STEP_IMPL(smoke_step) {
     next_grid[idx_next].updated = false;                                       \
     grid[idx].updated = true;                                                  \
     grid[idx_next].updated = true;                                             \
+    moved = true;                                                              \
   }
 
   const float p = 0.4f;
@@ -28,6 +29,7 @@ STEP_IMPL(smoke_step) {
   const float mass_decay = 0.015f;
 
   const bool decayed = grid[idx].mass <= min_mass;
+  bool moved = false;
 
   if (decayed) {
     next_grid[idx].type = AIR_TYPE;
@@ -35,11 +37,12 @@ STEP_IMPL(smoke_step) {
     next_grid[idx].velocity = V_STATIONARY;
     next_grid[idx].updated = false;
     grid[idx].updated = true;
+
+    moved = true;
   }
 
   else if (top_valid) {
-    const float rand = get_rand_float(rand_seed, row, col, grid[idx].mass);
-    if (rand > p)
+    if (get_rand_float(seed) > p)
       return;
 
     // clang-format off
@@ -49,8 +52,11 @@ STEP_IMPL(smoke_step) {
     // clang-format on
   }
 
-  else if (top_valid) {
-    const float rand = get_rand_float((uint)rand, row, col, grid[idx].mass);
+  // decay in place
+  if (!moved) {
+    next_grid[idx].mass = grid[idx].mass - mass_decay;
+    next_grid[idx].updated = false;
+    grid[idx].updated = true;
   }
 }
 
@@ -64,7 +70,7 @@ STEP_IMPL(fire_step) {
     next_grid[target].velocity = V_STATIONARY;                                 \
     next_grid[target].updated = false;                                         \
     grid[idx].updated = true;                                                  \
-  } else if (IS_AIR(grid[target]) && rand < p) {                               \
+  } else if (IS_AIR(grid[target]) && get_rand_float(seed) < p) {               \
     next_grid[target].type = SMOKE_TYPE;                                       \
     next_grid[target].mass = remaining_mass - mass_decay;                      \
     next_grid[target].velocity = grid[idx].velocity;                           \
@@ -76,7 +82,6 @@ STEP_IMPL(fire_step) {
   const float min_mass = 0.0f;
   const float mass_decay = 0.05f;
 
-  const float rand = get_rand_float(rand_seed, row, col, grid[idx].mass);
   const float remaining_mass = grid[idx].mass - mass_decay;
 
   if (remaining_mass <= min_mass) {
@@ -130,13 +135,6 @@ float water_get_stable_state(const float total_mass) {
 //  water
 STEP_IMPL(water_step) {
   GEN_STEP_IMPL_HEADER();
-
-  uint rand = 0;
-#define NEXT_RAND()                                                            \
-  {                                                                            \
-    rand = get_rand(rand_seed, row, col, grid[idx].mass);                      \
-    rand_seed = get_rand(rand, row, col, grid[idx].mass);                      \
-  }
 
   const float min_mass = 0.000f;
   const float max_speed = 1.00f;
@@ -195,17 +193,16 @@ STEP_IMPL(water_step) {
       flow *= flow > min_flow ? dampen : 1.f;
       flow = FCLAMP(flow, 0, next_grid[idx].mass);
 
-      NEXT_RAND();
       remaining_mass -= flow;
 
       // if the block below is sand, 30% chance it'll get displaced to the
       // bottom right.
-      if (IS_SAND(next_grid[idx_bot]) && remaining_mass > 0.07f &&
-          rand % 100 <= 5) {
+      if (IS_SAND(next_grid[idx_bot]) && remaining_mass > 0.01f &&
+          get_rand(seed) % 10 == 0) {
         // new sand block to the bottom left.
         next_grid[next_idx].type = SAND_TYPE;
         next_grid[next_idx].mass = SAND_MASS;
-        next_grid[next_idx].updated = true;
+        next_grid[next_idx].updated = false;
 
         // new water block below.
         next_grid[idx].mass -= flow;
@@ -240,17 +237,16 @@ STEP_IMPL(water_step) {
       flow *= flow > min_flow ? dampen : 1.f;
       flow = FCLAMP(flow, 0, next_grid[idx].mass);
 
-      NEXT_RAND();
       remaining_mass -= flow;
 
       // if the block below is sand, 30% chance it'll get displaced to the
       // bottom left
-      if (IS_SAND(next_grid[idx_bot]) && remaining_mass > 0.07f &&
-          rand % 100 <= 5) {
+      if (IS_SAND(next_grid[idx_bot]) && remaining_mass > 0.01f &&
+          get_rand(seed) % 10 == 0) {
         // new sand block to the bottom left
         next_grid[next_idx].type = SAND_TYPE;
         next_grid[next_idx].mass = SAND_MASS;
-        next_grid[next_idx].updated = true;
+        next_grid[next_idx].updated = false;
 
         // new water block below
         next_grid[idx].mass -= flow;
@@ -387,15 +383,13 @@ STEP_IMPL(sand_step) {
     next_grid[idx].velocity = V_STATIONARY;                                    \
     next_grid[idx_next].velocity = V_STATIONARY;                               \
     next_grid[idx].updated = false;                                            \
-    next_grid[idx_next].updated = true;                                        \
+    next_grid[idx_next].updated = false;                                       \
     grid[idx].updated = true;                                                  \
     grid[idx_next].updated = true;                                             \
   }
 
   if (!bot_valid)
     return;
-
-  const uint rand = get_rand(rand_seed, row, col, grid[idx].mass);
 
   // move down if possible
   if (IS_FLUID(grid[idx_bot])) {
@@ -404,7 +398,7 @@ STEP_IMPL(sand_step) {
 
     // 80% chance water will be pushed above by sand.
     // 20% change water will eat sand away
-    if (rand % 100 < 80) {
+    if (get_rand(seed) % 100 < 80) {
       replacement_mass = next_grid[idx_bot].mass;
       replacement_type = next_grid[idx_bot].type;
     }
@@ -419,7 +413,7 @@ STEP_IMPL(sand_step) {
     next_grid[idx_bot].velocity = V_STATIONARY;
 
     next_grid[idx].updated = false;
-    next_grid[idx_bot].updated = true;
+    next_grid[idx_bot].updated = false;
 
     // mark this cell updated
     grid[idx].updated = true;
@@ -428,7 +422,7 @@ STEP_IMPL(sand_step) {
 
   // move down left/right if possible with uniform probability
   // TODO(vir): improve random number generation for this case
-  else if (get_rand(rand_seed, row, col, grid[idx].mass) % 2 == 0) {
+  else if (get_rand(seed) % 2 == 0) {
 
     // prefer left
     if (left_valid && IS_FLUID(grid[idx_bot_left]) &&

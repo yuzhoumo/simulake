@@ -1,14 +1,14 @@
 // vim: ft=cpp :
 
-// NOTE(vir): DO NOT REMOVE --- x0
+// NOTE(vir): DO NOT REMOVE --- x2
 #include "base.cl"
 
-// NOTE(vir): DO NOT REMOVE --- x0
+// NOTE(vir): DO NOT REMOVE --- x6
 #include "cell.cl"
 
 // {{{ initialize kernel
-__kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
-                         const uint2 dims, const uint rand_seed) {
+__kernel void initialize(__global ulong *seeds, __global grid_t *grid,
+                         __global grid_t *next_grid, const uint2 dims) {
   GEN_LOC_VARS();
   const uint size = get_global_size(0); // full grid size (rows)
 
@@ -30,7 +30,7 @@ __kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
   grid[idx].updated = false;
   next_grid[idx].updated = false;
 
-  // // draw box with water
+  // draw box with water
   // if (abs(row - (height / 2) - 5) < 5 &&
   //     abs(col - width / 4 - 5) < width / 2 + 5) {
   //   grid[idx].type = STONE_TYPE;
@@ -50,7 +50,7 @@ __kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
   //   next_grid[idx].mass = STONE_MASS;
   // }
 
-  // else if (get_rand(row, col) % 7 == 0) {
+  // else if (get_rand(&seeds[idx]) % 2 == 0) {
   //   grid[idx].type = WATER_TYPE;
   //   next_grid[idx].type = WATER_TYPE;
 
@@ -61,16 +61,15 @@ __kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
 // }}}
 
 // {{{ random init kernel
-__kernel void random_init(__global grid_t *grid,
-                          const __global grid_t *next_grid, const uint2 dims,
-                          const uint rand_seed) {
+__kernel void random_init(__global ulong *seeds, __global grid_t *grid,
+                          const __global grid_t *next_grid, const uint2 dims) {
   GEN_LOC_VARS();
 
   const uint width = dims[0];
   const uint height = dims[1];
 
   const uint idx = GET_INDEX(row, col, width, height);
-  const uint rand = get_rand(rand_seed, row, col, grid[idx].mass);
+  const uint rand = get_rand(&seeds[idx]);
 
   if (rand % 20) {
     grid[idx].type = SAND_TYPE;
@@ -82,8 +81,8 @@ __kernel void random_init(__global grid_t *grid,
 // }}}
 
 //  {{{ simulate kernel
-__kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
-                       const uint2 dims, const uint rand_seed) {
+__kernel void simulate(__global ulong *seeds, __global grid_t *grid,
+                       __global grid_t *next_grid, const uint2 dims) {
   GEN_LOC_VARS();
   const uint2 loc = {row, col};
 
@@ -132,16 +131,19 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
 }
 // }}} simulate kernel
 
-__kernel void fluid_pass(__global grid_t *grid, __global grid_t *next_grid,
-                         const uint2 dims, const uint rand_seed) {
+// {{{ fluid pass
+__kernel void fluid_pass(__global ulong *seeds, __global grid_t *grid,
+                         __global grid_t *next_grid, const uint2 dims) {
   // pass
 }
+// }}}
 
 // {{{ render texture kernel
-__kernel void render_texture(__write_only image2d_t texture,
+__kernel void render_texture(__global ulong *seeds,
+                             __write_only image2d_t texture,
                              __global const grid_t *grid,
                              __global const grid_t *next_grid, const uint2 dims,
-                             const uint cell_size, const uint rand_seed) {
+                             const uint cell_size) {
   GEN_LOC_VARS();
 
   const uint width = dims[0];
@@ -164,10 +166,10 @@ __kernel void render_texture(__write_only image2d_t texture,
 // }}}
 
 // {{{ spawn cells kernel
-__kernel void spawn_cells(__global grid_t *grid, __global grid_t *next_grid,
-                          const uint2 center, const uint paint_radius,
-                          const uint target, const uint2 dims,
-                          const uint cell_size, const uint rand_seed) {
+__kernel void spawn_cells(__global ulong *seeds, __global grid_t *grid,
+                          __global grid_t *next_grid, const uint2 center,
+                          const uint paint_radius, const uint target,
+                          const uint2 dims, const uint cell_size) {
   GEN_LOC_VARS();
 
   const uint width = dims.x;
@@ -182,7 +184,7 @@ __kernel void spawn_cells(__global grid_t *grid, __global grid_t *next_grid,
     next_grid[idx].type = target;
     grid[idx].type = target;
 
-    const float mass = get_mass(target, rand_seed, row, col);
+    const float mass = get_mass(target, &seeds[idx]);
     next_grid[idx].mass = mass;
     grid[idx].mass = mass;
 
