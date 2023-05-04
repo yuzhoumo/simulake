@@ -396,9 +396,9 @@ STEP_IMPL(sand_step) {
     int replacement_type = AIR_TYPE;
     float replacement_mass = AIR_MASS;
 
-    // 80% chance water will be pushed above by sand.
-    // 20% change water will eat sand away
-    if (get_rand(seed) % 100 < 80) {
+    // 45% chance water will be pushed above by sand
+    // 50% change water will eat sand away
+    if (get_rand(seed) % 100 < 45) {
       replacement_mass = next_grid[idx_bot].mass;
       replacement_type = next_grid[idx_bot].type;
     }

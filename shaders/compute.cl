@@ -3,7 +3,7 @@
 // NOTE(vir): DO NOT REMOVE --- x2
 #include "base.cl"
 
-// NOTE(vir): DO NOT REMOVE --- x6
+// NOTE(vir): DO NOT REMOVE --- x2
 #include "cell.cl"
 
 // {{{ initialize kernel
