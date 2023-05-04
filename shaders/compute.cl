@@ -138,7 +138,18 @@ __kernel void simulate(__global ulong *seeds, __global grid_t *grid,
 // {{{ fluid pass
 __kernel void fluid_pass(__global ulong *seeds, __global grid_t *grid,
                          __global grid_t *next_grid, const uint2 dims) {
-  // pass
+  // If water is above oil, swap.
+  GEN_LOC_VARS();
+  const uint2 loc = {row, col};
+
+  const uint width = dims[0];
+  const uint height = dims[1];
+  const uint num_cells = width * height;
+
+  GEN_BOUNDS_VALID(row, col, width, height);
+  GEN_NEIGHBOUR_INDICES(row, col, width, height);
+
+  INVOKE_IMPL(water_oil_step);
 }
 // }}}
 

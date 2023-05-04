@@ -233,8 +233,7 @@ vec4 shade_water(float mass) {
 }
 
 vec4 shade_oil() {
-  // TODO: implement
-  return vec4(0.0);
+  return vec4(0.40, 0.40, 0.19, 1.0);
 }
 
 vec4 shade_sand() {
