@@ -116,7 +116,36 @@ vec4 background(vec2 fragCoord)
 
 float rand(vec2 co) {
   // pseudo-random generator
-  return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+  return fract(sin(dot(co, vec2(13.92715, 78.233))) * 43758.5453);
+}
+
+vec2 voronoi(vec2 uv) {
+  vec2 cell = floor(uv);
+  vec2 offset = vec2(0.0);
+  float minDist = 1.0;
+  for (int x = -1; x <= 1; x++) {
+    for (int y = -1; y <= 1; y++) {
+      vec2 neighbor = cell + vec2(float(x), float(y));
+      vec2 center = neighbor + rand(neighbor);
+      vec2 diff = uv - center;
+      float dist = dot(diff, diff);
+      if (dist < minDist) {
+        minDist = dist;
+        offset = diff;
+      }
+    }
+  }
+  return offset;
+}
+
+float noise(vec2 uv) {
+    vec2 i = floor(uv);
+    vec2 f = fract(uv);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(rand(i + vec2(0.0, 0.0)),
+                   rand(i + vec2(1.0, 0.0)), u.x),
+               mix(rand(i + vec2(0.0, 1.0)),
+                   rand(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
 float fbm(vec2 st, int octaves) {
@@ -217,8 +246,26 @@ vec4 shade_jet_fuel() {
   return shade_fire(rand(gl_FragCoord.xy / u_resolution));
 }
 
-vec4 shade_stone() {
-  return vec4(0.0, 0.0, 0.0, 1.0); // black
+vec4 shade_stone(vec2 uv) {
+  // overkill, doesn't look that good :/
+  // Constants
+  float scale = 10.0;
+  float voronoiScale = 5.0;
+  float noiseStrength = 0.25;
+  float turbulence = 5.0;
+  float baseColorStrength = 0.75;
+  vec3 baseColor = vec3(0.5, 0.5, 0.5);
+
+  // Stone texture generation
+  vec2 scaledUV = uv * scale;
+  float baseNoise = fbm(scaledUV, 4);
+  vec2 voronoiOffset = voronoi(scaledUV * voronoiScale);
+  float voronoiNoise = fbm((scaledUV + voronoiOffset) * turbulence, 4);
+  float combinedNoise = mix(baseNoise, voronoiNoise, noiseStrength);
+
+  // Color and output
+  vec3 color = baseColor * (1.0 - baseColorStrength * combinedNoise);
+  return vec4(color, 1.0);
 }
 
 vec4 shade_default() {
@@ -258,7 +305,7 @@ void main() {
     color = shade_jet_fuel();
     break;
   case STONE_TYPE:
-    color = shade_stone();
+    color = shade_stone(gl_FragCoord.xy);
     break;
   default:
     color = shade_default();
