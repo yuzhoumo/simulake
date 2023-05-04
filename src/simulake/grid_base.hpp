@@ -20,12 +20,12 @@ public:
   virtual ~GridBase() = default;
 
   /* iterate the simulation by one step */
-  virtual void simulate() noexcept = 0;
+  virtual void simulate(float delta_time) noexcept = 0;
 
   /* reset the grid to air cells (empty) */
   virtual void reset() noexcept = 0;
 
-  /* spawn cells, given grid coords, radius in cells, and cell type */
+  /* spawn cells, given grid coords (x,y), radius in cells, and cell type */
   virtual void spawn_cells(const std::tuple<std::uint32_t,
                            std::uint32_t> &center,
                            const std::uint32_t paint_radius,
@@ -45,7 +45,7 @@ public:
   virtual serialized_grid_t serialize() const noexcept = 0;
 
   /* loads grid from float buffer */
-  virtual void deserialize(const serialized_grid_t &) noexcept = 0;
+  virtual void deserialize(const serialized_grid_t &data) noexcept = 0;
 };
 
 } /* namespace simulake */
