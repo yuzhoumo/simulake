@@ -131,6 +131,13 @@ float water_get_stable_state(const float total_mass) {
 STEP_IMPL(water_step) {
   GEN_STEP_IMPL_HEADER();
 
+  uint rand = 0;
+#define NEXT_RAND()                                                            \
+  {                                                                            \
+    rand = get_rand(rand_seed, row, col, grid[idx].mass);                      \
+    rand_seed = get_rand(rand, row, col, grid[idx].mass);                      \
+  }
+
   const float min_mass = 0.000f;
   const float max_speed = 1.00f;
   const float min_flow = 0.005f;
@@ -142,9 +149,9 @@ STEP_IMPL(water_step) {
     next_grid[idx].mass = grid[idx].mass;
 
   // mark cell calculated
-  // grid[idx].updated = true;
   next_grid[idx].updated = false;
   next_grid[idx].type = WATER_TYPE;
+  grid[idx].updated = true;
 
   float remaining_mass = next_grid[idx].mass;
   if (remaining_mass <= min_mass) {
@@ -154,7 +161,7 @@ STEP_IMPL(water_step) {
   }
 
   // downward flow
-  if (bot_valid && IS_FLUID(grid[idx_bot])) {
+  if (bot_valid && IS_FLUID(grid[idx_bot]) && !IS_SAND(next_grid[idx_bot])) {
     next_grid[idx_bot].type = WATER_TYPE;
     next_grid[idx_bot].updated = false;
 
@@ -181,19 +188,37 @@ STEP_IMPL(water_step) {
          left >= ((int)col - bot_reach) && left >= 0 && (row + down) < height;
          left -= 1, down += 1) {
       const uint next_idx = GET_INDEX(row + down, left, width, height);
-      if (!IS_FLUID(grid[next_idx]))
+      if (!IS_FLUID(grid[next_idx]) || IS_SAND(next_grid[next_idx]))
         break;
-
-      next_grid[next_idx].type = WATER_TYPE;
-      next_grid[next_idx].updated = false;
 
       float flow = (next_grid[idx].mass - next_grid[next_idx].mass);
       flow *= flow > min_flow ? dampen : 1.f;
       flow = FCLAMP(flow, 0, next_grid[idx].mass);
 
+      NEXT_RAND();
       remaining_mass -= flow;
-      next_grid[idx].mass -= flow;
-      next_grid[next_idx].mass += flow;
+
+      // if the block below is sand, 30% chance it'll get displaced to the
+      // bottom right.
+      if (IS_SAND(next_grid[idx_bot]) && remaining_mass > 0.07f &&
+          rand % 100 <= 5) {
+        // new sand block to the bottom left.
+        next_grid[next_idx].type = SAND_TYPE;
+        next_grid[next_idx].mass = SAND_MASS;
+        next_grid[next_idx].updated = true;
+
+        // new water block below.
+        next_grid[idx].mass -= flow;
+        next_grid[idx_bot].type = WATER_TYPE;
+        next_grid[idx_bot].mass = flow;
+        next_grid[idx_bot].updated = false;
+        break;
+      } else {
+        next_grid[next_idx].type = WATER_TYPE;
+        next_grid[next_idx].updated = false;
+        next_grid[next_idx].mass += flow;
+        next_grid[idx].mass -= flow;
+      }
     }
 
     if (remaining_mass <= min_mass) {
@@ -202,24 +227,44 @@ STEP_IMPL(water_step) {
       return;
     }
 
+    // to the right
     for (int right = (int)col + 1, down = 1;
          right <= ((int)col + bot_reach) && right < width &&
          (row + down) < height;
          right += 1, down += 1) {
       const uint next_idx = GET_INDEX(row + down, right, width, height);
-      if (!IS_FLUID(grid[next_idx]))
+      if (!IS_FLUID(next_grid[next_idx]) || IS_SAND(next_grid[next_idx]))
         break;
-
-      next_grid[next_idx].type = WATER_TYPE;
-      next_grid[next_idx].updated = false;
 
       float flow = (next_grid[idx].mass - next_grid[next_idx].mass);
       flow *= flow > min_flow ? dampen : 1.f;
       flow = FCLAMP(flow, 0, next_grid[idx].mass);
 
+      NEXT_RAND();
       remaining_mass -= flow;
-      next_grid[idx].mass -= flow;
-      next_grid[next_idx].mass += flow;
+
+      // if the block below is sand, 30% chance it'll get displaced to the
+      // bottom left
+      if (IS_SAND(next_grid[idx_bot]) && remaining_mass > 0.07f &&
+          rand % 100 <= 5) {
+        // new sand block to the bottom left
+        next_grid[next_idx].type = SAND_TYPE;
+        next_grid[next_idx].mass = SAND_MASS;
+        next_grid[next_idx].updated = true;
+
+        // new water block below
+        next_grid[idx].mass -= flow;
+        next_grid[idx_bot].type = WATER_TYPE;
+        next_grid[idx_bot].mass = flow;
+        next_grid[idx_bot].updated = false;
+        break;
+
+      } else {
+        next_grid[next_idx].type = WATER_TYPE;
+        next_grid[next_idx].updated = false;
+        next_grid[next_idx].mass += flow;
+        next_grid[idx].mass -= flow;
+      }
     }
 
     if (remaining_mass <= min_mass) {
@@ -239,7 +284,7 @@ STEP_IMPL(water_step) {
     // find left bound
     for (; left >= max((int)col - horizontal_reach, 0); left -= 1) {
       const uint idx = GET_INDEX(row, left, width, height);
-      if (!IS_FLUID(grid[idx]))
+      if (!IS_FLUID(next_grid[idx]) || IS_SAND(next_grid[idx]))
         break;
 
       mass_left += next_grid[idx].mass;
@@ -248,20 +293,18 @@ STEP_IMPL(water_step) {
     // find right bound
     for (; right <= min(col + horizontal_reach, width - 1); right += 1) {
       const uint idx = GET_INDEX(row, right, width, height);
-      if (!IS_FLUID(grid[idx]))
+      if (!IS_FLUID(next_grid[idx]) || IS_SAND(next_grid[idx]))
         break;
 
       mass_right += next_grid[idx].mass;
     }
 
-    // correct endpoints
+    // correct
     left++;
     right--;
 
     float mean_mass = (mass_left + mass_right + next_grid[idx].mass);
     mean_mass /= (right - left + 1);
-
-    // ASSERT_TRUE(mean_mass > 0.0f)
 
 #ifdef DEBUG
     if (mean_mass < 0.0f) {
@@ -306,7 +349,8 @@ STEP_IMPL(water_step) {
   }
 
   // upward flow
-  if (top_valid && IS_FLUID(next_grid[idx_top]) && IS_FLUID(grid[idx_top])) {
+  if (top_valid && IS_FLUID(next_grid[idx_top]) &&
+      !IS_SAND(next_grid[idx_top])) {
     next_grid[idx_top].type = WATER_TYPE;
     next_grid[idx_top].updated = false; // other cells updated by this
 
@@ -332,6 +376,8 @@ STEP_IMPL(water_step) {
 
 //  sand
 STEP_IMPL(sand_step) {
+  GEN_STEP_IMPL_HEADER();
+
 #define __move_sand__(idx_next)                                                \
   {                                                                            \
     next_grid[idx].type = AIR_TYPE;                                            \
@@ -341,20 +387,43 @@ STEP_IMPL(sand_step) {
     next_grid[idx].velocity = V_STATIONARY;                                    \
     next_grid[idx_next].velocity = V_STATIONARY;                               \
     next_grid[idx].updated = false;                                            \
-    next_grid[idx_next].updated = false;                                       \
+    next_grid[idx_next].updated = true;                                        \
     grid[idx].updated = true;                                                  \
     grid[idx_next].updated = true;                                             \
   }
 
-  GEN_STEP_IMPL_HEADER();
-
-  // cannot fall below bottom
   if (!bot_valid)
     return;
 
+  const uint rand = get_rand(rand_seed, row, col, grid[idx].mass);
+
   // move down if possible
-  if (IS_FLUID(grid[idx_bot]) && !grid[idx_bot].updated) {
-    __move_sand__(idx_bot);
+  if (IS_FLUID(grid[idx_bot])) {
+    int replacement_type = AIR_TYPE;
+    float replacement_mass = AIR_MASS;
+
+    // 80% chance water will be pushed above by sand.
+    // 20% change water will eat sand away
+    if (rand % 100 < 80) {
+      replacement_mass = next_grid[idx_bot].mass;
+      replacement_type = next_grid[idx_bot].type;
+    }
+
+    next_grid[idx].type = replacement_type;
+    next_grid[idx_bot].type = SAND_TYPE;
+
+    next_grid[idx].mass = replacement_mass;
+    next_grid[idx_bot].mass = SAND_MASS;
+
+    next_grid[idx].velocity = V_STATIONARY;
+    next_grid[idx_bot].velocity = V_STATIONARY;
+
+    next_grid[idx].updated = false;
+    next_grid[idx_bot].updated = true;
+
+    // mark this cell updated
+    grid[idx].updated = true;
+    grid[idx_bot].updated = true;
   }
 
   // move down left/right if possible with uniform probability

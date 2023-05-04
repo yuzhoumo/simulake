@@ -22,6 +22,7 @@ DeviceGrid::~DeviceGrid() {
   CL_CALL(clReleaseMemObject(sim_context.next_grid));
   CL_CALL(clReleaseKernel(sim_context.init_kernel));
   CL_CALL(clReleaseKernel(sim_context.sim_kernel));
+  CL_CALL(clReleaseKernel(sim_context.fluid_kernel));
   CL_CALL(clReleaseKernel(sim_context.rand_kernel));
   CL_CALL(clReleaseKernel(sim_context.render_kernel));
   CL_CALL(clReleaseKernel(sim_context.spawn_kernel));
@@ -73,7 +74,6 @@ void DeviceGrid::simulate(float delta_time) noexcept {
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
 
-  // simulation step
   {
     // clang-format off
     CL_CALL(clSetKernelArg(sim_context.sim_kernel, flip_flag ? 0 : 1, sizeof(cl_mem), &sim_context.grid));
@@ -82,20 +82,35 @@ void DeviceGrid::simulate(float delta_time) noexcept {
     const unsigned int rand_seed = std::rand();
     CL_CALL(clSetKernelArg(sim_context.sim_kernel, 3, sizeof(cl_uint), &rand_seed));
     // clang-format on
-
-    CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.sim_kernel, 2,
-                                   nullptr, global_item_size, local_item_size,
-                                   0, nullptr, nullptr));
-    CL_CALL(clEnqueueCopyBuffer(
-        sim_context.queue, flip_flag ? sim_context.next_grid : sim_context.grid,
-        flip_flag ? sim_context.grid : sim_context.next_grid, 0, 0, memory_size,
-        0, nullptr, nullptr));
-
-    render_texture();
-
-    // wait for kernel to finish
-    CL_CALL(clFinish(sim_context.queue));
   }
+
+  {
+    // clang-format off
+    CL_CALL(clSetKernelArg(sim_context.fluid_kernel, flip_flag ? 0 : 1, sizeof(cl_mem), &sim_context.grid));
+    CL_CALL(clSetKernelArg(sim_context.fluid_kernel, flip_flag ? 1 : 0, sizeof(cl_mem), &sim_context.next_grid));
+
+    const unsigned int rand_seed = std::rand();
+    CL_CALL(clSetKernelArg(sim_context.fluid_kernel, 3, sizeof(cl_uint), &rand_seed));
+    // clang-format on
+  }
+
+  CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.sim_kernel, 2,
+                                 nullptr, global_item_size, local_item_size, 0,
+                                 nullptr, nullptr));
+
+  CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.fluid_kernel, 2,
+                                 nullptr, global_item_size, local_item_size, 0,
+                                 nullptr, nullptr));
+
+  CL_CALL(clEnqueueCopyBuffer(
+      sim_context.queue, flip_flag ? sim_context.next_grid : sim_context.grid,
+      flip_flag ? sim_context.grid : sim_context.next_grid, 0, 0, memory_size,
+      0, nullptr, nullptr));
+
+  render_texture();
+
+  // wait for kernels to finish
+  CL_CALL(clFinish(sim_context.queue));
 
   flip_flag = !flip_flag;
 }
@@ -412,6 +427,7 @@ void DeviceGrid::initialize_device() noexcept {
 void DeviceGrid::initialize_kernels() noexcept {
   constexpr auto PROGRAM_PATH = "./shaders/compute.cl";
   constexpr auto SIM_KERNEL_NAME = "simulate";
+  constexpr auto FLUID_KERNEL_NAME = "fluid_pass";
   constexpr auto INIT_KERNEL_NAME = "initialize";
   constexpr auto RAND_KERNEL_NAME = "random_init";
   constexpr auto RENDER_KERNEL_NAME = "render_texture";
@@ -457,6 +473,10 @@ void DeviceGrid::initialize_kernels() noexcept {
   sim_context.sim_kernel = clCreateKernel(sim_context.program, SIM_KERNEL_NAME, &error);
   CL_CALL(error);
 
+  // second simulation pass for fluids
+  sim_context.fluid_kernel = clCreateKernel(sim_context.program, FLUID_KERNEL_NAME, &error);
+  CL_CALL(error);
+
   // initialization kernel
   sim_context.init_kernel = clCreateKernel(sim_context.program, INIT_KERNEL_NAME, &error);
   CL_CALL(error);
@@ -495,9 +515,10 @@ void DeviceGrid::initialize_kernels() noexcept {
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 5, sizeof(cl_uint2), &grid_dim));
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 6, sizeof(unsigned int), &cell_size));
 
-  // NOTE(vir): we set sim kernel data args in DeviceGrid::simulate()
+  // NOTE(vir): we set sim/fluid kernel data args in DeviceGrid::simulate()
   // these are the fixed ones
   CL_CALL(clSetKernelArg(sim_context.sim_kernel, 2, sizeof(cl_uint2), &grid_dim));
+  CL_CALL(clSetKernelArg(sim_context.fluid_kernel, 2, sizeof(cl_uint2), &grid_dim));
   // clang-format on
 }
 

@@ -132,6 +132,11 @@ __kernel void simulate(__global grid_t *grid, __global grid_t *next_grid,
 }
 // }}} simulate kernel
 
+__kernel void fluid_pass(__global grid_t *grid, __global grid_t *next_grid,
+                         const uint2 dims, const uint rand_seed) {
+  // pass
+}
+
 // {{{ render texture kernel
 __kernel void render_texture(__write_only image2d_t texture,
                              __global const grid_t *grid,
