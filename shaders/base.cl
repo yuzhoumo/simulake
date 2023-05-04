@@ -70,7 +70,7 @@ inline uint get_rand(const uint seed_, const uint row, const uint col,
   // return (col) ^ ((col) >> 19) ^ (t ^ (t >> 8));
 
   // java random
-  ulong seed = seed_ + row * col * mass;
+  ulong seed = seed_ + (row * col) * mass * get_local_id(0) - get_local_id(1);
   seed = (seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
   return seed >> 16;
 }
@@ -89,7 +89,7 @@ inline float get_mass(const uint type, const uint random_seed, const uint row,
     return get_rand_float(random_seed, row, col, SMOKE_MASS);
     break;
   case FIRE_TYPE:
-    return SCALE_FLOAT(get_rand_float(random_seed, row, col, FIRE_MASS), 0.5f,
+    return SCALE_FLOAT(get_rand_float(random_seed, row, col, FIRE_MASS), 0.7f,
                        FIRE_MASS);
     break;
   case WATER_TYPE:

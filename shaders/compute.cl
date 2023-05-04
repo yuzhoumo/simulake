@@ -1,10 +1,10 @@
 // vim: ft=cpp :
 
+// NOTE(vir): DO NOT REMOVE --- x0
 #include "base.cl"
-// NOTE(vir): do not remove these new lines
 
+// NOTE(vir): DO NOT REMOVE --- x0
 #include "cell.cl"
-// NOTE(vir): do not remove these new lines
 
 // {{{ initialize kernel
 __kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
@@ -148,10 +148,9 @@ __kernel void render_texture(__write_only image2d_t texture,
   // write texture
   // attributes go here
   const float4 out_color = {
-      type,
-      grid[idx].mass,
-      grid[idx].velocity.x,
-      grid[idx].velocity.y,
+      type, next_grid[idx].mass,
+      0, // grid[idx].velocity.x,
+      0, // grid[idx].velocity.y,
   };
 
   const int2 out_coord = {width - col - 1, height - row - 1};

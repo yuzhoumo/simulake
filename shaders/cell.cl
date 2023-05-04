@@ -23,15 +23,11 @@ STEP_IMPL(smoke_step) {
     grid[idx_next].updated = true;                                             \
   }
 
-#define GET_NEXT_RAND()                                                        \
-  (rand = rand_seed = get_rand_float(rand_seed, row, col, grid[idx].mass));
-
   const float p = 0.4f;
   const float min_mass = 0.0f;
-  const float mass_decay = 0.005f;
+  const float mass_decay = 0.015f;
 
   const bool decayed = grid[idx].mass <= min_mass;
-  const float rand = get_rand_float(rand_seed, row, col, grid[idx].mass);
 
   if (decayed) {
     next_grid[idx].type = AIR_TYPE;
@@ -41,7 +37,11 @@ STEP_IMPL(smoke_step) {
     grid[idx].updated = true;
   }
 
-  else if (top_valid && rand < p) {
+  else if (top_valid) {
+    const float rand = get_rand_float(rand_seed, row, col, grid[idx].mass);
+    if (rand > p)
+      return;
+
     // clang-format off
     if      (               IS_FLUID(grid[idx_top]))       { __move_smoke__(idx_top);       }
     else if (left_valid  && IS_FLUID(grid[idx_top_left]))  { __move_smoke__(idx_top_left);  }
