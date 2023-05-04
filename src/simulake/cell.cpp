@@ -12,7 +12,7 @@ std::random_device BaseCell::rd;
 std::mt19937 BaseCell::gen(BaseCell::rd());
 
 bool BaseCell::is_liquid(CellType type) {
-  return type == CellType::WATER or type == CellType::OIL;
+  return type == CellType::WATER or type == CellType::OIL or type == CellType::NAPALM;
 }
 
 bool BaseCell::is_gas(CellType type) {
@@ -36,7 +36,7 @@ float BaseCell::flammability(CellType type) {
     return 0.5f;
   case CellType::FIRE:
     return 0.0f;
-  case CellType::JELLO:
+  case CellType::NAPALM:
     return 0.0f;
   case CellType::SMOKE:
     return 0.0f;
@@ -201,13 +201,162 @@ void FireCell::step(const position_t &pos, Grid &grid) noexcept {
 
 cell_data_t WaterCell::spawn(const position_t &pos, Grid &grid) noexcept {
   return {
-      .type = CellType::WATER,
-      .mass = max_mass,
-      .updated = true,
+    .type = CellType::WATER,
+    .mass = max_mass,
+    .updated = true,
   };
 }
 
-void WaterCell::step(const position_t &pos, Grid &grid) noexcept {}
+
+void WaterCell::step(const position_t &pos, Grid &grid) noexcept{
+
+}
+
+cell_data_t NapalmCell::spawn(const position_t &, Grid &) noexcept {
+  return {
+    .type = CellType::NAPALM,
+    .mass = 1.0f,
+    .updated = true,
+  };
+}
+
+void NapalmCell::step(const position_t &pos, Grid &grid) noexcept {
+  const auto [x, y] = pos;
+
+  cell_data_t current_cell = grid.cell_at(x, y);
+
+
+  // Check downward movement
+  cell_data_t below_cell = grid.cell_at(x, y + 1);
+
+  if (below_cell.type == CellType::NAPALM and random_int(0, 1000) == 0) {
+    // spontaneously combust with varying intensity
+    grid.set_next(x, y, { .type = CellType::FIRE, .mass = random_float(0.0, 4.0) });
+    return;
+  }
+
+  if (!is_fluid(below_cell.type) and random_int(0, 10) == 0) {
+    // spontaneously combust with varying intensity
+    grid.set_next(x, y, { .type = CellType::FIRE, .mass = random_float(0.0, 2.0) });
+    return;
+  }
+
+  if (!below_cell.updated and (below_cell.type == CellType::AIR or below_cell.type == CellType::SMOKE)) {
+    // mark updated
+    grid.mark_updated(x, y + 1);
+
+    // Water moves down
+    grid.set_next(x, y + 1, current_cell);
+    grid.set_next(x, y, { .type = CellType::AIR, .mass = 0.0f, .updated = false });
+    return;
+  }
+
+  // Check lateral movement (left and right)
+  int direction = random_int(-1, 1);
+
+  cell_data_t side_cell = grid.cell_at(x + direction, y);
+  if (!side_cell.updated and (side_cell.type == CellType::AIR or side_cell.type == CellType::SMOKE)) {
+    // mark updated
+    grid.mark_updated(x + direction, y);
+
+    // Water moves laterally
+    grid.set_next(x + direction, y, current_cell);
+    grid.set_next(x, y, {.type = CellType::AIR, .mass = 0.0f, .updated = false});
+    return;
+  }
+
+  // Water remains in the current cell
+  grid.set_next(x, y, current_cell);
+}
+
+// void WaterCell::step(const position_t &pos, Grid &grid) noexcept {
+//   const auto [x, y] = pos;
+//   const auto context = BaseCell::get_cell_context(pos, grid);
+//
+//   float flow;
+//   float remaining_mass = grid.cell_at(x, y).mass;
+//   if (remaining_mass <= 0) {
+//     grid.set_next(x, y, { .type = CellType::AIR });
+//     return;
+//   }
+//
+//   // Flow to block below.
+//   if (is_fluid(context.bottom)) {
+//     flow = get_stable_state_b(remaining_mass + grid.cell_at(x, y + 1).mass) - grid.cell_at(x, y + 1).mass;
+//
+//     // Smoother flow.
+//     if (flow > min_flow) flow *= 0.5;
+//
+//     flow = constrain(flow, 0, std::min(max_speed, remaining_mass));
+//
+//     // flow into neighbor, add to mass of neighbor, remove mass from current
+//     grid.set_next(x, y + 1, { .type = CellType::WATER, .mass = grid.cell_at(x, y + 1, true).mass + flow });
+//     grid.set_next(x, y, { .type = CellType::WATER, .mass = grid.cell_at(x, y, true).mass - flow });
+//
+//     remaining_mass -= flow;
+//   }
+//
+//   if (remaining_mass <= 0) {
+//     grid.set_next(x, y, { .type = CellType::AIR });
+//     return;
+//   }
+//
+//   // Equalize water with right block.
+//   if (is_fluid(context.right)) {
+//     flow = (grid.cell_at(x, y).mass - grid.cell_at(x + 1, y).mass) / 4;
+//
+//     // Smoother flow.
+//     if (flow > min_flow) flow *= 0.5;
+//
+//     flow = constrain(flow, 0, remaining_mass);
+//
+//     grid.set_next(x + 1, y, { .type = CellType::WATER, .mass = grid.cell_at(x + 1, y, true).mass + flow });
+//     grid.set_next(x, y, { .type = CellType::WATER, .mass = grid.cell_at(x, y, true).mass - flow });
+//
+//     remaining_mass -= flow;
+//   }
+//
+//   if (remaining_mass <= 0) {
+//     grid.set_next(x, y, { .type = CellType::AIR });
+//     return;
+//   }
+//
+//   // Equalize water with left block.
+//   if (is_fluid(context.left)) {
+//     flow = (grid.cell_at(x, y).mass - grid.cell_at(x - 1, y).mass) / 4;
+//
+//     // Smoother flow.
+//     if (flow > min_flow) flow *= 0.5;
+//
+//     flow = constrain(flow, 0, remaining_mass);
+//
+//     grid.set_next(x - 1, y, { .type = CellType::WATER, .mass = grid.cell_at(x - 1, y, true).mass + flow });
+//     grid.set_next(x, y, { .type = CellType::WATER, .mass = grid.cell_at(x, y, true).mass - flow });
+//
+//
+//     remaining_mass -= flow;
+//   }
+//
+//   if (remaining_mass <= 0) {
+//     grid.set_next(x, y, { .type = CellType::AIR });
+//     return;
+//   }
+//
+//   // If compressed, flow up.
+//   if (is_fluid(context.top)) {
+//     flow = remaining_mass - get_stable_state_b(remaining_mass + grid.cell_at(x, y - 1).mass);
+//
+//     // Smoother flow.
+//     if (flow > min_flow) flow *= 0.5;
+//
+//     flow = constrain(flow, 0, std::min(max_speed, remaining_mass));
+//
+//     grid.set_next(x, y - 1, { .type = CellType::WATER, .mass = grid.cell_at(x, y - 1, true).mass + flow });
+//     grid.set_next(x, y, { .type = CellType::WATER, .mass = grid.cell_at(x, y, true).mass - flow });
+//
+//     remaining_mass -= flow;
+//   }
+// }
 
 /* <<<<<<<< SAND >>>>>>>> */
 
@@ -354,124 +503,5 @@ void StoneCell::step(const position_t &pos, Grid &grid) noexcept {
 //   }
 // }
 
-// void WaterCell::step(const position_t &pos, Grid &grid) noexcept {
-// const auto [x, y] = pos;
-// const auto context = BaseCell::get_cell_context(pos, grid);
-//
-// float flow;
-// float remaining_mass = grid.cell_at(x, y).mass;
-// if (remaining_mass <= 0) {
-//   grid.set_next(x, y, { .type = CellType::AIR });
-//   return;
-// }
-//
-// // Flow to block below.
-// if (IS_FLUID(context.bottom)) {
-//   // Convert to water.
-//   grid.set_next(x + 1, y, { .type = CellType::WATER });
-//
-//   flow = get_stable_state_b(remaining_mass + grid.cell_at(x + 1, y).mass)
-//       - grid.cell_at(x + 1, y).mass;
-//
-//   // Smoother flow.
-//   if (flow > min_flow) flow *= 0.5;
-//
-//   flow = constrain(flow, 0, std::min(max_speed, remaining_mass));
-//
-//   cell_data_t cell = grid.cell_at(x, y);
-//   cell.mass -= flow;
-//   grid.set_next(x, y, cell);
-//
-//   cell = grid.cell_at(x + 1, y);
-//   cell.mass += flow;
-//   grid.set_next(x + 1, y, cell);
-//
-//   remaining_mass -= flow;
-// }
-//
-// if (remaining_mass <= 0) {
-//   grid.set_next(x, y, { .type = CellType::AIR });
-//   return;
-// }
-//
-// // Equalize water with right block.
-// if (IS_FLUID(context.right)) {
-//   // Convert to water.
-//   grid.set_next(x, y + 1, { .type = CellType::WATER });
-//
-//   flow = (grid.cell_at(x, y).mass - grid.cell_at(x, y + 1).mass) / 4;
-//
-//   // Smoother flow.
-//   if (flow > min_flow) flow *= 0.5;
-//
-//   flow = constrain(flow, 0, remaining_mass);
-//
-//   cell_data_t cell = grid.cell_at(x, y);
-//   cell.mass -= flow;
-//   grid.set_next(x, y, cell);
-//
-//   cell = grid.cell_at(x, y + 1);
-//   cell.mass += flow;
-//   grid.set_next(x, y + 1, cell);
-//
-//   remaining_mass -= flow;
-// }
-//
-// if (remaining_mass <= 0) {
-//   grid.set_next(x, y, { .type = CellType::AIR });
-//   return;
-// }
-//
-// // Equalize water with left block.
-// if (IS_FLUID(context.left)) {
-//   // Convert to water.
-//   grid.set_next(x, y - 1, { .type = CellType::WATER });
-//
-//   flow = (grid.cell_at(x, y).mass - grid.cell_at(x, y - 1).mass) / 4;
-//
-//   // Smoother flow.
-//   if (flow > min_flow) flow *= 0.5;
-//
-//   flow = constrain(flow, 0, remaining_mass);
-//
-//   cell_data_t cell = grid.cell_at(x, y);
-//   cell.mass -= flow;
-//   grid.set_next(x, y, cell);
-//
-//   cell = grid.cell_at(x, y - 1);
-//   cell.mass += flow;
-//   grid.set_next(x, y - 1, cell);
-//
-//   remaining_mass -= flow;
-// }
-//
-// if (remaining_mass <= 0) {
-//   grid.set_next(x, y, { .type = CellType::AIR });
-//   return;
-// }
-//
-// // If compressed, flow up.
-// if (IS_FLUID(context.top)) {
-//   // Convert to water.
-//   grid.set_next(x, y, { .type = CellType::WATER });
-//
-//   flow = remaining_mass
-//       - get_stable_state_b(remaining_mass + grid.cell_at(x - 1, y).mass);
-//
-//   // Smoother flow.
-//   if (flow > min_flow) flow *= 0.5;
-//
-//   flow = constrain(flow, 0, std::min(max_speed, remaining_mass));
-//
-//   cell_data_t cell = grid.cell_at(x, y);
-//   cell.mass -= flow;
-//   grid.set_next(x, y, cell);
-//
-//   cell = grid.cell_at(x - 1, y);
-//   cell.mass += flow;
-//   grid.set_next(x - 1, y, cell);
-//
-//   remaining_mass -= flow;
-// }
 
 } /* namespace simulake */

@@ -53,7 +53,7 @@ public:
   void deserialize(const serialized_grid_t &) noexcept override;
 
   /* get cell type at given position */
-  cell_data_t cell_at(std::uint32_t, std::uint32_t) const noexcept;
+  cell_data_t cell_at(std::uint32_t, std::uint32_t, bool = false) const noexcept;
 
   /* set cell type at given position. returns true of successful */
   bool set_next(std::uint32_t, std::uint32_t, const cell_data_t) noexcept;
@@ -94,6 +94,14 @@ public:
     }
 
     return glm::ivec3(0, 0, 0);
+  }
+
+  inline void mark_updated(std::uint32_t x, std::uint32_t y) {
+    _grid[y][x].updated = true;
+  }
+
+  inline bool updated(std::uint32_t x, std::uint32_t y) {
+    return _grid[y][x].updated;
   }
 
 private:

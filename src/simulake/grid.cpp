@@ -74,7 +74,7 @@ void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
         break;
 
       case CellType::WATER:
-        //spawn_cell = WaterCell::spawn({x, y}, *this);
+        spawn_cell = WaterCell::spawn({x, y}, *this);
         break;
 
       case CellType::OIL:
@@ -85,8 +85,8 @@ void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
         spawn_cell = SandCell::spawn({x, y}, *this);
         break;
 
-      case CellType::JELLO:
-        //spawn_cell = JelloCell::spawn({x, y}, *this);
+      case CellType::NAPALM:
+        spawn_cell = NapalmCell::spawn({x, y}, *this);
         break;
 
       case CellType::STONE:
@@ -131,8 +131,8 @@ void Grid::simulate(float delta_time) noexcept {
         FireCell::step({x, y}, *this);
         break;
 
-      case CellType::JELLO:
-        // JelloCell::step({x, y}, *this);
+      case CellType::NAPALM:
+        NapalmCell::step({x, y}, *this);
         break;
 
       case CellType::SMOKE:
@@ -152,7 +152,7 @@ void Grid::simulate(float delta_time) noexcept {
   /* reset updated */
   for (int x = 0; x < width; x += 1) {
     for (int y = 0; y < height; y += 1) {
-      _grid[y][x].updated = false;
+      _next_grid[y][x].updated = false;
     }
   }
 
@@ -200,11 +200,11 @@ void Grid::deserialize(const GridBase::serialized_grid_t &data) noexcept {
   }
 }
 
-cell_data_t Grid::cell_at(std::uint32_t x, std::uint32_t y) const noexcept {
+cell_data_t Grid::cell_at(std::uint32_t x, std::uint32_t y, bool next) const noexcept {
   if (y >= height || x >= width) [[unlikely]]
     return cell_data_t{};
 
-  return _grid[y][x];
+  return next ? _next_grid[y][x] : _grid[y][x];
 }
 
 bool Grid::set_next(std::uint32_t x, std::uint32_t y,

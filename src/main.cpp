@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     ("x,width",      "grid width in cells",     cxxopts::value<std::uint32_t>()->default_value("400"))
     ("y,height",     "grid height in cells",    cxxopts::value<std::uint32_t>()->default_value("200"))
     ("c,cellsize",   "cell size in pixels",     cxxopts::value<std::uint32_t>()->default_value("4"))
-    ("g,gpu",        "enable GPU acceleration", cxxopts::value<bool>()->default_value("true"))
+    ("g,gpu",        "enable GPU acceleration", cxxopts::value<bool>())
     ("l,load",       "load scene from disk",    cxxopts::value<std::string>())
     ("h,help",       "print help");
   // clang-format on

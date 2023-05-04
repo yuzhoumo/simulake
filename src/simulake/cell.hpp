@@ -18,7 +18,7 @@ enum class CellType : std::uint8_t {
   WATER,
   OIL,
   SAND,
-  JELLO,
+  NAPALM,
   STONE,
 };
 
@@ -103,15 +103,15 @@ struct WaterCell final : public BaseCell {
 
   static constexpr float max_mass = 1.0f;
   static constexpr float max_compress = 0.02f;
-  static constexpr float min_mass = 0.0001f;
+  static constexpr float min_mass = 0.001f;
   static constexpr float max_speed = 1.0f;
   static constexpr float min_flow = 0.01f;
 
   /* Returns the amount of water that should be in the bottom cell. */
   static float get_stable_state_b(float total_mass) {
-    if (total_mass <= 1) {
-      return 1;
-    } else if (total_mass < 2 * max_mass + max_compress) {
+    if (total_mass <= 1.0f) {
+      return 1.0f;
+    } else if (total_mass < 2.0f * max_mass + max_compress) {
       return (max_mass * max_mass + total_mass * max_compress)
           / (max_mass + max_compress);
     } else {
@@ -135,7 +135,7 @@ struct SandCell final : public BaseCell {
 };
 
 /* jello cell rules */
-struct JelloCell final : public BaseCell {
+struct NapalmCell final : public BaseCell {
   static cell_data_t spawn(const position_t &, Grid &) noexcept;
   static void step(const position_t &, Grid &) noexcept;
 };

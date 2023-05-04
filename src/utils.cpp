@@ -43,7 +43,7 @@ std::ostream &operator<<(std::ostream &stream, const simulake::CellType type) {
   case simulake::CellType::FIRE:
     stream << 'F';
     break;
-  case simulake::CellType::JELLO:
+  case simulake::CellType::NAPALM:
     stream << 'J';
     break;
   case simulake::CellType::SMOKE:

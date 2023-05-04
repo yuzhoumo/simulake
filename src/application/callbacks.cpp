@@ -39,7 +39,7 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
   if (key == GLFW_KEY_5 && action == GLFW_PRESS)
     state.set_selected_cell_type(simulake::CellType::SAND);
   if (key == GLFW_KEY_6 && action == GLFW_PRESS)
-    state.set_selected_cell_type(simulake::CellType::JELLO);
+    state.set_selected_cell_type(simulake::CellType::NAPALM);
   if (key == GLFW_KEY_7 && action == GLFW_PRESS)
     state.set_selected_cell_type(simulake::CellType::STONE);
 
