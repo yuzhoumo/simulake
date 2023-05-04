@@ -1,5 +1,5 @@
-#include "loader.hpp"
 #include "app.hpp"
+#include "loader.hpp"
 
 namespace simulake {
 
