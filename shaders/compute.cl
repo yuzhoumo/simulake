@@ -31,32 +31,32 @@ __kernel void initialize(__global ulong *seeds, __global grid_t *grid,
   next_grid[idx].updated = false;
 
   // draw box with water
-  if (abs(row - (height / 2) - 5) < 5 &&
-      abs(col - width / 4 - 5) < width / 2 + 5) {
-    grid[idx].type = STONE_TYPE;
-    next_grid[idx].type = STONE_TYPE;
+  // if (abs(row - (height / 2) - 5) < 5 &&
+  //     abs(col - width / 4 - 5) < width / 2 + 5) {
+  //   grid[idx].type = STONE_TYPE;
+  //   next_grid[idx].type = STONE_TYPE;
 
-    grid[idx].mass = STONE_MASS;
-    next_grid[idx].mass = STONE_MASS;
-  }
+  //   grid[idx].mass = STONE_MASS;
+  //   next_grid[idx].mass = STONE_MASS;
+  // }
 
-  else if ((abs(col - (width * 1 / 4) - 5) < 5 ||
-            abs(col - (width * 3 / 4) - 5) < 5) &&
-           abs(row - height / 2 + 80) < 100) {
-    grid[idx].type = STONE_TYPE;
-    next_grid[idx].type = STONE_TYPE;
+  // else if ((abs(col - (width * 1 / 4) - 5) < 5 ||
+  //           abs(col - (width * 3 / 4) - 5) < 5) &&
+  //          abs(row - height / 2 + 80) < 100) {
+  //   grid[idx].type = STONE_TYPE;
+  //   next_grid[idx].type = STONE_TYPE;
 
-    grid[idx].mass = STONE_MASS;
-    next_grid[idx].mass = STONE_MASS;
-  }
+  //   grid[idx].mass = STONE_MASS;
+  //   next_grid[idx].mass = STONE_MASS;
+  // }
 
-  else if (get_rand(&seeds[idx]) % 2 == 0) {
-    grid[idx].type = WATER_TYPE;
-    next_grid[idx].type = WATER_TYPE;
+  // else if (get_rand(&seeds[idx]) % 2 == 0) {
+  //   grid[idx].type = WATER_TYPE;
+  //   next_grid[idx].type = WATER_TYPE;
 
-    grid[idx].mass = WATER_MASS;
-    next_grid[idx].mass = WATER_MASS;
-  }
+  //   grid[idx].mass = WATER_MASS;
+  //   next_grid[idx].mass = WATER_MASS;
+  // }
 }
 // }}}
 
