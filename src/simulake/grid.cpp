@@ -85,8 +85,8 @@ void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
         spawn_cell = SandCell::spawn({x, y}, *this);
         break;
 
-      case CellType::NAPALM:
-        spawn_cell = NapalmCell::spawn({x, y}, *this);
+      case CellType::JET_FUEL:
+        spawn_cell = JetFuelCell::spawn({x, y}, *this);
         break;
 
       case CellType::STONE:
@@ -131,8 +131,12 @@ void Grid::simulate(float delta_time) noexcept {
         FireCell::step({x, y}, *this);
         break;
 
-      case CellType::NAPALM:
-        NapalmCell::step({x, y}, *this);
+      case CellType::GREEK_FIRE:
+        // FireCell::step({x, y}, *this);
+        break;
+
+      case CellType::JET_FUEL:
+        JetFuelCell::step({x, y}, *this);
         break;
 
       case CellType::SMOKE:

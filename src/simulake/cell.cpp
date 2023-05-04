@@ -12,7 +12,7 @@ std::random_device BaseCell::rd;
 std::mt19937 BaseCell::gen(BaseCell::rd());
 
 bool BaseCell::is_liquid(CellType type) {
-  return type == CellType::WATER or type == CellType::OIL or type == CellType::NAPALM;
+  return type == CellType::WATER or type == CellType::OIL or type == CellType::JET_FUEL;
 }
 
 bool BaseCell::is_gas(CellType type) {
@@ -36,7 +36,7 @@ float BaseCell::flammability(CellType type) {
     return 0.5f;
   case CellType::FIRE:
     return 0.0f;
-  case CellType::NAPALM:
+  case CellType::JET_FUEL:
     return 0.0f;
   case CellType::SMOKE:
     return 0.0f;
@@ -212,15 +212,15 @@ void WaterCell::step(const position_t &pos, Grid &grid) noexcept{
 
 }
 
-cell_data_t NapalmCell::spawn(const position_t &, Grid &) noexcept {
+cell_data_t JetFuelCell::spawn(const position_t &, Grid &) noexcept {
   return {
-    .type = CellType::NAPALM,
+    .type = CellType::JET_FUEL,
     .mass = 1.0f,
     .updated = true,
   };
 }
 
-void NapalmCell::step(const position_t &pos, Grid &grid) noexcept {
+void JetFuelCell::step(const position_t &pos, Grid &grid) noexcept {
   const auto [x, y] = pos;
 
   cell_data_t current_cell = grid.cell_at(x, y);
@@ -229,7 +229,7 @@ void NapalmCell::step(const position_t &pos, Grid &grid) noexcept {
   // Check downward movement
   cell_data_t below_cell = grid.cell_at(x, y + 1);
 
-  if (below_cell.type == CellType::NAPALM and random_int(0, 1000) == 0) {
+  if (below_cell.type == CellType::JET_FUEL and random_int(0, 1000) == 0) {
     // spontaneously combust with varying intensity
     grid.set_next(x, y, { .type = CellType::FIRE, .mass = random_float(0.0, 4.0) });
     return;

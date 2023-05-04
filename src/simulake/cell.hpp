@@ -19,7 +19,7 @@ enum class CellType : std::uint8_t {
   WATER,
   OIL,
   SAND,
-  NAPALM,
+  JET_FUEL,
   STONE,
 };
 
@@ -138,8 +138,8 @@ struct SandCell final : public BaseCell {
   static constexpr bool isFlammable = true;
 };
 
-/* jello cell rules */
-struct NapalmCell final : public BaseCell {
+/* jet fuel cell rules */
+struct JetFuelCell final : public BaseCell {
   static cell_data_t spawn(const position_t &, Grid &) noexcept;
   static void step(const position_t &, Grid &) noexcept;
 };

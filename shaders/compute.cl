@@ -3,7 +3,7 @@
 // NOTE(vir): DO NOT REMOVE --- x0
 #include "base.cl"
 
-// NOTE(vir): DO NOT REMOVE --- x19
+// NOTE(vir): DO NOT REMOVE --- x0
 #include "cell.cl"
 
 // {{{ initialize kernel
@@ -120,8 +120,8 @@ __kernel void simulate(__global ulong *seeds, __global grid_t *grid,
     INVOKE_IMPL(sand_step);
     break;
 
-  case JELLO_TYPE:
-    INVOKE_IMPL(jello_step);
+  case JET_FUEL_TYPE:
+    INVOKE_IMPL(jet_fuel_step);
     break;
 
   case STONE_TYPE:

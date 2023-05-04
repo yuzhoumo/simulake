@@ -33,17 +33,17 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods) {
   if (key == GLFW_KEY_2 && action == GLFW_PRESS)
     state.set_selected_cell_type(simulake::CellType::FIRE);
   if (key == GLFW_KEY_3 && action == GLFW_PRESS)
-    state.set_selected_cell_type(simulake::CellType::GREEK_FIRE);
-  if (key == GLFW_KEY_4 && action == GLFW_PRESS)
     state.set_selected_cell_type(simulake::CellType::WATER);
-  if (key == GLFW_KEY_5 && action == GLFW_PRESS)
+  if (key == GLFW_KEY_4 && action == GLFW_PRESS)
     state.set_selected_cell_type(simulake::CellType::OIL);
-  if (key == GLFW_KEY_6 && action == GLFW_PRESS)
+  if (key == GLFW_KEY_5 && action == GLFW_PRESS)
     state.set_selected_cell_type(simulake::CellType::SAND);
+  if (key == GLFW_KEY_6 && action == GLFW_PRESS)
+    state.set_selected_cell_type(simulake::CellType::JET_FUEL);
   if (key == GLFW_KEY_7 && action == GLFW_PRESS)
-    state.set_selected_cell_type(simulake::CellType::JELLO);
-  if (key == GLFW_KEY_8 && action == GLFW_PRESS)
     state.set_selected_cell_type(simulake::CellType::STONE);
+  if (key == GLFW_KEY_8 && action == GLFW_PRESS)
+    state.set_selected_cell_type(simulake::CellType::GREEK_FIRE);
 
   /* debug: print app state to console */
   if (key == GLFW_KEY_P && action == GLFW_PRESS)

@@ -15,7 +15,7 @@
 #define   WATER_TYPE        5
 #define   OIL_TYPE          6
 #define   SAND_TYPE         7
-#define   JELLO_TYPE        8
+#define   JET_FUEL_TYPE     8
 #define   STONE_TYPE        9
 // clang-format on
 
@@ -24,11 +24,14 @@
 
 #define V_STATIONARY ((float2){0.0f, 0.0f})
 
-#define IS_FLUID(x) (x.type >= AIR_TYPE && x.type <= OIL_TYPE)
+#define IS_FLUID(x)                                                            \
+  ((x.type >= AIR_TYPE && x.type <= OIL_TYPE) || (x.type == JET_FUEL_TYPE))
 #define IS_LIQUID(x) (x.type >= WATER_TYPE && x.type <= OIL_TYPE)
 #define IS_AIR(x) (x.type == AIR_TYPE)
+#define IS_SMOKE(x) (x.type == SMOKE_TYPE)
 #define IS_SAND(x) (x.type == SAND_TYPE)
 #define IS_WATER(x) (x.type == WATER_TYPE)
+#define IS_JET_FUEL(x) (x.type == JET_FUEL_TYPE)
 #define IS_FLAMMABLE(x)                                                        \
   (x.type >= AIR_TYPE && (x.type == OIL_TYPE || x.type == SAND_TYPE))
 
@@ -48,7 +51,7 @@
 #define   WATER_MASS      1.0f
 #define   OIL_MASS        0.8f
 #define   SAND_MASS       1.5f
-#define   JELLO_MASS      1.7f
+#define   JET_FUEL_MASS   1.0f
 #define   STONE_MASS      3.0f
 // clang-format on
 
@@ -91,7 +94,7 @@ inline float get_mass(const uint type, __global ulong *random_seed) {
     return SCALE_FLOAT(get_rand_float(random_seed), 0.7f, FIRE_MASS);
     break;
   case GREEK_FIRE_TYPE:
-    return SCALE_FLOAT(get_rand_float(random_seed), 0.5f, GREEK_FIRE_MASS);
+    return SCALE_FLOAT(get_rand_float(random_seed), 0.2f, GREEK_FIRE_MASS);
     break;
   case WATER_TYPE:
     return get_rand_float(random_seed);
@@ -102,8 +105,8 @@ inline float get_mass(const uint type, __global ulong *random_seed) {
   case SAND_TYPE:
     return SAND_MASS;
     break;
-  case JELLO_TYPE:
-    return JELLO_MASS;
+  case JET_FUEL_TYPE:
+    return SCALE_FLOAT(get_rand_float(random_seed), 0.3f, GREEK_FIRE_MASS);
     break;
 
   case AIR_TYPE:

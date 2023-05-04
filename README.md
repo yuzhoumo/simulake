@@ -43,7 +43,7 @@ For debug build, use the `-DCMAKE_BUILD_TYPE=Debug` flag.
 | Select WATER cell type     | `3`            |
 | Select OIL cell type       | `4`            |
 | Select SAND cell type      | `5`            |
-| Select JELLO cell type     | `6`            |
+| Select JET_FUEL cell type  | `6`            |
 | Select STONE cell type     | `7`            |
 | Print app state to console | `P`            |
 | Save grid to disk          | `S`            |

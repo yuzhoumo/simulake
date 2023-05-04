@@ -7,7 +7,7 @@
 #define WATER_TYPE      5
 #define OIL_TYPE        6
 #define SAND_TYPE       7
-#define JELLO_TYPE      8
+#define JET_FUEL_TYPE   8
 #define STONE_TYPE      9
 
 uniform sampler2D u_grid_data_texture;
@@ -180,10 +180,9 @@ vec4 shade_fire(float mass) {
   return vec4(fire_color, 1.0);
 }
 
-vec4 shade_greek_fire() {
+vec4 shade_greek_fire(float mass) {
   vec2 st = gl_FragCoord.xy / u_resolution * u_grid_dim;
   float noise = fbm(st, 4);
-  float mass = texture(u_grid_data_texture, tex_coord).g;
 
   // remap the mass value to a range of 0.0 to 1.0
   float normalized_mass = clamp(mass / 0.6, 0.0, 1.0);
@@ -214,7 +213,7 @@ vec4 shade_sand() {
   return vec4(vec3(0.9, 0.85, 0.4) * (0.5 + 0.5 * noise), 1.0);
 }
 
-vec4 shade_napalm() {
+vec4 shade_jet_fuel() {
   return shade_fire(rand(gl_FragCoord.xy / u_resolution));
 }
 
@@ -244,7 +243,7 @@ void main() {
     color = shade_fire(mass);
     break;
   case GREEK_FIRE_TYPE:
-    color = shade_greek_fire();
+    color = shade_greek_fire(mass);
     break;
   case WATER_TYPE:
     color = shade_water(mass);
@@ -255,8 +254,8 @@ void main() {
   case SAND_TYPE:
     color = shade_sand();
     break;
-  case NAPALM_TYPE:
-    color = shade_napalm();
+  case JET_FUEL_TYPE:
+    color = shade_jet_fuel();
     break;
   case STONE_TYPE:
     color = shade_stone();

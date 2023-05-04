@@ -117,7 +117,7 @@ STEP_IMPL(fire_step) {
 STEP_IMPL(greek_fire_step) {
   GEN_STEP_IMPL_HEADER();
 
-#define __to_greek_fire__(target, r, c)                                        \
+#define __to_greek_fire_or_smoke__(target, r, c)                               \
   if (IS_FLAMMABLE(grid[target])) {                                            \
     next_grid[target].type = FIRE_TYPE;                                        \
     next_grid[target].mass = remaining_mass;                                   \
@@ -149,15 +149,15 @@ STEP_IMPL(greek_fire_step) {
 
   // clang-format off
   if (top_valid) {
-                       __to_greek_fire__(idx_top,       (long) row - 1, (long) col + 0);
-    if (left_valid)  { __to_greek_fire__(idx_top_left,  (long) row - 1, (long) col - 1); }
-    if (right_valid) { __to_greek_fire__(idx_top_right, (long) row - 1, (long) col + 1); }
+                       __to_greek_fire_or_smoke__(idx_top,       (long) row - 1, (long) col + 0);
+    if (left_valid)  { __to_greek_fire_or_smoke__(idx_top_left,  (long) row - 1, (long) col - 1); }
+    if (right_valid) { __to_greek_fire_or_smoke__(idx_top_right, (long) row - 1, (long) col + 1); }
   }
 
   if (bot_valid) {
-    __to_greek_fire__(idx_bot,       (long) row + 1, (long) col + 0);
-    if (left_valid)  { __to_greek_fire__(idx_bot_left,  (long) row + 1, (long) col - 1); }
-    if (right_valid) { __to_greek_fire__(idx_bot_right, (long) row + 1, (long) col + 1); }
+                       __to_greek_fire_or_smoke__(idx_bot,       (long) row + 1, (long) col + 0);
+    if (left_valid)  { __to_greek_fire_or_smoke__(idx_bot_left,  (long) row + 1, (long) col - 1); }
+    if (right_valid) { __to_greek_fire_or_smoke__(idx_bot_right, (long) row + 1, (long) col + 1); }
   }
   // clang-format on
 
@@ -169,7 +169,77 @@ STEP_IMPL(greek_fire_step) {
 }
 
 STEP_IMPL(oil_step) {}
-STEP_IMPL(jello_step) {}
+
+STEP_IMPL(jet_fuel_step) {
+  GEN_STEP_IMPL_HEADER();
+
+  grid[idx].updated = true;
+  next_grid[idx].updated = false;
+
+  if (top_valid && IS_FLAMMABLE(grid[idx_top]) && get_rand(seed) % 10 < 3) {
+    next_grid[idx].type = FIRE_TYPE;
+    next_grid[idx].mass = SCALE_FLOAT(get_rand_float(seed), 0.7f, 4.0f);
+    next_grid[idx].velocity = V_STATIONARY;
+    return;
+  }
+
+  if (top_valid && IS_WATER(grid[idx_top])) {
+    next_grid[idx].type = SMOKE_TYPE;
+    next_grid[idx].mass = get_mass(SMOKE_TYPE, seed);
+    next_grid[idx].velocity = V_STATIONARY;
+    return;
+  }
+
+  if (bot_valid && IS_JET_FUEL(grid[idx_bot]) && get_rand(seed) % 100 < 100) {
+    next_grid[idx].type = FIRE_TYPE;
+    next_grid[idx].mass = SCALE_FLOAT(get_rand_float(seed), 0.7f, 4.0f);
+    next_grid[idx].velocity = V_STATIONARY;
+    return;
+  }
+
+  if (bot_valid && !IS_FLUID(grid[idx_bot]) && get_rand(seed) % 10 < 5) {
+    next_grid[idx].type = FIRE_TYPE;
+    next_grid[idx].mass = SCALE_FLOAT(get_rand_float(seed), 0.5f, 4.0f);
+    next_grid[idx].velocity = V_STATIONARY;
+    return;
+  }
+
+  if (bot_valid && (IS_AIR(grid[idx_bot]) || IS_SMOKE(grid[idx_bot]))) {
+    next_grid[idx_bot].type = JET_FUEL_TYPE;
+    next_grid[idx_bot].mass = grid[idx].mass;
+    next_grid[idx_bot].velocity = grid[idx].velocity;
+    next_grid[idx_bot].updated = false;
+
+    next_grid[idx].type = AIR_TYPE;
+    next_grid[idx].mass = AIR_MASS;
+    next_grid[idx].velocity = V_STATIONARY;
+
+    grid[idx_bot].updated = true;
+    return;
+  }
+
+  const int direction = get_rand(seed) % 2 == 0 ? -1 : 1;
+  const bool dir_valid = direction == -1 ? top_valid : bot_valid;
+  const int next_idx = GET_INDEX(row + direction, col, width, height);
+  if (dir_valid && (IS_AIR(grid[next_idx]) || IS_SMOKE(grid[next_idx]))) {
+    next_grid[next_idx].type = JET_FUEL_TYPE;
+    next_grid[next_idx].mass = grid[idx].mass;
+    next_grid[next_idx].velocity = grid[idx].velocity;
+    next_grid[next_idx].updated = false;
+
+    next_grid[idx].type = AIR_TYPE;
+    next_grid[idx].mass = AIR_MASS;
+    next_grid[idx].velocity = V_STATIONARY;
+
+    grid[next_idx].updated = true;
+    return;
+  }
+
+  next_grid[idx].type = JET_FUEL_TYPE;
+  next_grid[idx].mass = grid[idx].mass;
+  next_grid[idx].velocity = grid[idx].velocity;
+}
+
 STEP_IMPL(stone_step) {}
 
 float water_get_stable_state(const float total_mass) {
