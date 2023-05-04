@@ -101,6 +101,7 @@ private:
     /* buffers */
     cl_mem grid = nullptr;
     cl_mem next_grid = nullptr;
+    cl_mem seeds = nullptr;
   };
 
   /* initialize logical device and compute structures */

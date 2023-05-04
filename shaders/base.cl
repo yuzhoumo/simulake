@@ -63,38 +63,33 @@
   }
 
 // get a random number (0, UINT_MAX) using xor shift
-inline uint get_rand(const uint seed_, const uint row, const uint col,
-                     const float mass) {
+inline uint get_rand(__global ulong *seed) {
   // xorshift
   // const uint seed = seed + row;
   // const uint t = seed ^ (seed << 11);
   // return (col) ^ ((col) >> 19) ^ (t ^ (t >> 8));
 
   // java random
-  ulong seed = seed_ + (row * col) * mass * get_local_id(0) - get_local_id(1);
-  seed = (seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
-  return seed >> 16;
+  *seed = ((*seed) * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
+  return (*seed) >> 16;
 }
 
-inline float get_rand_float(const uint seed_, const uint row, const uint col,
-                            const float mass) {
-  return ((float)get_rand(seed_, row, col, mass)) / ((float)UINT_MAX);
+inline float get_rand_float(__global ulong *seed_) {
+  return ((float)get_rand(seed_)) / ((float)UINT_MAX);
 }
 
 #define SCALE_FLOAT(f, low, high) ((f - 1.0f) / (1.0f)) * (high - low) + low
 
-inline float get_mass(const uint type, const uint random_seed, const uint row,
-                      const uint col) {
+inline float get_mass(const uint type, __global ulong *random_seed) {
   switch (type) {
   case SMOKE_TYPE:
-    return get_rand_float(random_seed, row, col, SMOKE_MASS);
+    return get_rand_float(random_seed);
     break;
   case FIRE_TYPE:
-    return SCALE_FLOAT(get_rand_float(random_seed, row, col, FIRE_MASS), 0.7f,
-                       FIRE_MASS);
+    return SCALE_FLOAT(get_rand_float(random_seed), 0.7f, FIRE_MASS);
     break;
   case WATER_TYPE:
-    return get_rand_float(random_seed, row, col, WATER_MASS);
+    return get_rand_float(random_seed);
     break;
   case OIL_TYPE:
     return OIL_MASS;
@@ -144,10 +139,10 @@ typedef struct __attribute__((packed, aligned(8))) {
   const uint row = get_global_id(1);
 
 #define STEP_IMPL(name)                                                        \
-  inline void name(const uint2 loc, const uint2 dims, __global grid_t *grid,   \
-                   __global grid_t *next_grid, uint rand_seed)
+  inline void name(__global ulong *seed, const uint2 loc, const uint2 dims,    \
+                   __global grid_t *grid, __global grid_t *next_grid)
 
-#define INVOKE_IMPL(name) name(loc, dims, grid, next_grid, rand_seed)
+#define INVOKE_IMPL(name) name(&seeds[idx], loc, dims, grid, next_grid)
 
 #define GEN_STEP_LOC()                                                         \
   const uint row = loc[0];                                                     \

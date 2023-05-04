@@ -20,6 +20,7 @@ DeviceGrid::DeviceGrid(const std::uint32_t _width, const std::uint32_t _height,
 DeviceGrid::~DeviceGrid() {
   CL_CALL(clReleaseMemObject(sim_context.grid));
   CL_CALL(clReleaseMemObject(sim_context.next_grid));
+  CL_CALL(clReleaseMemObject(sim_context.seeds));
   CL_CALL(clReleaseKernel(sim_context.init_kernel));
   CL_CALL(clReleaseKernel(sim_context.sim_kernel));
   CL_CALL(clReleaseKernel(sim_context.fluid_kernel));
@@ -36,14 +37,26 @@ void DeviceGrid::reset() noexcept {
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
 
-  // clang-format off
-  const unsigned int rand_seed = std::rand();
-  CL_CALL(clSetKernelArg(sim_context.init_kernel, 3, sizeof(cl_uint), &rand_seed));
-  // clang-format on
-
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.init_kernel, 2,
                                  nullptr, global_item_size, local_item_size, 0,
                                  nullptr, nullptr));
+
+  // reset seeds
+  {
+    static std::uniform_int_distribution<unsigned long> distribution(
+        std::numeric_limits<unsigned long>::min(),
+        std::numeric_limits<unsigned long>::max());
+    static std::default_random_engine generator{};
+
+    // generate seeds
+    std::vector<unsigned long> seeds(num_cells, 0L);
+    std::generate(seeds.begin(), seeds.end(),
+                  []() { return distribution(generator); });
+
+    CL_CALL(clEnqueueWriteBuffer(sim_context.queue, sim_context.seeds, CL_TRUE,
+                                 0, num_cells * sizeof(unsigned long),
+                                 seeds.data(), 0, nullptr, nullptr));
+  }
 
   // wait for kernel to finish
   CL_CALL(clFinish(sim_context.queue));
@@ -53,11 +66,6 @@ void DeviceGrid::initialize_random() const noexcept {
   // max work group size is 256 = 16 * 16
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
-
-  // clang-format off
-  const unsigned int rand_seed = std::rand();
-  CL_CALL(clSetKernelArg(sim_context.rand_kernel, 3, sizeof(cl_uint), &rand_seed));
-  // clang-format on
 
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.rand_kernel, 2,
                                  nullptr, global_item_size, local_item_size, 0,
@@ -74,25 +82,12 @@ void DeviceGrid::simulate(float delta_time) noexcept {
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
 
-  {
-    // clang-format off
-    CL_CALL(clSetKernelArg(sim_context.sim_kernel, flip_flag ? 0 : 1, sizeof(cl_mem), &sim_context.grid));
-    CL_CALL(clSetKernelArg(sim_context.sim_kernel, flip_flag ? 1 : 0, sizeof(cl_mem), &sim_context.next_grid));
-
-    const unsigned int rand_seed = std::rand();
-    CL_CALL(clSetKernelArg(sim_context.sim_kernel, 3, sizeof(cl_uint), &rand_seed));
-    // clang-format on
-  }
-
-  {
-    // clang-format off
-    CL_CALL(clSetKernelArg(sim_context.fluid_kernel, flip_flag ? 0 : 1, sizeof(cl_mem), &sim_context.grid));
-    CL_CALL(clSetKernelArg(sim_context.fluid_kernel, flip_flag ? 1 : 0, sizeof(cl_mem), &sim_context.next_grid));
-
-    const unsigned int rand_seed = std::rand();
-    CL_CALL(clSetKernelArg(sim_context.fluid_kernel, 3, sizeof(cl_uint), &rand_seed));
-    // clang-format on
-  }
+  // clang-format off
+  CL_CALL(clSetKernelArg(sim_context.sim_kernel, flip_flag ? 1 : 2, sizeof(cl_mem), &sim_context.grid));
+  CL_CALL(clSetKernelArg(sim_context.sim_kernel, flip_flag ? 2 : 1, sizeof(cl_mem), &sim_context.next_grid));
+  CL_CALL(clSetKernelArg(sim_context.fluid_kernel, flip_flag ? 1 : 2, sizeof(cl_mem), &sim_context.grid));
+  CL_CALL(clSetKernelArg(sim_context.fluid_kernel, flip_flag ? 2 : 1, sizeof(cl_mem), &sim_context.next_grid));
+  // clang-format on
 
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.sim_kernel, 2,
                                  nullptr, global_item_size, local_item_size, 0,
@@ -190,12 +185,9 @@ void DeviceGrid::render_texture() const noexcept {
 
   // clang-format off
   // TODO(vir): do we need both current and previous frame? might be useful for effects
-  CL_CALL(clSetKernelArg(sim_context.render_kernel, 0, sizeof(cl_image), &image));
-  CL_CALL(clSetKernelArg(sim_context.render_kernel, flip_flag ? 2 : 1, sizeof(cl_mem), &sim_context.grid));
-  CL_CALL(clSetKernelArg(sim_context.render_kernel, flip_flag ? 1 : 2, sizeof(cl_mem), &sim_context.next_grid));
-
-  const unsigned int rand_seed = std::rand();
-  CL_CALL(clSetKernelArg(sim_context.render_kernel, 5, sizeof(cl_uint), &rand_seed));
+  CL_CALL(clSetKernelArg(sim_context.render_kernel, 1, sizeof(cl_image), &image));
+  CL_CALL(clSetKernelArg(sim_context.render_kernel, flip_flag ? 3 : 2, sizeof(cl_mem), &sim_context.grid));
+  CL_CALL(clSetKernelArg(sim_context.render_kernel, flip_flag ? 2 : 3, sizeof(cl_mem), &sim_context.next_grid));
   // clang-format on
 
   // render into texture
@@ -221,14 +213,11 @@ void DeviceGrid::spawn_cells(
 
   // update the last rendered grid, do not overwrite existing non-vacant cells
   // clang-format off
-  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, flip_flag ? 0 : 1, sizeof(cl_mem), &sim_context.grid));
-  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, flip_flag ? 1 : 0, sizeof(cl_mem), &sim_context.next_grid));
-  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 2, sizeof(cl_uint2), &grid_xy));
-  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 3, sizeof(unsigned int), &radius));
-  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 4, sizeof(unsigned int), &target));
-
-  const unsigned int rand_seed = std::rand();
-  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 7, sizeof(unsigned int), &rand_seed));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, flip_flag ? 1 : 2, sizeof(cl_mem), &sim_context.grid));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, flip_flag ? 2 : 1, sizeof(cl_mem), &sim_context.next_grid));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 3, sizeof(cl_uint2), &grid_xy));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 4, sizeof(unsigned int), &radius));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 5, sizeof(unsigned int), &target));
   // clang-format on
 
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.spawn_kernel, 2,
@@ -448,6 +437,9 @@ void DeviceGrid::initialize_kernels() noexcept {
 
     sim_context.next_grid = clCreateBuffer(sim_context.context, CL_MEM_HOST_READ_ONLY, memory_size, nullptr, &error);
     CL_CALL(error);
+
+    sim_context.seeds = clCreateBuffer(sim_context.context, CL_MEM_WRITE_ONLY, num_cells * sizeof(cl_long), nullptr, &error);
+    CL_CALL(error);
   }
 
   // create and compile program
@@ -496,29 +488,36 @@ void DeviceGrid::initialize_kernels() noexcept {
   cl_uint2 grid_dim = {width, height};
 
   // set init kernel args: fixed
-  CL_CALL(clSetKernelArg(sim_context.init_kernel, 0, sizeof(cl_mem), &sim_context.grid));
-  CL_CALL(clSetKernelArg(sim_context.init_kernel, 1, sizeof(cl_mem), &sim_context.next_grid));
-  CL_CALL(clSetKernelArg(sim_context.init_kernel, 2, sizeof(cl_uint2), &grid_dim));
+  CL_CALL(clSetKernelArg(sim_context.init_kernel, 0, sizeof(cl_mem), &sim_context.seeds));
+  CL_CALL(clSetKernelArg(sim_context.init_kernel, 1, sizeof(cl_mem), &sim_context.grid));
+  CL_CALL(clSetKernelArg(sim_context.init_kernel, 2, sizeof(cl_mem), &sim_context.next_grid));
+  CL_CALL(clSetKernelArg(sim_context.init_kernel, 3, sizeof(cl_uint2), &grid_dim));
 
   // set random init kernel args: fixed
-  CL_CALL(clSetKernelArg(sim_context.rand_kernel, 0, sizeof(cl_mem), &sim_context.grid));
-  CL_CALL(clSetKernelArg(sim_context.rand_kernel, 1, sizeof(cl_mem), &sim_context.next_grid));
-  CL_CALL(clSetKernelArg(sim_context.rand_kernel, 2, sizeof(cl_uint2), &grid_dim));
+  CL_CALL(clSetKernelArg(sim_context.rand_kernel, 0, sizeof(cl_mem), &sim_context.seeds));
+  CL_CALL(clSetKernelArg(sim_context.rand_kernel, 1, sizeof(cl_mem), &sim_context.grid));
+  CL_CALL(clSetKernelArg(sim_context.rand_kernel, 2, sizeof(cl_mem), &sim_context.next_grid));
+  CL_CALL(clSetKernelArg(sim_context.rand_kernel, 3, sizeof(cl_uint2), &grid_dim));
 
   // NOTE(vir): we set render kernel data args in Device::render_texture()
   // these are the fixed ones
-  CL_CALL(clSetKernelArg(sim_context.render_kernel, 3, sizeof(cl_uint2), &grid_dim));
-  CL_CALL(clSetKernelArg(sim_context.render_kernel, 4, sizeof(unsigned int), &cell_size));
+  CL_CALL(clSetKernelArg(sim_context.render_kernel, 0, sizeof(cl_mem), &sim_context.seeds));
+  CL_CALL(clSetKernelArg(sim_context.render_kernel, 4, sizeof(cl_uint2), &grid_dim));
+  CL_CALL(clSetKernelArg(sim_context.render_kernel, 5, sizeof(unsigned int), &cell_size));
 
   // NOTE(vir): we set spawn kernel data args in DeviceGrid::spawn_cells()
   // these are the fixed ones
-  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 5, sizeof(cl_uint2), &grid_dim));
-  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 6, sizeof(unsigned int), &cell_size));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 0, sizeof(cl_mem), &sim_context.seeds));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 6, sizeof(cl_uint2), &grid_dim));
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 7, sizeof(unsigned int), &cell_size));
 
   // NOTE(vir): we set sim/fluid kernel data args in DeviceGrid::simulate()
   // these are the fixed ones
-  CL_CALL(clSetKernelArg(sim_context.sim_kernel, 2, sizeof(cl_uint2), &grid_dim));
-  CL_CALL(clSetKernelArg(sim_context.fluid_kernel, 2, sizeof(cl_uint2), &grid_dim));
+  CL_CALL(clSetKernelArg(sim_context.sim_kernel, 0, sizeof(cl_mem), &sim_context.seeds));
+  CL_CALL(clSetKernelArg(sim_context.sim_kernel, 3, sizeof(cl_uint2), &grid_dim));
+
+  CL_CALL(clSetKernelArg(sim_context.fluid_kernel, 0, sizeof(cl_mem), &sim_context.seeds));
+  CL_CALL(clSetKernelArg(sim_context.fluid_kernel, 3, sizeof(cl_uint2), &grid_dim));
   // clang-format on
 }
 
