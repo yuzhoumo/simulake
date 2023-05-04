@@ -6,10 +6,8 @@ namespace simulake {
 App::App(std::uint32_t width, std::uint32_t height, std::uint32_t cell_size,
          const std::string_view title)
     : window(width * cell_size, height * cell_size, title),
-      renderer(width, height, cell_size),
-      device_grid(width, height, cell_size),
-      grid(width, height),
-      state(AppState::get_instance()) {
+      renderer(width, height, cell_size), device_grid(width, height, cell_size),
+      grid(width, height), state(AppState::get_instance()) {
 
   state.set_renderer(&renderer);
   state.set_window(&window);
@@ -29,39 +27,35 @@ void App::step_sim(bool paused, GridBase *sim_grid) noexcept {
   const auto target_type = state.get_target_type();
 
   if (state.is_mouse_pressed() and target_type != CellType::NONE) {
-    std::uint32_t x = static_cast<std::uint32_t>(grid.get_width() *
+    std::uint32_t x = static_cast<std::uint32_t>(
+        grid.get_width() *
         (state.get_prev_mouse_x() / state.get_window_width()));
-    std::uint32_t y = static_cast<std::uint32_t>(grid.get_height() *
+    std::uint32_t y = static_cast<std::uint32_t>(
+        grid.get_height() *
         (state.get_prev_mouse_y() / state.get_window_height()));
 
     sim_grid->spawn_cells({x, y}, state.get_spawn_radius(), target_type);
   }
 
-  if (!paused) sim_grid->simulate(state.get_delta_time());
+  if (!paused)
+    sim_grid->simulate(state.get_delta_time());
 }
 
 void App::run(const bool gpu_mode, GridBase::serialized_grid_t *data) noexcept {
 
   /* init grid and simulation update function */
-  GridBase *sim_grid = gpu_mode ? static_cast<GridBase *>(&device_grid) :
-                                  static_cast<GridBase *>(&grid);
+  GridBase *sim_grid = gpu_mode ? static_cast<GridBase *>(&device_grid)
+                                : static_cast<GridBase *>(&grid);
 
   state.set_grid(sim_grid);
   if (data != nullptr) {
-    // TODO(vir): MAKE desearlize return true/false on error or hard exit is required
+    // TODO(vir): MAKE desearlize return true/false on error or hard exit is
+    // required
     state.get_grid()->deserialize(*data);
-    state.set_paused(true);
+    // state.set_paused(true);
   }
 
   renderer.submit_grid(sim_grid);
-
-  if (gpu_mode) {
-    renderer.submit_grid(sim_grid);
-  }
-
-  if (gpu_mode) {
-    renderer.submit_grid(device_grid);
-  }
 
 #if DEBUG
   std::uint64_t frame_count = 0;
@@ -81,7 +75,8 @@ void App::run(const bool gpu_mode, GridBase::serialized_grid_t *data) noexcept {
 
     /* step the simulation */
     step_sim(state.is_paused(), sim_grid);
-    if (!gpu_mode) renderer.submit_grid(sim_grid);
+    if (!gpu_mode)
+      renderer.submit_grid(sim_grid);
 
     /* push frame */
     renderer.render();
