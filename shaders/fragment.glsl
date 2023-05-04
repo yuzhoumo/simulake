@@ -232,8 +232,10 @@ vec4 shade_water(float mass) {
   return vec4(mix(light_blue, dark_blue, mass), 1.0); // interpolated
 }
 
-vec4 shade_oil() {
-  return vec4(0.40, 0.40, 0.19, 1.0);
+vec4 shade_oil(float mass) {
+  vec3 light_olive = vec3(0.40, 0.40, 0.19); // light olive
+  vec3 dark_olive = vec3(0.20, 0.20, 0.09);  // dark olive
+  return vec4(mix(light_olive, dark_olive, mass), 1.0); // interpolated
 }
 
 vec4 shade_sand() {
@@ -295,7 +297,7 @@ void main() {
     color = shade_water(mass);
     break;
   case OIL_TYPE:
-    color = shade_oil();
+    color = shade_oil(mass);
     break;
   case SAND_TYPE:
     color = shade_sand();
