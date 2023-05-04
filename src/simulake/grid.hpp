@@ -2,8 +2,8 @@
 #define SIMULAKE_GRID_HPP
 
 #include <optional>
-#include <vector>
 #include <random>
+#include <vector>
 
 #include "cell.hpp"
 #include "grid_base.hpp"
@@ -34,13 +34,10 @@ public:
 
   /* spawn cells, given grid coords, radius in cells, and cell type */
   void spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &,
-                   const std::uint32_t,
-                   const CellType) noexcept override;
+                   const std::uint32_t, const CellType) noexcept override;
 
   /* is not device grid */
-  constexpr bool is_device_grid() const noexcept override {
-    return false;
-  }
+  constexpr bool is_device_grid() const noexcept override { return false; }
 
   /* accessor methods for grid dimensions */
   inline std::uint32_t get_width() const noexcept override { return width; }
@@ -112,7 +109,6 @@ private:
   std::uint32_t stride;
 
   float delta_time = 0.0f;
-
 };
 
 } /* namespace simulake */

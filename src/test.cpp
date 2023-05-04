@@ -50,7 +50,7 @@ namespace test {
 //       int second_row = (int) WIDTH / CELL_SIZE / 3 * 2;
 //
 //       if ((x == first_col && first_row < y && y < second_row)
-//           || (x == second_col && first_row < y && y < second_row) 
+//           || (x == second_col && first_row < y && y < second_row)
 //           || (y == first_row && first_col < x && x < second_col)
 //           || (y == second_row && first_col < x && x < second_col)) {
 //         test_grid.set_curr(x, y, { .type = simulake::CellType::STONE });
