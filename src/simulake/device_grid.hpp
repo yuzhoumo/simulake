@@ -92,6 +92,7 @@ private:
 
     /* kernels */
     cl_kernel sim_kernel = nullptr;
+    cl_kernel fluid_kernel = nullptr;
     cl_kernel init_kernel = nullptr;
     cl_kernel rand_kernel = nullptr;
     cl_kernel render_kernel = nullptr;
