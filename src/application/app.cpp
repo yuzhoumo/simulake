@@ -46,7 +46,6 @@ void App::run(const bool gpu_mode, GridBase::serialized_grid_t *data) noexcept {
   /* init grid and simulation update function */
   GridBase *sim_grid = gpu_mode ? static_cast<GridBase *>(&device_grid)
                                 : static_cast<GridBase *>(&grid);
-
   state.set_grid(sim_grid);
   if (data != nullptr) {
     // TODO(vir): MAKE desearlize return true/false on error or hard exit is

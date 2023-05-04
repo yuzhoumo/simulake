@@ -35,6 +35,11 @@ void DeviceGrid::reset() noexcept {
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
 
+  // clang-format off
+  const unsigned int rand_seed = std::rand();
+  CL_CALL(clSetKernelArg(sim_context.init_kernel, 3, sizeof(cl_uint), &rand_seed));
+  // clang-format on
+
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.init_kernel, 2,
                                  nullptr, global_item_size, local_item_size, 0,
                                  nullptr, nullptr));
@@ -48,6 +53,11 @@ void DeviceGrid::initialize_random() const noexcept {
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
 
+  // clang-format off
+  const unsigned int rand_seed = std::rand();
+  CL_CALL(clSetKernelArg(sim_context.rand_kernel, 3, sizeof(cl_uint), &rand_seed));
+  // clang-format on
+
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.rand_kernel, 2,
                                  nullptr, global_item_size, local_item_size, 0,
                                  nullptr, nullptr));
@@ -57,7 +67,8 @@ void DeviceGrid::initialize_random() const noexcept {
 }
 
 void DeviceGrid::simulate(float delta_time) noexcept {
-  //NOTE(joe): ignore delta time for now if not needed
+  // NOTE(joe): ignore delta time for now if not needed
+
   // max work group size is 256 = 16 * 16
   const size_t global_item_size[] = {width, height};
   const size_t local_item_size[] = {LOCAL_WIDTH, LOCAL_HEIGHT};
@@ -67,6 +78,9 @@ void DeviceGrid::simulate(float delta_time) noexcept {
     // clang-format off
     CL_CALL(clSetKernelArg(sim_context.sim_kernel, flip_flag ? 0 : 1, sizeof(cl_mem), &sim_context.grid));
     CL_CALL(clSetKernelArg(sim_context.sim_kernel, flip_flag ? 1 : 0, sizeof(cl_mem), &sim_context.next_grid));
+
+    const unsigned int rand_seed = std::rand();
+    CL_CALL(clSetKernelArg(sim_context.sim_kernel, 3, sizeof(cl_uint), &rand_seed));
     // clang-format on
 
     CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.sim_kernel, 2,
@@ -164,6 +178,9 @@ void DeviceGrid::render_texture() const noexcept {
   CL_CALL(clSetKernelArg(sim_context.render_kernel, 0, sizeof(cl_image), &image));
   CL_CALL(clSetKernelArg(sim_context.render_kernel, flip_flag ? 2 : 1, sizeof(cl_mem), &sim_context.grid));
   CL_CALL(clSetKernelArg(sim_context.render_kernel, flip_flag ? 1 : 2, sizeof(cl_mem), &sim_context.next_grid));
+
+  const unsigned int rand_seed = std::rand();
+  CL_CALL(clSetKernelArg(sim_context.render_kernel, 5, sizeof(cl_uint), &rand_seed));
   // clang-format on
 
   // render into texture
@@ -194,6 +211,9 @@ void DeviceGrid::spawn_cells(
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 2, sizeof(cl_uint2), &grid_xy));
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 3, sizeof(unsigned int), &radius));
   CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 4, sizeof(unsigned int), &target));
+
+  const unsigned int rand_seed = std::rand();
+  CL_CALL(clSetKernelArg(sim_context.spawn_kernel, 7, sizeof(unsigned int), &rand_seed));
   // clang-format on
 
   CL_CALL(clEnqueueNDRangeKernel(sim_context.queue, sim_context.spawn_kernel, 2,

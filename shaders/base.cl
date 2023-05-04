@@ -62,11 +62,24 @@
   }
 
 // get a random number (0, UINT_MAX) using xor shift
-inline uint get_rand(const uint row, const uint col) {
-  const uint seed = 1337 + row;
-  const uint t = seed ^ (seed << 11);
-  return (7331 + col) ^ ((7331 + col) >> 19) ^ (t ^ (t >> 8));
+inline uint get_rand(const uint seed_, const uint row, const uint col) {
+  // xorshift
+  // const uint seed = seed + row;
+  // const uint t = seed ^ (seed << 11);
+  // return (col) ^ ((col) >> 19) ^ (t ^ (t >> 8));
+
+  // java random
+  ulong seed = seed_ + row * col;
+  seed = (seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
+  return seed >> 16;
 }
+
+inline float get_rand_float(const uint seed_, const uint row, const uint col) {
+  const uint rand = get_rand(seed_, row, col);
+  return ((float)get_rand(seed_, row, col)) / ((float)UINT_MAX);
+}
+
+#define SCALE_FLOAT(f, low, high) ((f - 1.0f) / (1.0f)) * (high - low) + low
 
 inline float get_mass(const uint type) {
   switch (type) {
@@ -117,18 +130,20 @@ typedef struct __attribute__((packed, aligned(8))) {
   const uint idx_bot_right = GET_INDEX(row + 1, col + 1, width, height);
 
 #define GEN_BOUNDS_VALID(row, col, width, height)                              \
-  const bool top_valid = (row - 1) >= 0;                                       \
-  const bool bot_valid = (row + 1) < height;                                   \
+  const bool top_valid = ((long)row - 1) >= 0;                                 \
+  const bool bot_valid = ((long)row + 1) < (long)height;                       \
   const bool left_valid = ((long)col - 1) > 0;                                 \
-  const bool right_valid = (col + 1) < width;
+  const bool right_valid = ((long)col + 1) < (long)width;
 
 #define GEN_LOC_VARS()                                                         \
   const uint col = get_global_id(0);                                           \
   const uint row = get_global_id(1);
 
 #define STEP_IMPL(name)                                                        \
-  void name(const uint2 loc, const uint2 dims, __global grid_t *grid,          \
-            __global grid_t *next_grid)
+  inline void name(const uint2 loc, const uint2 dims, __global grid_t *grid,   \
+                   __global grid_t *next_grid, const uint rand_seed)
+
+#define INVOKE_IMPL(name) name(loc, dims, grid, next_grid, rand_seed)
 
 #define GEN_STEP_LOC()                                                         \
   const uint row = loc[0];                                                     \
@@ -139,6 +154,7 @@ typedef struct __attribute__((packed, aligned(8))) {
 #define GEN_STEP_IMPL_HEADER()                                                 \
   GEN_STEP_LOC();                                                              \
   GEN_BOUNDS_VALID(row, col, width, height);                                   \
-  GEN_NEIGHBOUR_INDICES(row, col, width, height);
+  GEN_NEIGHBOUR_INDICES(row, col, width, height);                              \
+  const uint type = (int)grid[idx].type;
 
 #endif

@@ -3,8 +3,102 @@
 // base macros and definitions
 #include "base.cl"
 
-STEP_IMPL(smoke_step) {}
-STEP_IMPL(fire_step) {}
+STEP_IMPL(smoke_step) {
+  GEN_STEP_IMPL_HEADER();
+
+#define __move_smoke__(idx_next)                                               \
+  {                                                                            \
+    next_grid[idx].type = AIR_TYPE;                                            \
+    next_grid[idx].mass = AIR_MASS;                                            \
+    next_grid[idx].velocity = V_STATIONARY;                                    \
+    next_grid[idx].updated = false;                                            \
+    next_grid[idx_next].type = SMOKE_TYPE;                                     \
+    next_grid[idx_next].mass = grid[idx].mass - mass_decay;                    \
+    next_grid[idx_next].velocity = grid[idx].velocity;                         \
+    next_grid[idx_next].updated = false;                                       \
+    grid[idx].updated = true;                                                  \
+    grid[idx_next].updated = true;                                             \
+  }
+
+  const float p = 0.4f;
+  const float min_mass = 0.0f;
+  const float mass_decay = 0.005f;
+
+  const bool decayed = grid[idx].mass <= min_mass;
+  const float rand = get_rand_float(rand_seed, row, col);
+
+  if (decayed) {
+    next_grid[idx].type = AIR_TYPE;
+    next_grid[idx].mass = AIR_MASS;
+    next_grid[idx].velocity = V_STATIONARY;
+    next_grid[idx].updated = false;
+    grid[idx].updated = true;
+  }
+
+  else if (rand < p && top_valid) {
+    // clang-format off
+    if      (               IS_FLUID(grid[idx_top]))       { __move_smoke__(idx_top); }
+    else if (left_valid  && IS_FLUID(grid[idx_top_left]))  { __move_smoke__(idx_top_left); }
+    else if (right_valid && IS_FLUID(grid[idx_top_right])) { __move_smoke__(idx_top_right); }
+    // clang-format on
+  }
+}
+
+STEP_IMPL(fire_step) {
+  GEN_STEP_IMPL_HEADER();
+
+#define __to_fire_or_smoke__(target, r, c)                                     \
+  if (IS_FLAMMABLE(grid[target])) {                                            \
+    next_grid[target].type = FIRE_TYPE;                                        \
+    next_grid[target].mass = remaining_mass;                                   \
+    next_grid[target].velocity = V_STATIONARY;                                 \
+    next_grid[target].updated = false;                                         \
+    grid[idx].updated = true;                                                  \
+  } else if (IS_AIR(grid[target]) && rand < p) {                               \
+    next_grid[target].type = SMOKE_TYPE;                                       \
+    next_grid[target].mass = SMOKE_MASS;                                       \
+    next_grid[target].velocity = remaining_mass - mass_decay;                  \
+    next_grid[target].updated = false;                                         \
+    grid[idx].updated = true;                                                  \
+  }
+
+  const float p = 0.4f;
+  const float min_mass = 0.0f;
+  const float mass_decay = 0.05f;
+
+  const float rand = get_rand_float(rand_seed, row, col);
+  const float remaining_mass = grid[idx].mass - mass_decay;
+
+  if (remaining_mass <= min_mass) {
+    next_grid[idx].type = SMOKE_TYPE;
+    next_grid[idx].mass = SMOKE_MASS;
+    next_grid[idx].velocity = grid[idx].velocity;
+    next_grid[idx].updated = false;
+    grid[idx].updated = true;
+    return;
+  }
+
+  // clang-format off
+  if (top_valid) {
+                       __to_fire_or_smoke__(idx_top,       (long) row - 1, (long) col + 0);
+    if (left_valid)  { __to_fire_or_smoke__(idx_top_left,  (long) row - 1, (long) col - 1); }
+    if (right_valid) { __to_fire_or_smoke__(idx_top_right, (long) row - 1, (long) col + 1); }
+  }
+
+  if (bot_valid) {
+                       __to_fire_or_smoke__(idx_bot,       (long) row + 1, (long) col + 0);
+    if (left_valid)  { __to_fire_or_smoke__(idx_bot_left,  (long) row + 1, (long) col - 1); }
+    if (right_valid) { __to_fire_or_smoke__(idx_bot_right, (long) row + 1, (long) col + 1); }
+  }
+  // clang-format on
+
+  next_grid[idx].type = FIRE_TYPE;
+  next_grid[idx].mass = fmax(0.0f, remaining_mass);
+  next_grid[idx].velocity = V_STATIONARY;
+  next_grid[idx].updated = false;
+  grid[idx].updated = true;
+}
+
 STEP_IMPL(oil_step) {}
 STEP_IMPL(jello_step) {}
 STEP_IMPL(stone_step) {}
@@ -23,7 +117,7 @@ float water_get_stable_state(const float total_mass) {
   }
 }
 
-// {{{ water
+//  water
 STEP_IMPL(water_step) {
   GEN_STEP_IMPL_HEADER();
 
@@ -225,9 +319,8 @@ STEP_IMPL(water_step) {
   // set remaining mass to this cell
   next_grid[idx].mass = remaining_mass;
 }
-// }}}
 
-// {{{ sand
+//  sand
 STEP_IMPL(sand_step) {
 #define __move_sand__(idx_next)                                                \
   {                                                                            \
@@ -235,6 +328,8 @@ STEP_IMPL(sand_step) {
     next_grid[idx_next].type = SAND_TYPE;                                      \
     next_grid[idx].mass = AIR_MASS;                                            \
     next_grid[idx_next].mass = SAND_MASS;                                      \
+    next_grid[idx].velocity = V_STATIONARY;                                    \
+    next_grid[idx_next].velocity = V_STATIONARY;                               \
     next_grid[idx].updated = false;                                            \
     next_grid[idx_next].updated = false;                                       \
     grid[idx].updated = true;                                                  \
@@ -253,7 +348,8 @@ STEP_IMPL(sand_step) {
   }
 
   // move down left/right if possible with uniform probability
-  else if (get_rand(row, col) % 2 == 0) {
+  // TODO(vir): improve random number generation for this case
+  else if (get_rand(rand_seed, row, col) % 2 == 0) {
 
     // prefer left
     if (left_valid && IS_FLUID(grid[idx_bot_left]) &&
@@ -282,4 +378,3 @@ STEP_IMPL(sand_step) {
 
   return;
 }
-// }}}
