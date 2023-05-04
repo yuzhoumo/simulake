@@ -59,6 +59,10 @@ void App::run(const bool gpu_mode, GridBase::serialized_grid_t *data) noexcept {
     renderer.submit_grid(sim_grid);
   }
 
+  if (gpu_mode) {
+    renderer.submit_grid(device_grid);
+  }
+
 #if DEBUG
   std::uint64_t frame_count = 0;
   std::chrono::time_point start = std::chrono::high_resolution_clock::now();
