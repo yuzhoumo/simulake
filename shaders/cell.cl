@@ -195,10 +195,10 @@ STEP_IMPL(water_step) {
 
       remaining_mass -= flow;
 
-      // if the block below is sand, 30% chance it'll get displaced to the
+      // if the block below is sand, 2% chance it'll get displaced to the
       // bottom right.
-      if (IS_SAND(next_grid[idx_bot]) && remaining_mass > 0.01f &&
-          get_rand(seed) % 10 == 0) {
+      if (IS_SAND(next_grid[idx_bot]) && remaining_mass > 0.005f &&
+          get_rand(seed) % 100 < 3) {
         // new sand block to the bottom left.
         next_grid[next_idx].type = SAND_TYPE;
         next_grid[next_idx].mass = SAND_MASS;
@@ -239,10 +239,10 @@ STEP_IMPL(water_step) {
 
       remaining_mass -= flow;
 
-      // if the block below is sand, 30% chance it'll get displaced to the
+      // if the block below is sand, 2% chance it'll get displaced to the
       // bottom left
-      if (IS_SAND(next_grid[idx_bot]) && remaining_mass > 0.01f &&
-          get_rand(seed) % 10 == 0) {
+      if (IS_SAND(next_grid[idx_bot]) && remaining_mass > 0.005f &&
+          get_rand(seed) % 100 < 2) {
         // new sand block to the bottom left
         next_grid[next_idx].type = SAND_TYPE;
         next_grid[next_idx].mass = SAND_MASS;
