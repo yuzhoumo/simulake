@@ -114,6 +114,60 @@ STEP_IMPL(fire_step) {
   grid[idx].updated = true;
 }
 
+STEP_IMPL(greek_fire_step) {
+  GEN_STEP_IMPL_HEADER();
+
+#define __to_greek_fire__(target, r, c)                                        \
+  if (IS_FLAMMABLE(grid[target])) {                                            \
+    next_grid[target].type = FIRE_TYPE;                                        \
+    next_grid[target].mass = remaining_mass;                                   \
+    next_grid[target].velocity = V_STATIONARY;                                 \
+    next_grid[target].updated = false;                                         \
+    grid[idx].updated = true;                                                  \
+  } else if (IS_AIR(grid[target]) && get_rand_float(seed) < p) {               \
+    next_grid[target].type = SMOKE_TYPE;                                       \
+    next_grid[target].mass = get_mass(SMOKE_TYPE, seed);                       \
+    next_grid[target].velocity = grid[idx].velocity;                           \
+    next_grid[target].updated = false;                                         \
+    grid[idx].updated = true;                                                  \
+  }
+
+  const float p = 0.4f;
+  const float min_mass = 0.0f;
+  const float mass_decay = 0.05f;
+
+  const float remaining_mass = grid[idx].mass - mass_decay;
+
+  if (remaining_mass <= min_mass) {
+    next_grid[idx].type = GREEK_FIRE_TYPE;
+    next_grid[idx].mass = get_mass(GREEK_FIRE_TYPE, seed);
+    next_grid[idx].velocity = grid[idx].velocity;
+    next_grid[idx].updated = false;
+    grid[idx].updated = true;
+    return;
+  }
+
+  // clang-format off
+  if (top_valid) {
+                       __to_greek_fire__(idx_top,       (long) row - 1, (long) col + 0);
+    if (left_valid)  { __to_greek_fire__(idx_top_left,  (long) row - 1, (long) col - 1); }
+    if (right_valid) { __to_greek_fire__(idx_top_right, (long) row - 1, (long) col + 1); }
+  }
+
+  if (bot_valid) {
+    __to_greek_fire__(idx_bot,       (long) row + 1, (long) col + 0);
+    if (left_valid)  { __to_greek_fire__(idx_bot_left,  (long) row + 1, (long) col - 1); }
+    if (right_valid) { __to_greek_fire__(idx_bot_right, (long) row + 1, (long) col + 1); }
+  }
+  // clang-format on
+
+  next_grid[idx].type = GREEK_FIRE_TYPE;
+  next_grid[idx].mass = fmax(0.0f, remaining_mass);
+  next_grid[idx].velocity = V_STATIONARY;
+  next_grid[idx].updated = false;
+  grid[idx].updated = true;
+}
+
 STEP_IMPL(oil_step) {}
 STEP_IMPL(jello_step) {}
 STEP_IMPL(stone_step) {}

@@ -1,8 +1,8 @@
 #include <cassert>
 #include <iostream>
 #include <optional>
-#include <thread>
 #include <random>
+#include <thread>
 
 #include <omp.h>
 
@@ -24,7 +24,7 @@ Grid::Grid(const std::uint32_t _width, const std::uint32_t _height)
 
 void Grid::reset() noexcept {
   /* construct in place */
-  _grid.resize(height, {width, cell_data_t{ .type = CellType::AIR } });
+  _grid.resize(height, {width, cell_data_t{.type = CellType::AIR}});
 
   /* deep copy construct (same dimensions and contents) */
   _next_grid = _grid;
@@ -38,25 +38,25 @@ void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
   float cy = std::get<1>(center);
 
   const int y_start = std::max(static_cast<int>(cy - paint_radius), 0);
-  const int y_end = std::min(static_cast<int>(cy + paint_radius),
-                             static_cast<int>(height));
+  const int y_end =
+      std::min(static_cast<int>(cy + paint_radius), static_cast<int>(height));
 
   const int x_start = std::max(static_cast<int>(cx - paint_radius), 0);
-  const int x_end = std::min(static_cast<int>(cx + paint_radius),
-                             static_cast<int>(width));
+  const int x_end =
+      std::min(static_cast<int>(cx + paint_radius), static_cast<int>(width));
 
   for (int y = y_start; y < y_end; ++y) {
     for (int x = x_start; x < x_end; ++x) {
-      int dist =
-          static_cast<int>(sqrt(pow(static_cast<int>(cx) - x, 2) +
-                                pow(static_cast<int>(cy) - y, 2)));
+      int dist = static_cast<int>(sqrt(pow(static_cast<int>(cx) - x, 2) +
+                                       pow(static_cast<int>(cy) - y, 2)));
 
       bool should_paint =
-          dist <= paint_radius and
-          (paint_target == CellType::AIR or cell_at(x, y).type == CellType::AIR);
+          dist <= paint_radius and (paint_target == CellType::AIR or
+                                    cell_at(x, y).type == CellType::AIR);
 
       /* skip if should_paint is false */
-      if (!should_paint) continue;
+      if (!should_paint)
+        continue;
 
       cell_data_t spawn_cell;
 
@@ -78,7 +78,7 @@ void Grid::spawn_cells(const std::tuple<std::uint32_t, std::uint32_t> &center,
         break;
 
       case CellType::OIL:
-        //spawn_cell = OilCell::spawn({x, y}, *this);
+        // spawn_cell = OilCell::spawn({x, y}, *this);
         break;
 
       case CellType::SAND:
@@ -140,7 +140,7 @@ void Grid::simulate(float delta_time) noexcept {
         break;
 
       case CellType::STONE:
-        //StoneCell::step({x, y}, *this);
+        // StoneCell::step({x, y}, *this);
         break;
 
       default: // CellType::NONE
@@ -172,13 +172,14 @@ GridBase::serialized_grid_t Grid::serialize() const noexcept {
     }
   }
 
-  return { .width = width, .height = height, .stride = stride, .buffer = buf };
+  return {.width = width, .height = height, .stride = stride, .buffer = buf};
 }
 
 void Grid::deserialize(const GridBase::serialized_grid_t &data) noexcept {
   if (width != data.width or height != data.height or stride != data.stride) {
-    //TODO(joe): implement grid resize
-    std::cerr << "NOT_IMPLEMENTED::GRID::DESERIALIZE: buffer resize" << std::endl;
+    // TODO(joe): implement grid resize
+    std::cerr << "NOT_IMPLEMENTED::GRID::DESERIALIZE: buffer resize"
+              << std::endl;
     return;
   }
 
@@ -187,20 +188,19 @@ void Grid::deserialize(const GridBase::serialized_grid_t &data) noexcept {
       const std::uint64_t base_index = (row * width + col) * stride;
       /* cast the buffer value back to CellType enum */
       CellType type = static_cast<CellType>(
-            static_cast<std::uint32_t>(data.buffer[base_index]));
+          static_cast<std::uint32_t>(data.buffer[base_index]));
       float mass = data.buffer[base_index + 1];
 
-      _grid[height - row - 1][col] = {
-        .type = type,
-        .mass = mass,
-        .velocity = glm::vec2{0.0f},
-        .updated = false
-      };
+      _grid[height - row - 1][col] = {.type = type,
+                                      .mass = mass,
+                                      .velocity = glm::vec2{0.0f},
+                                      .updated = false};
     }
   }
 }
 
-cell_data_t Grid::cell_at(std::uint32_t x, std::uint32_t y, bool next) const noexcept {
+cell_data_t Grid::cell_at(std::uint32_t x, std::uint32_t y,
+                          bool next) const noexcept {
   if (y >= height || x >= width) [[unlikely]]
     return cell_data_t{};
 
@@ -210,8 +210,7 @@ cell_data_t Grid::cell_at(std::uint32_t x, std::uint32_t y, bool next) const noe
 bool Grid::set_next(std::uint32_t x, std::uint32_t y,
                     const cell_data_t cell) noexcept {
   if (y >= height || x >= width) [[unlikely]] {
-    std::cerr << "ERROR::GRID: out of bound: " << x << ' ' << y
-        << std::endl;
+    std::cerr << "ERROR::GRID: out of bound: " << x << ' ' << y << std::endl;
     return false;
   } else {
     _next_grid[y][x] = cell;
@@ -222,8 +221,7 @@ bool Grid::set_next(std::uint32_t x, std::uint32_t y,
 bool Grid::set_curr(std::uint32_t x, std::uint32_t y,
                     const cell_data_t cell) noexcept {
   if (y >= height || x >= width) [[unlikely]] {
-    std::cerr << "ERROR::GRID: out of bound: " << x << ' ' << y
-        << std::endl;
+    std::cerr << "ERROR::GRID: out of bound: " << x << ' ' << y << std::endl;
     return false;
   } else {
     _grid[y][x] = cell;

@@ -1,9 +1,9 @@
 // vim: ft=cpp :
 
-// NOTE(vir): DO NOT REMOVE --- x2
+// NOTE(vir): DO NOT REMOVE --- x0
 #include "base.cl"
 
-// NOTE(vir): DO NOT REMOVE --- x2
+// NOTE(vir): DO NOT REMOVE --- x19
 #include "cell.cl"
 
 // {{{ initialize kernel
@@ -102,6 +102,10 @@ __kernel void simulate(__global ulong *seeds, __global grid_t *grid,
 
   case FIRE_TYPE:
     INVOKE_IMPL(fire_step);
+    break;
+
+  case GREEK_FIRE_TYPE:
+    INVOKE_IMPL(greek_fire_step);
     break;
 
   case WATER_TYPE:

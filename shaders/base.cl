@@ -7,15 +7,16 @@
 #define USE_ROWMAJOR true
 
 // clang-format off
-#define   NONE_TYPE    0
-#define   AIR_TYPE     1
-#define   SMOKE_TYPE   2
-#define   FIRE_TYPE    3
-#define   WATER_TYPE   4
-#define   OIL_TYPE     5
-#define   SAND_TYPE    6
-#define   JELLO_TYPE   7
-#define   STONE_TYPE   8
+#define   NONE_TYPE         0
+#define   AIR_TYPE          1
+#define   SMOKE_TYPE        2
+#define   FIRE_TYPE         3
+#define   GREEK_FIRE_TYPE   4
+#define   WATER_TYPE        5
+#define   OIL_TYPE          6
+#define   SAND_TYPE         7
+#define   JELLO_TYPE        8
+#define   STONE_TYPE        9
 // clang-format on
 
 #define FALLS_DOWN(x) (x.type > WATER_TYPE)
@@ -40,14 +41,15 @@
 #endif
 
 // clang-format off
-#define   AIR_MASS     0.0f
-#define   SMOKE_MASS   1.0f
-#define   FIRE_MASS    1.0f
-#define   WATER_MASS   1.0f
-#define   OIL_MASS     0.8f
-#define   SAND_MASS    1.5f
-#define   JELLO_MASS   1.7f
-#define   STONE_MASS   3.0f
+#define   AIR_MASS        0.0f
+#define   SMOKE_MASS      1.0f
+#define   FIRE_MASS       1.0f
+#define   GREEK_FIRE_MASS 1.0f
+#define   WATER_MASS      1.0f
+#define   OIL_MASS        0.8f
+#define   SAND_MASS       1.5f
+#define   JELLO_MASS      1.7f
+#define   STONE_MASS      3.0f
 // clang-format on
 
 #define ASSERT_TRUE(x)                                                         \
@@ -87,6 +89,9 @@ inline float get_mass(const uint type, __global ulong *random_seed) {
     break;
   case FIRE_TYPE:
     return SCALE_FLOAT(get_rand_float(random_seed), 0.7f, FIRE_MASS);
+    break;
+  case GREEK_FIRE_TYPE:
+    return SCALE_FLOAT(get_rand_float(random_seed), 0.5f, GREEK_FIRE_MASS);
     break;
   case WATER_TYPE:
     return get_rand_float(random_seed);

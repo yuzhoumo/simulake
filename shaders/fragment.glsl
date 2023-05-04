@@ -1,13 +1,14 @@
 #version 330 core
 
-#define AIR_TYPE 1
-#define SMOKE_TYPE 2
-#define FIRE_TYPE 3
-#define WATER_TYPE 4
-#define OIL_TYPE 5
-#define SAND_TYPE 6
-#define NAPALM_TYPE 7
-#define STONE_TYPE 8
+#define AIR_TYPE        1
+#define SMOKE_TYPE      2
+#define FIRE_TYPE       3
+#define GREEK_FIRE_TYPE 4
+#define WATER_TYPE      5
+#define OIL_TYPE        6
+#define SAND_TYPE       7
+#define JELLO_TYPE      8
+#define STONE_TYPE      9
 
 uniform sampler2D u_grid_data_texture;
 
@@ -179,6 +180,24 @@ vec4 shade_fire(float mass) {
   return vec4(fire_color, 1.0);
 }
 
+vec4 shade_greek_fire() {
+  vec2 st = gl_FragCoord.xy / u_resolution * u_grid_dim;
+  float noise = fbm(st, 4);
+  float mass = texture(u_grid_data_texture, tex_coord).g;
+
+  // remap the mass value to a range of 0.0 to 1.0
+  float normalized_mass = clamp(mass / 0.6, 0.0, 1.0);
+
+  // create a gradient of colors from blue to white based on mass and noise
+  vec3 fire_color = mix(vec3(0.016, 0.147, 0.496), vec3(0.2, 0.645, 0.876), normalized_mass);
+  fire_color *= 0.8 + 0.2 * noise;
+
+  // make the fire appear more whiter higher up in the flame
+  fire_color *= mix(1.0, 1.9, smoothstep(0.0, 1.0, st.y / u_grid_dim.y));
+
+  return vec4(fire_color, 1.0);
+}
+
 vec4 shade_water(float mass) {
   vec3 light_blue = vec3(0.0, 0.5, 1.0); // light blue
   vec3 dark_blue = vec3(0.0, 0.0, 0.5);  // dark blue
@@ -216,13 +235,16 @@ void main() {
   vec4 color = vec4(0.0);
   switch (cell_type) {
   case AIR_TYPE:
-    color = background(gl_FragCoord.xy); 
+    color = background(gl_FragCoord.xy);
     break;
   case SMOKE_TYPE:
     color = shade_smoke(mass);
     break;
   case FIRE_TYPE:
     color = shade_fire(mass);
+    break;
+  case GREEK_FIRE_TYPE:
+    color = shade_greek_fire();
     break;
   case WATER_TYPE:
     color = shade_water(mass);

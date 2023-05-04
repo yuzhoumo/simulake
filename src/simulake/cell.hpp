@@ -1,11 +1,11 @@
 #ifndef SIMULAKE_CELL_HPP
 #define SIMULAKE_CELL_HPP
 
-#include <cstdlib>
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
-#include <utility>
 #include <random>
+#include <utility>
 
 namespace simulake {
 class Grid;
@@ -15,6 +15,7 @@ enum class CellType : std::uint8_t {
   AIR,
   SMOKE,
   FIRE,
+  GREEK_FIRE,
   WATER,
   OIL,
   SAND,
@@ -23,10 +24,10 @@ enum class CellType : std::uint8_t {
 };
 
 struct cell_data_t {
-  CellType type = CellType::NONE;  /* type (NONE means out of bounds) */
-  float mass = 0.0f;               /* current mass of the cell */
-  glm::vec2 velocity{0.0f};        /* current velocity */
-  bool updated = false;            /* updated this frame */
+  CellType type = CellType::NONE; /* type (NONE means out of bounds) */
+  float mass = 0.0f;              /* current mass of the cell */
+  glm::vec2 velocity{0.0f};       /* current velocity */
+  bool updated = false;           /* updated this frame */
 };
 
 class BaseCell {
@@ -59,7 +60,7 @@ public:
   typedef std::tuple<std::uint32_t, std::uint32_t> position_t;
 
   static inline context_t get_cell_context(const position_t &,
-        const Grid &) noexcept;
+                                           const Grid &) noexcept;
 
   static inline float random_float(float lower, float upper);
   static inline int random_int(int lower, int upper);
@@ -83,8 +84,10 @@ struct SmokeCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 
   static constexpr float mass_decay = 0.005;
-  static std::vector<position_t> getEmptyTopNeighbors(const position_t &, Grid &) noexcept;
-  static std::vector<BaseCell::position_t> getEmptyBottomNeighbors(const position_t &, Grid &) noexcept;
+  static std::vector<position_t> getEmptyTopNeighbors(const position_t &,
+                                                      Grid &) noexcept;
+  static std::vector<BaseCell::position_t>
+  getEmptyBottomNeighbors(const position_t &, Grid &) noexcept;
 };
 
 /* fire cell rules */
@@ -93,7 +96,8 @@ struct FireCell final : public BaseCell {
   static void step(const position_t &, Grid &) noexcept;
 
   static constexpr float mass_decay = 0.05f;
-  static void helper(CellType curr, Grid &grid, int x, int y, float remaining_mass);
+  static void helper(CellType curr, Grid &grid, int x, int y,
+                     float remaining_mass);
 };
 
 /* water cell rules */
@@ -109,11 +113,11 @@ struct WaterCell final : public BaseCell {
 
   /* Returns the amount of water that should be in the bottom cell. */
   static float get_stable_state_b(float total_mass) {
-    if (total_mass <= 1.0f) {
-      return 1.0f;
-    } else if (total_mass < 2.0f * max_mass + max_compress) {
-      return (max_mass * max_mass + total_mass * max_compress)
-          / (max_mass + max_compress);
+    if (total_mass <= 1) {
+      return 1;
+    } else if (total_mass < 2 * max_mass + max_compress) {
+      return (max_mass * max_mass + total_mass * max_compress) /
+             (max_mass + max_compress);
     } else {
       return (total_mass + max_compress) / 2;
     }
