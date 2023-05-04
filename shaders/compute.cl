@@ -1,11 +1,10 @@
 // vim: ft=cpp :
 
-// base macros and definitions
 #include "base.cl"
-
-// NOTE(vir): DO NOT REMOVE THIS NEWLINE
+// NOTE(vir): do not remove these new lines
 
 #include "cell.cl"
+// NOTE(vir): do not remove these new lines
 
 // {{{ initialize kernel
 __kernel void initialize(__global grid_t *grid, __global grid_t *next_grid,
@@ -71,7 +70,7 @@ __kernel void random_init(__global grid_t *grid,
   const uint height = dims[1];
 
   const uint idx = GET_INDEX(row, col, width, height);
-  const uint rand = get_rand(rand_seed, row, col);
+  const uint rand = get_rand(rand_seed, row, col, grid[idx].mass);
 
   if (rand % 20) {
     grid[idx].type = SAND_TYPE;
@@ -179,7 +178,7 @@ __kernel void spawn_cells(__global grid_t *grid, __global grid_t *next_grid,
     next_grid[idx].type = target;
     grid[idx].type = target;
 
-    const float mass = get_mass(target);
+    const float mass = get_mass(target, rand_seed, row, col);
     next_grid[idx].mass = mass;
     grid[idx].mass = mass;
 

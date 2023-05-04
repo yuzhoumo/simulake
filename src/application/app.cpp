@@ -56,7 +56,7 @@ void App::run(const bool gpu_mode, GridBase::serialized_grid_t *data) noexcept {
 
   renderer.submit_grid(sim_grid);
 
-#if DEBUG
+#if ENABLE_PROFILING
   std::uint64_t frame_count = 0;
   std::chrono::time_point start = std::chrono::high_resolution_clock::now();
 #endif
@@ -64,7 +64,7 @@ void App::run(const bool gpu_mode, GridBase::serialized_grid_t *data) noexcept {
   /* main render loop */
   while (!window.should_close()) {
 
-#if DEBUG
+#if ENABLE_PROFILING
     frame_count += 1;
 #endif
 
@@ -82,7 +82,7 @@ void App::run(const bool gpu_mode, GridBase::serialized_grid_t *data) noexcept {
     window.swap_buffers();
   }
 
-#if DEBUG
+#if ENABLE_PROFILING
   const auto delta = (std::chrono::high_resolution_clock::now() - start);
   const auto duration_s =
       std::chrono::duration_cast<std::chrono::seconds>(delta);

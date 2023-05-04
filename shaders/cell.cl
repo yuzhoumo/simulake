@@ -1,5 +1,8 @@
 // vim: ft=cpp :
 
+#ifndef SIMULAKE_COMPUTE_CELL_CL
+#define SIMULAKE_COMPUTE_CELL_CL
+
 // base macros and definitions
 #include "base.cl"
 
@@ -20,12 +23,15 @@ STEP_IMPL(smoke_step) {
     grid[idx_next].updated = true;                                             \
   }
 
+#define GET_NEXT_RAND()                                                        \
+  (rand = rand_seed = get_rand_float(rand_seed, row, col, grid[idx].mass));
+
   const float p = 0.4f;
   const float min_mass = 0.0f;
   const float mass_decay = 0.005f;
 
   const bool decayed = grid[idx].mass <= min_mass;
-  const float rand = get_rand_float(rand_seed, row, col);
+  const float rand = get_rand_float(rand_seed, row, col, grid[idx].mass);
 
   if (decayed) {
     next_grid[idx].type = AIR_TYPE;
@@ -35,12 +41,16 @@ STEP_IMPL(smoke_step) {
     grid[idx].updated = true;
   }
 
-  else if (rand < p && top_valid) {
+  else if (top_valid && rand < p) {
     // clang-format off
-    if      (               IS_FLUID(grid[idx_top]))       { __move_smoke__(idx_top); }
-    else if (left_valid  && IS_FLUID(grid[idx_top_left]))  { __move_smoke__(idx_top_left); }
+    if      (               IS_FLUID(grid[idx_top]))       { __move_smoke__(idx_top);       }
+    else if (left_valid  && IS_FLUID(grid[idx_top_left]))  { __move_smoke__(idx_top_left);  }
     else if (right_valid && IS_FLUID(grid[idx_top_right])) { __move_smoke__(idx_top_right); }
     // clang-format on
+  }
+
+  else if (top_valid) {
+    const float rand = get_rand_float((uint)rand, row, col, grid[idx].mass);
   }
 }
 
@@ -56,8 +66,8 @@ STEP_IMPL(fire_step) {
     grid[idx].updated = true;                                                  \
   } else if (IS_AIR(grid[target]) && rand < p) {                               \
     next_grid[target].type = SMOKE_TYPE;                                       \
-    next_grid[target].mass = SMOKE_MASS;                                       \
-    next_grid[target].velocity = remaining_mass - mass_decay;                  \
+    next_grid[target].mass = remaining_mass - mass_decay;                      \
+    next_grid[target].velocity = grid[idx].velocity;                           \
     next_grid[target].updated = false;                                         \
     grid[idx].updated = true;                                                  \
   }
@@ -66,7 +76,7 @@ STEP_IMPL(fire_step) {
   const float min_mass = 0.0f;
   const float mass_decay = 0.05f;
 
-  const float rand = get_rand_float(rand_seed, row, col);
+  const float rand = get_rand_float(rand_seed, row, col, grid[idx].mass);
   const float remaining_mass = grid[idx].mass - mass_decay;
 
   if (remaining_mass <= min_mass) {
@@ -349,7 +359,7 @@ STEP_IMPL(sand_step) {
 
   // move down left/right if possible with uniform probability
   // TODO(vir): improve random number generation for this case
-  else if (get_rand(rand_seed, row, col) % 2 == 0) {
+  else if (get_rand(rand_seed, row, col, grid[idx].mass) % 2 == 0) {
 
     // prefer left
     if (left_valid && IS_FLUID(grid[idx_bot_left]) &&
@@ -378,3 +388,5 @@ STEP_IMPL(sand_step) {
 
   return;
 }
+
+#endif
