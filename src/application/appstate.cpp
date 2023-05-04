@@ -89,6 +89,11 @@ void AppState::set_time(const float curr_time) noexcept {
   state.delta_time = curr_time - state.prev_time;
   state.prev_time = state.time;
   state.time = curr_time;
+
+  Renderer::uniform_opts_t uniforms_to_update = {
+    {Renderer::UniformId::TIME, curr_time}};
+
+  state.renderer->submit_shader_uniforms(uniforms_to_update);
 }
 
 void AppState::set_paused(const bool paused) noexcept {

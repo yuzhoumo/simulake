@@ -14,12 +14,104 @@ uniform sampler2D u_grid_data_texture;
 uniform vec2 u_resolution;
 uniform vec2 u_grid_dim;
 uniform vec2 u_mouse_pos;
+uniform float u_time;
 
 uniform float u_spawn_radius;
 uniform float u_cell_size;
 
 in vec2 tex_coord;
 out vec4 frag_color;
+
+
+
+// SHADERTOY https://www.shadertoy.com/view/fsjXDh
+
+float hash21(vec2 p)
+{
+    p=fract(p*vec2(123.456,789.01));
+    p+=dot(p,p+45.67);
+    return fract(p.x*p.y);
+}
+float star(vec2 uv,float brightness)
+{
+    float color=0.0;
+    float star=length(uv);
+    float diffraction=abs(uv.x*uv.y);
+    //diffraction *= abs((uv.x + 0.001953125) * (uv.y + 0.001953125));
+    star=brightness/star;
+    diffraction=pow(brightness,2.0)/diffraction;
+    diffraction=min(star,diffraction);
+    diffraction*=sqrt(star);
+    color+=star*sqrt(brightness)*8.0;
+    color+=diffraction*8.0;
+    return color;
+}
+vec4 background(vec2 fragCoord)
+{
+    vec4 fragColor;
+    vec2 UV=fragCoord.xy/u_resolution.yy;
+    vec3 color=vec3(0.0);
+    float dist=1.0;
+    float brightness=.01;
+    vec2 uv=(floor(UV*256.)/256.)-.51019;
+    uv*=128.;
+    uv+=floor((u_time)*64.)/3072.0;
+
+    vec2 gv=fract(uv)-.5;
+    vec2 id;
+    float displacement;
+    for(float y=-dist;y<=dist;y++)
+    {
+        for(float x=-dist;x<=dist;x++)
+        {
+            id=floor(uv);
+            displacement=hash21(id+vec2(x,y));
+            //color+=vec3(star(gv-vec2(x,y)-vec2(displacement,fract(displacement*16.))+.5,(hash21(id+vec2(x,y))/128.)));
+            //color=min(color,.4);
+        }
+    }
+    uv/=2.;
+    gv=fract(uv)-.5;
+    for(float y=-dist;y<=dist;y++)
+    {
+        for(float x=-dist;x<=dist;x++)
+        {
+            id=floor(uv);
+            displacement=hash21(id+vec2(x,y));
+            color+=vec3(star(gv-vec2(x,y)-vec2(displacement,fract(displacement*16.))+.5,(hash21(id+vec2(x,y))/128.)));
+        }
+    }
+    uv/=8.;
+    gv=fract(uv)-.5;
+    for(float y=-dist;y<=dist;y++)
+    {
+        for(float x=-dist;x<=dist;x++)
+        {
+            id=floor(uv);
+            displacement=hash21(id+vec2(x,y));
+            color+=vec3(star(gv-vec2(x,y)-vec2(displacement,fract(displacement*16.))+.5,(hash21(id+vec2(x,y))/256.)));
+        }
+    }
+    uv/=6.;
+    gv=fract(uv)-.5;
+    for(float y=-dist;y<=dist;y++)
+    {
+        for(float x=-dist;x<=dist;x++)
+        {
+            id=floor(uv);
+            displacement=hash21(id+vec2(x,y));
+            color+=vec3(star(gv-vec2(x,y)-vec2(displacement,fract(displacement*16.))+.5,(hash21(id+vec2(x,y))/256.)));
+        }
+    }
+    color*=vec3(.5,.7,1.);
+    //color = floor(0.01 + color * 16.0) / 16.0;
+    fragColor=vec4(color,1.);
+  return fragColor;
+}
+
+// END SHADERTOY
+
+
 
 float rand(vec2 co) {
   // pseudo-random generator
@@ -124,7 +216,7 @@ void main() {
   vec4 color = vec4(0.0);
   switch (cell_type) {
   case AIR_TYPE:
-    color = shade_air();
+    color = background(gl_FragCoord.xy); 
     break;
   case SMOKE_TYPE:
     color = shade_smoke(mass);

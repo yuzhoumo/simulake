@@ -103,6 +103,9 @@ void Renderer::submit_shader_uniforms(
     case Renderer::UniformId::GRID_DIM:
       shader.set_float2("u_grid_dim", std::get<glm::vec2>(value));
       break;
+    case Renderer::UniformId::TIME:
+      shader.set_float("u_time", std::get<float>(value));
+      break;
     }
   }
 }

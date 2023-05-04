@@ -32,7 +32,7 @@ public:
   void submit_grid(GridBase *) noexcept;
 
   enum class UniformId {
-    CELL_SIZE, SPAWN_RADIUS, MOUSE_POS, RESOLUTION, GRID_DIM
+    CELL_SIZE, SPAWN_RADIUS, MOUSE_POS, RESOLUTION, GRID_DIM, TIME
   };
 
   typedef std::variant<glm::vec2, float> shader_uniform_t;
