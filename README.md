@@ -2,6 +2,8 @@
 
 A cellular automata physics simulator.
 
+![Showcase screenshot](assets/simulake.png)
+
 ## Cloning
 
 External dependencies are included as git submodules in `lib`. Clone source
