@@ -89,7 +89,7 @@
                 <h5 align="">Water (flow + pressure + erosion)</h5>
                 <ul>
                     <li>Water moves vertically + diagonally down and horizontally equalizes across a certain range, giving it a wider range of motion than sand.</li>
-                    <li>The mass of each cell is also taken into account, such that water can get compressed and contain more mass than its top neighbor.</li>
+                    <li>The mass of each cell is also taken into account, so that a water cell can get compressed and contain more mass than the water cell above it.</li>
                     <li>To simulate pressure, if the mass of a water cell exceeds a certain threshold, water will flow back upward.</li>
                     <li>If water flows diagonally on top of soil, it will erode and displace the nearest soil cell with a low probability.</li>
                     <li>Our final algorithm for water behavior consists of hundreds of lines of code, as a result of iterating upon both ideas found online and our own mathematical reasoning.</li>
